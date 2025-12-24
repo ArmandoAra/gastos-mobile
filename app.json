@@ -16,15 +16,23 @@
       "supportsTablet": true
     },
     "android": {
+      "newArchEnabled": true,
+      "ios": {
+        "supportsTablet": true
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.gastosmobile"
     },
     "web": {
       "favicon": "./assets/favicon.ico"
-    }
+    },
+    "plugins": [
+      "expo-localization"
+    ]
   }
 }

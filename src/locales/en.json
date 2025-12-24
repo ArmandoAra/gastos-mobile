@@ -1,0 +1,32 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "loading": "Loading..."
+    },
+    "auth": {
+        "login": "Log in",
+        "email": "Email",
+        "password": "Password",
+        "register": "Sign up"
+    },
+    "accounts": {
+        "title": "Accounts",
+        "addAccount": "Add account",
+        "balance": "Balance",
+        "savings": "Savings",
+        "checking": "Checking",
+        "cash": "Cash"
+    },
+    "transactions": {
+        "title": "Transactions",
+        "addTransaction": "New transaction",
+        "expense": "Expense",
+        "income": "Income",
+        "amount": "Amount",
+        "description": "Description",
+        "date": "Date",
+        "category": "Category"
+    }
+}

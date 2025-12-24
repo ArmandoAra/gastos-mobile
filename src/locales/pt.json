@@ -1,0 +1,32 @@
+{
+    "common": {
+        "save": "Salvar",
+        "cancel": "Cancelar",
+        "delete": "Excluir",
+        "loading": "Carregando..."
+    },
+    "auth": {
+        "login": "Entrar",
+        "email": "E-mail",
+        "password": "Senha",
+        "register": "Registrar-se"
+    },
+    "accounts": {
+        "title": "Contas",
+        "addAccount": "Adicionar conta",
+        "balance": "Saldo",
+        "savings": "Poupança",
+        "checking": "Conta corrente",
+        "cash": "Dinheiro"
+    },
+    "transactions": {
+        "title": "Transações",
+        "addTransaction": "Nova transação",
+        "expense": "Despesa",
+        "income": "Receita",
+        "amount": "Valor",
+        "description": "Descrição",
+        "date": "Data",
+        "category": "Categoria"
+    }
+}
