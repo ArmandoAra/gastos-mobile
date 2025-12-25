@@ -1,58 +1,36 @@
 import * as Crypto from 'expo-crypto';
-import * as Keychain from 'react-native-keychain';
-import ReactNativeBiometrics from 'react-native-biometrics';
+import * as LocalAuthentication from 'expo-local-authentication';
 
-const rnBiometrics = new ReactNativeBiometrics();
-
-// Hash PIN con salt
-export async function hashPin(pin: string): Promise<string> {
-    const salt = await Crypto.digestStringAsync(
+/**
+ * Convierte el PIN (ej: "1234") en un hash SHA-256 irreversible
+ * (ej: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3")
+ */
+export const hashPin = async (pin: string): Promise<string> => {
+    const digest = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
-        Date.now().toString()
-    );
+      pin
+  );
+    return digest;
+};
 
-    const hash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        pin + salt
-    );
+/**
+ * Verifica si el hardware tiene biometría (Huella/FaceID)
+ */
+export const checkBiometricHardware = async (): Promise<boolean> => {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+    return hasHardware && isEnrolled;
+};
 
-    return `${salt}:${hash}`;
-}
-
-export async function verifyPin(pin: string, stored: string): Promise<boolean> {
-    const [salt, hash] = stored.split(':');
-    const computed = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        pin + salt
-    );
-
-    return computed === hash;
-}
-
-// Guardar PIN en Keychain
-export async function savePin(pin: string): Promise<void> {
-    const hashed = await hashPin(pin);
-    await Keychain.setGenericPassword('pin', hashed);
-}
-
-export async function getStoredPin(): Promise<string | null> {
-    const credentials = await Keychain.getGenericPassword();
-    return credentials ? credentials.password : null;
-}
-
-// Biometría
-export async function isBiometricAvailable(): Promise<boolean> {
-    const { available } = await rnBiometrics.isSensorAvailable();
-    return available;
-}
-
-export async function authenticateBiometric(): Promise<boolean> {
-    try {
-        const { success } = await rnBiometrics.simplePrompt({
-            promptMessage: 'Confirma tu identidad',
-        });
-        return success;
-    } catch {
-        return false;
-    }
-}
+/**
+ * Solicita la huella/cara al usuario
+ */
+export const authenticateBiometric = async (): Promise<boolean> => {
+    const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Desbloquear Finanzas',
+        fallbackLabel: 'Usar PIN',
+        cancelLabel: 'Cancelar',
+        disableDeviceFallback: true, // Forzar nuestra propia pantalla de PIN si falla
+    });
+    return result.success;
+};

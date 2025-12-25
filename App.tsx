@@ -31,6 +31,7 @@ import { useSettingsStore } from './src/stores/settingsStore';
 
 // Importar tema
 import { lightTheme, darkTheme } from './src/theme/colors';
+import { SetupScreen } from './src/screens/auth/SetupScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -186,34 +187,26 @@ const AuthStack = () => {
 // ROOT NAVIGATOR
 // ============================================
 const RootNavigator = () => {
-  const { isAuthenticated } = useAuthStore();
-  const { isPinEnabled, isUnlocked } = useSettingsStore();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const { isSetupComplete, isAuthenticated } = useAuthStore();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Check real de MMKV aquí
-    setTimeout(() => setIsCheckingAuth(false), 1000);
+    // Pequeño delay para dejar que MMKV cargue
+    setTimeout(() => setIsReady(true), 500);
   }, []);
 
-  if (isCheckingAuth) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>💰</Text>
-        <Text style={styles.loadingSubtext}>Cargando...</Text>
-      </View>
-    );
-  }
+  if (!isReady) return null; // O tu Loading Screen
 
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
-        // Stack de Autenticación
-        <RootStack.Screen name="Auth" component={AuthStack} />
-      ) : isPinEnabled && !isUnlocked ? (
-        // Pantalla de Bloqueo PIN
-        <RootStack.Screen name="PinLock" component={PinScreen} />
+      {!isSetupComplete ? (
+        // Caso 1: Primera vez que abre la app (Crear usuario y PIN)
+        <RootStack.Screen name="Setup" component={SetupScreen} />
+      ) : !isAuthenticated ? (
+        // Caso 2: Usuario existe pero la app está bloqueada
+        <RootStack.Screen name="LockScreen" component={PinScreen} />
       ) : (
-        // App Principal
+            // Caso 3: Usuario autenticado -> Entrar a la app
         <RootStack.Screen name="MainApp" component={AppStack} />
       )}
     </RootStack.Navigator>

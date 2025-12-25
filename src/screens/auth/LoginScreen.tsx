@@ -1,87 +1,120 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { useAuthStore } from '../../stores/authStore';
 
-// ============================================
-// LOGIN SCREEN
-
-import { useState } from "react";
-import { View, TextInput, TouchableOpacity, Text } from "react-native";
-import { useAuthStore } from "../../stores/authStore";
-import { styles } from "../../theme/styles2";
-
-// ============================================
 export const LoginScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const { setAuth } = useAuthStore();
+
+    // Extraemos acciones y estado del store
+    const { login, isLoading, error, clearError } = useAuthStore();
 
     const handleLogin = async () => {
-        setIsLoading(true);
+      if (!email || !password) {
+          Alert.alert('Error', 'Por favor completa los campos');
+          return;
+      }
 
-        // Simular llamada API
-        setTimeout(() => {
-            const mockUser = {
-                id: '1',
-                email: email,
-                name: 'Usuario Demo',
-                created_at: new Date().toISOString()
-            };
-
-            const mockToken = 'mock-jwt-token-123';
-
-            setAuth(mockUser, mockToken);
-            setIsLoading(false);
-        }, 1500);
-    };
+      await login(email, password);
+      // Nota: No necesitas navegar manualmente aquí.
+      // El RootNavigator en App.tsx detectará el cambio de 'isAuthenticated'
+      // y cambiará el Stack automáticamente.
+  };
 
     return (
-        <View style={styles.authContainer}>
-            <View style={styles.authContent}>
-                <Text style={styles.authLogo}>💰</Text>
-                <Text style={styles.authTitle}>Mi Finanzas</Text>
-                <Text style={styles.authSubtitle}>Controla tus gastos e ingresos</Text>
+      <View style={styles.container}>
+          <Text style={styles.title}>Bienvenido de nuevo 👋</Text>
 
-                <View style={styles.authForm}>
-                    <TextInput
-                        style={styles.authInput}
-                        placeholder="Correo electrónico"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
-                    <TextInput
-                        style={styles.authInput}
-                        placeholder="Contraseña"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
+          {error && (
+              <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                  <TouchableOpacity onPress={clearError}>
+                      <Text style={styles.closeError}>✕</Text>
+                  </TouchableOpacity>
+              </View>
+          )}
 
-                    <TouchableOpacity
-                        style={styles.authButton}
-                        onPress={handleLogin}
-                        disabled={isLoading}
-                    >
-                        <Text style={styles.authButtonText}>
-                            {isLoading ? 'Ingresando...' : 'Iniciar Sesión'}
-                        </Text>
-                    </TouchableOpacity>
+          <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                  style={styles.input}
+                  placeholder="demo@test.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+              />
+          </View>
 
-                    <TouchableOpacity style={styles.authLink}>
-                        <Text style={styles.authLinkText}>¿Olvidaste tu contraseña?</Text>
-                    </TouchableOpacity>
+          <View style={styles.inputContainer}>
+              <Text style={styles.label}>Contraseña</Text>
+              <TextInput
+                  style={styles.input}
+                  placeholder="123456"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+              />
+          </View>
 
-                    <View style={styles.authDivider}>
-                        <View style={styles.authDividerLine} />
-                        <Text style={styles.authDividerText}>o</Text>
-                        <View style={styles.authDividerLine} />
-                    </View>
+          <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={isLoading}
+          >
+              {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+              ) : (
+                  <Text style={styles.buttonText}>Iniciar Sesión</Text>
+              )}
+          </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.authButtonSecondary}>
-                        <Text style={styles.authButtonSecondaryText}>Crear cuenta nueva</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </View>
-    );
+          <TouchableOpacity
+              style={styles.linkButton}
+              onPress={() => navigation.navigate('Register')}
+          >
+              <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
+          </TouchableOpacity>
+      </View>
+  );
 };
+
+const styles = StyleSheet.create({
+    container: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: '#fff' },
+    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 32, color: '#333' },
+    inputContainer: { marginBottom: 16 },
+    label: { fontSize: 14, color: '#666', marginBottom: 8, fontWeight: '600' },
+    input: {
+        backgroundColor: '#F5F5F5',
+        padding: 16,
+        borderRadius: 12,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    button: {
+        backgroundColor: '#6200EE',
+        padding: 18,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 16,
+        shadowColor: '#6200EE',
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+    },
+    buttonDisabled: { backgroundColor: '#B0B0B0' },
+    buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    linkButton: { marginTop: 20, alignItems: 'center' },
+    linkText: { color: '#6200EE', fontWeight: '600' },
+    errorContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        backgroundColor: '#FFEBEE',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 20,
+    },
+    errorText: { color: '#D32F2F' },
+    closeError: { color: '#D32F2F', fontWeight: 'bold', marginLeft: 10 },
+});
