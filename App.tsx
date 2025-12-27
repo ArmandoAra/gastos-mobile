@@ -23,7 +23,6 @@ import { AccountsListScreen } from './src/screens/accounts/AccountsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { PinScreen } from './src/screens/auth/PinScreen';
-import { AddTransactionScreen } from './src/screens/transactions/AddTransactionScreen';
 
 // Importar stores
 import { useAuthStore } from './src/stores/authStore';
@@ -151,17 +150,6 @@ const AppStack = () => {
         name="MainTabs"
         component={MainTabs}
         options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="AddTransaction"
-        component={AddTransactionScreen}
-        options={{
-          title: 'Nueva Transacción',
-          headerStyle: {
-            backgroundColor: '#6200EE',
-          },
-          headerTintColor: '#fff',
-        }}
       />
     </Stack.Navigator>
   );

@@ -1,48 +1,103 @@
-
-// ============================================
-// SETTINGS SCREEN
-// ============================================
+import React from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+    StyleSheet,
+    Platform
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient'; // Para el texto gradiente del título
+
+// Stores
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useAuthStore } from '../../stores/authStore';
-import { ScrollView, View, TouchableOpacity, Text } from 'react-native';
+
+// Estilos y Constantes
 import { styles } from '../../theme/styles2';
+import { languages } from '../../constants/languages';
+import UserProfileSection from './components/UserProfileSection';
+import AccountManagementSection from './components/AccountManagementSection';
+import DataManagementSection from './components/DataManagementSection';
+import DangerZoneSection from './components/DangerZoneSection';
 
 export const SettingsScreen = () => {
+    const navigation = useNavigation();
     const { t, i18n } = useTranslation();
+
+    // Hooks del store (combinando lógica de ambos ejemplos)
     const { theme, setTheme, isPinEnabled, togglePin, language, setLanguage } = useSettingsStore();
     const { user, logout } = useAuthStore();
-
-    const languages = [
-        { code: 'es', name: 'Español', flag: '🇪🇸' },
-        { code: 'en', name: 'English', flag: '🇺🇸' },
-        { code: 'pt', name: 'Português', flag: '🇧🇷' }
-    ];
 
     const handleLanguageChange = (code: string) => {
         setLanguage(code);
         i18n.changeLanguage(code);
     };
 
+    // Configuración de animación para simular el "staggerChildren" de Framer Motion
+    const EnteringAnimation = (delay: number) =>
+        FadeInDown.duration(500).delay(delay).springify();
+
     return (
-        <ScrollView style={styles.container}>
-            {/* User Info */}
-            <View style={styles.section}>
+        <ScrollView
+            style={[styles.container, { backgroundColor: theme === 'dark' ? '#121212' : '#F4F6F8' }]}
+            showsVerticalScrollIndicator={false}
+        >
+            {/* 1. Header (Traducido del MUI) */}
+            <Animated.View entering={EnteringAnimation(100)} style={localStyles.headerContainer}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={localStyles.backButton}
+                >
+                    <Text style={[localStyles.backButtonText, { color: '#007AFF' }]}>
+                        &larr; Back to Dashboard
+                    </Text>
+                </TouchableOpacity>
+
+                <View>
+                    {/* Simulación de gradiente de texto del MUI */}
+                    <Text style={localStyles.headerTitle}>Settings</Text>
+                    <Text style={localStyles.headerSubtitle}>
+                        Manage your account preferences and app settings
+                    </Text>
+                </View>
+            </Animated.View>
+
+            {/* 2. User Profile Section (Del estilo RN proporcionado) */}
+            {/* <Animated.View entering={EnteringAnimation(200)} style={styles.section}>
                 <View style={styles.userCard}>
                     <View style={styles.userAvatar}>
                         <Text style={styles.userAvatarText}>
-                            {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                            {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                         </Text>
                     </View>
                     <View style={styles.userInfo}>
                         <Text style={styles.userName}>{user?.name || 'Usuario'}</Text>
-                        <Text style={styles.userEmail}>{user?.email}</Text>
+                        <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
                     </View>
                 </View>
-            </View>
+            </Animated.View> */}
+            <UserProfileSection />
 
-            {/* Appearance */}
-            <View style={styles.section}>
+            {/* 3. Account Management (Traducido usando estilos RN) */}
+            {/* <Animated.View entering={EnteringAnimation(300)} style={styles.section}>
+                <Text style={styles.sectionTitle}>Account Management</Text>
+                <TouchableOpacity style={styles.settingItem}>
+                    <Text style={styles.settingLabel}>Edit Profile</Text>
+                    <Text style={localStyles.chevron}>›</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.settingItem}>
+                    <Text style={styles.settingLabel}>Notifications</Text>
+                    <Text style={localStyles.chevron}>›</Text>
+                </TouchableOpacity>
+            </Animated.View> */}
+            <AccountManagementSection />
+
+            {/* 4. Appearance (Del estilo RN proporcionado) */}
+            <Animated.View entering={EnteringAnimation(400)} style={styles.section}>
                 <Text style={styles.sectionTitle}>Apariencia</Text>
                 <View style={styles.settingItem}>
                     <Text style={styles.settingLabel}>Tema</Text>
@@ -61,10 +116,10 @@ export const SettingsScreen = () => {
                         </TouchableOpacity>
                     </View>
                 </View>
-            </View>
+            </Animated.View>
 
-            {/* Language */}
-            <View style={styles.section}>
+            {/* 5. Language (Del estilo RN proporcionado) */}
+            <Animated.View entering={EnteringAnimation(500)} style={styles.section}>
                 <Text style={styles.sectionTitle}>Idioma</Text>
                 {languages.map(lang => (
                     <TouchableOpacity
@@ -80,10 +135,10 @@ export const SettingsScreen = () => {
                         )}
                     </TouchableOpacity>
                 ))}
-            </View>
+            </Animated.View>
 
-            {/* Security */}
-            <View style={styles.section}>
+            {/* 6. Security (Del estilo RN proporcionado) */}
+            <Animated.View entering={EnteringAnimation(600)} style={styles.section}>
                 <Text style={styles.sectionTitle}>Seguridad</Text>
                 <View style={styles.settingItem}>
                     <Text style={styles.settingLabel}>PIN de Seguridad</Text>
@@ -97,29 +152,60 @@ export const SettingsScreen = () => {
                 <TouchableOpacity style={styles.settingItem}>
                     <Text style={styles.settingLabel}>🔐 Habilitar Biometría</Text>
                 </TouchableOpacity>
+            </Animated.View>
+
+            {/* 7. Danger Zone (Traducido del MUI a estilos RN) */}
+            {/* <Animated.View entering={EnteringAnimation(700)} style={[styles.section, localStyles.dangerZoneSection]}>
+                <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>Danger Zone</Text>
                 <TouchableOpacity style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>🔑 Cambiar PIN</Text>
+                    <Text style={[styles.settingLabel, { color: '#ef4444' }]}>Delete Account</Text>
+                    <Text style={{ fontSize: 12, color: '#999' }}>Irreversible</Text>
                 </TouchableOpacity>
-            </View>
+            </Animated.View> */}
 
-            {/* About */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Acerca de</Text>
-                <View style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>Versión</Text>
-                    <Text style={styles.settingValue}>1.0.0</Text>
-                </View>
-            </View>
+            <DataManagementSection />
+            <DangerZoneSection userId={user?.id} />
 
-            {/* Logout */}
-            <TouchableOpacity
-                style={styles.logoutBtn}
-                onPress={logout}
-            >
-                <Text style={styles.logoutText}>🚪 Cerrar Sesión</Text>
-            </TouchableOpacity>
-
-            <View style={{ height: 40 }} />
         </ScrollView>
     );
 };
+
+// Estilos locales adicionales para lo que no estaba en styles2.ts (Header y Danger Zone específicos)
+const localStyles = StyleSheet.create({
+    headerContainer: {
+        paddingHorizontal: 20,
+        paddingTop: Platform.OS === 'ios' ? 10 : 20,
+        marginBottom: 20,
+    },
+    backButton: {
+        marginBottom: 15,
+        alignSelf: 'flex-start',
+    },
+    backButtonText: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    headerTitle: {
+        fontSize: 32,
+        fontWeight: '700',
+        color: '#333', // O el color primario de tu tema
+        marginBottom: 5,
+        // Nota: React Native no soporta background-clip: text nativamente sin librerías complejas (MaskedView).
+        // Se usa un color sólido o LinearGradient overlay si es estrictamente necesario.
+    },
+    headerSubtitle: {
+        fontSize: 16,
+        color: '#666',
+        lineHeight: 22,
+    },
+    chevron: {
+        fontSize: 20,
+        color: '#ccc',
+        fontWeight: 'bold',
+    },
+    dangerZoneSection: {
+        borderColor: '#fca5a5', // Rojo claro
+        borderWidth: 1,
+        backgroundColor: '#fef2f2', // Fondo rojizo muy suave
+    }
+});

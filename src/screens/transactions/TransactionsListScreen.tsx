@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { View, TouchableOpacity, ScrollView, Text } from "react-native";
 import { styles } from "../../theme/styles";
 import { MOCK_TRANSACTIONS } from "../home/HomeScreen";
+import AddTransactionsButton from "../../components/buttons/AddTransactionsButton";
+import InfoPopUp from "../../components/messages/InfoPopUp";
 
 
 export function TransactionsScreen() {
@@ -43,6 +45,8 @@ export function TransactionsScreen() {
 
     return (
         <View style={styles.container}>
+            {/* message popup */}
+            <InfoPopUp />
             {/* Filtros */}
             <View style={styles.filterContainer}>
                 <TouchableOpacity
@@ -114,9 +118,8 @@ export function TransactionsScreen() {
             </ScrollView>
 
             {/* Botón flotante */}
-            <TouchableOpacity style={styles.fab}>
-                <Text style={styles.fabIcon}>+</Text>
-            </TouchableOpacity>
+            <AddTransactionsButton />
+
         </View>
     );
 };

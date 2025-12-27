@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createMMKV } from 'react-native-mmkv';
+import { InputNameActive } from '../interfaces/settings.interface';
 
 const storage = createMMKV();
 
@@ -18,6 +19,12 @@ interface SettingsState {
     language: string;
     isPinEnabled: boolean;
     isUnlocked: boolean;
+    isAddOptionsOpen: boolean;
+    isDateSelectorOpen: boolean;
+    inputNameActive: InputNameActive;
+    setIsAddOptionsOpen: (isOpen: boolean) => void;
+    setIsDateSelectorOpen: (isOpen: boolean) => void;
+    setInputNameActive: (inputName: InputNameActive) => void;
     setTheme: (theme: 'light' | 'dark') => void;
     setLanguage: (lang: string) => void;
     togglePin: () => void;
@@ -31,6 +38,12 @@ export const useSettingsStore = create<SettingsState>()(
             language: 'es',
             isPinEnabled: false,
             isUnlocked: true,
+            isAddOptionsOpen: false,
+            isDateSelectorOpen: false,
+            inputNameActive: InputNameActive.NONE,
+            setIsAddOptionsOpen: (isOpen) => set({ isAddOptionsOpen: isOpen }),
+            setIsDateSelectorOpen: (isOpen) => set({ isDateSelectorOpen: isOpen }),
+            setInputNameActive: (inputNameActive) => set({ inputNameActive }),
             setTheme: (theme) => set({ theme }),
             setLanguage: (language) => set({ language }),
             togglePin: () => set((state) => ({

@@ -26,6 +26,11 @@ export interface MonthFinance {
     updatedAt: Date; // Timestamp de última actualización
 }
 
+export interface YearResume extends MonthFinance {
+    totalExpenses: number;
+    totalIncomes: number;
+}
+
 export enum TransactionType {
     EXPENSE = 'expense',
     INCOME = 'income',
@@ -33,17 +38,19 @@ export enum TransactionType {
 
 export interface Transaction {
     id: string;
+    account_id: string;
+    user_id: string;
     description: string;
     amount: number;
     type: TransactionType;
+    category_name: string;
+    date: string;
     quantity?: number;
-    date: Date; // ISO string format
-    createdAt: Date; // Timestamp de creación
-    updatedAt: Date; // Timestamp de última actualización
-    categoryId: string; // Foreign key
-    accountId: string; // Foreign key
-    monthFinanceId?: string; // Foreign key
-    transactionGroupId?: string; // Foreign key opcional
+    transaction_group_id?: string;
+    static_category_id?: string;
+    user_category_id?: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Category {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createMMKV } from 'react-native-mmkv';
 import { hashPin, authenticateBiometric } from '../utils/security';
+import { v4 as uuidv4 } from 'uuid';
 
 // 1. Storage seguro para auth
 const storage = createMMKV({ id: 'local-auth-storage' });
@@ -13,7 +14,9 @@ const mmkvStorage = {
 };
 
 interface UserProfile {
+    id: string;
     name: string;
+    email?: string;
     currency: string;
 }
 
@@ -28,6 +31,7 @@ interface AuthState {
     setupAccount: (name: string, pin: string, enableBiometrics: boolean) => Promise<void>;
     loginWithPin: (pin: string) => Promise<boolean>;
     loginWithBiometrics: () => Promise<boolean>;
+    updateUser: (newData: Partial<UserProfile>) => void;
     logout: () => void;
 }
 
@@ -45,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
               const hashed = await hashPin(pin);
 
               set({
-                  user: { name, currency: 'USD' },
+                  user: { id: uuidv4(), name, currency: 'USD' },
                   pinHash: hashed,
                   isBiometricEnabled: enableBiometrics,
                   isSetupComplete: true,
@@ -79,6 +83,13 @@ export const useAuthStore = create<AuthState>()(
               return success;
           },
 
+            updateUser: (newData: Partial<UserProfile>) => {
+                const currentUser = get().user;
+                if (currentUser) {
+                    set({ user: { ...currentUser, ...newData } });
+                }
+            },
+
           logout: () => set({ isAuthenticated: false }),
       }),
       {
@@ -89,7 +100,7 @@ export const useAuthStore = create<AuthState>()(
             user: state.user,
             pinHash: state.pinHash,
             isSetupComplete: state.isSetupComplete,
-            isBiometricEnabled: state.isBiometricEnabled
+            isBiometricEnabled: state.isBiometricEnabled,
         }),
       }
   )

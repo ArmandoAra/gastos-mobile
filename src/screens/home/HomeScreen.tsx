@@ -21,6 +21,7 @@ import {
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { styles } from '../../theme/styles';
+import AddTransactionsButton from '../../components/buttons/AddTransactionsButton';
 
 // ============================================
 // MOCK DATA & TYPES
@@ -148,20 +149,6 @@ export function HomeScreen() {
                         </View>
                     </View>
                 ))}
-            </View>
-
-            {/* Quick Actions */}
-            <View style={styles.section}>
-                <View style={styles.quickActions}>
-                    <TouchableOpacity style={styles.quickActionBtn}>
-                        <Text style={styles.quickActionIcon}>➕</Text>
-                        <Text style={styles.quickActionText}>Agregar Gasto</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickActionBtn}>
-                        <Text style={styles.quickActionIcon}>💵</Text>
-                        <Text style={styles.quickActionText}>Agregar Ingreso</Text>
-                    </TouchableOpacity>
-                </View>
             </View>
         </ScrollView>
     );

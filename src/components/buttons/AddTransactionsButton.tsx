@@ -1,17 +1,49 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons'; // Iconos equivalentes a MUI
-import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, AnimatePresence } from 'moti'; // Equivalente a Framer Motion
-import  { useSettingsStore } from '../../stores/settingsStore'; // Asumo que tu store ya es compatible (Zustand funciona igual)
-import { InputNameActive } from '../../interfaces/settings.interface';
 
-// Definimos variantes de animación similares a las que tenías
-// Moti nos permite definir 'from', 'animate', 'exit' directamente en el componente
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    withSpring,
+    FadeInDown,
+    FadeOutDown,
+    ZoomIn,
+    FadeIn,
+    FadeOut
+} from 'react-native-reanimated';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { InputNameActive } from '../../interfaces/settings.interface';
+import AddTransactionForm from '../forms/AddTransactionForm';
+
 const FAB_SIZE = 56;
 
+// Configuración de animación Spring optimizada
+const SPRING_CONFIG = {
+    damping: 100,
+    stiffness: 100,
+    mass: 0.8
+};
+
 export default function AddTransactionsButton() {
-    const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen } = useSettingsStore();
+    const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
+
+    // Shared Value para la rotación del icono
+    const rotation = useSharedValue(0);
+
+    // Sincronizar rotación con estado
+    useEffect(() => {
+        rotation.value = withTiming(isAddOptionsOpen ? 45 : 0, { duration: 200 });
+    }, [isAddOptionsOpen]);
+
+    // Estilo animado para el icono
+    const animatedIconStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ rotate: `${rotation.value}deg` }],
+        };
+    });
 
     const handleToggleOptions = () => {
         setIsAddOptionsOpen(!isAddOptionsOpen);
@@ -19,136 +51,145 @@ export default function AddTransactionsButton() {
 
     return (
         <>
-            {/* Opciones del Menú (AnimatePresence maneja el desmontaje animado) */}
-            <AnimatePresence>
-                {isAddOptionsOpen && (
-                    <MotiView
-                        key="options-container"
-                        from={{ opacity: 0, translateY: 20, scale: 0.9 }}
-                        animate={{ opacity: 1, translateY: 0, scale: 1 }}
-                        exit={{ opacity: 0, translateY: 20, scale: 0.9 }}
-                        transition={{ type: 'timing', duration: 250 }}
-                        style={styles.optionsContainer}
-                    >
-                        <View style={styles.optionsWrapper}>
-                            <InputOptions
-                                title="Add Income"
-                                iconName="trending-up"
-                                gradientColors={['#10b981', '#34d399']}
-                                onPress={() => {
-                                    setInputNameActive(InputNameActive.INCOME);
-                                    setIsAddOptionsOpen(false);
-                                }}
-                                index={0}
-                            />
-                            
-                            <InputOptions
-                                title="Add Spend"
-                                iconName="trending-down"
-                                gradientColors={['#ec4899', '#f43f5e']}
-                                onPress={() => {
-                                    setInputNameActive(InputNameActive.SPEND);
-                                    setIsAddOptionsOpen(false);
-                                }}
-                                index={1}
-                            />
-                        </View>
-                    </MotiView>
-                )}
-            </AnimatePresence>
+            {
+                (inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) &&
+                <AddTransactionForm />
+            }
+
+
+            {/* Opciones del Menú */}
+            {isAddOptionsOpen && (
+                <Animated.View
+                    key="options-container"
+                    style={styles.optionsContainer}
+                    entering={FadeIn.duration(200)}
+                    exiting={FadeOut.duration(150)}
+                >
+                    <View style={styles.optionsWrapper}>
+                        {/* Opción 1: Ingreso */}
+                        <InputOptionsNoShadow
+                            title="Add Income"
+                            iconName="trending-up"
+                            gradientColors={['#10b981', '#34d399']}
+                            onPress={() => {
+                                setInputNameActive(InputNameActive.INCOME);
+                                setIsAddOptionsOpen(false);
+                            }}
+                            index={0}
+                        />
+
+                        {/* Opción 2: Gasto */}
+                        <InputOptionsNoShadow
+                            title="Add Spend"
+                            iconName="trending-down"
+                            gradientColors={['#ec4899', '#f43f5e']}
+                            onPress={() => {
+                                setInputNameActive(InputNameActive.SPEND);
+                                setIsAddOptionsOpen(false);
+                            }}
+                            index={1}
+                        />
+                    </View>
+                </Animated.View>
+            )}
 
             {/* Botón Flotante (FAB) */}
             {!isDateSelectorOpen && (
-                <MotiView
-                    from={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', damping: 15 }}
+                <Animated.View
+                    entering={ZoomIn.springify().damping(12)}
                     style={styles.fabContainer}
                 >
                     <TouchableOpacity
-                        activeOpacity={0.8}
+                        activeOpacity={0.9}
                         onPress={handleToggleOptions}
                         style={[
                             styles.fab,
-                            isAddOptionsOpen && styles.fabOpen // Cambia sombra/color si está abierto
+                            isAddOptionsOpen && styles.fabOpen
                         ]}
                     >
-                        {/* Rotamos el icono si está abierto */}
-                        <MotiView
-                            animate={{ rotate: isAddOptionsOpen ? '45deg' : '0deg' }}
-                            transition={{ type: 'timing', duration: 200 }}
-                        >
+                        <Animated.View style={animatedIconStyle}>
                             <MaterialIcons name="add" size={28} color="#FFF" />
-                        </MotiView>
+                        </Animated.View>
                     </TouchableOpacity>
-                </MotiView>
+                </Animated.View>
             )}
         </>
     );
 }
 
 // ==========================================
-// Componente Hijo: InputOptions
+// Componente Hijo: InputOptions (CORREGIDO)
 // ==========================================
 
 interface InputOptionsProps {
     title: string;
     iconName: keyof typeof MaterialIcons.glyphMap;
-    closeOptions?: () => void;
     gradientColors: [string, string];
     index: number;
     onPress: () => void;
 }
 
-const InputOptions = ({ title, iconName, gradientColors, onPress, index }: InputOptionsProps) => {
+const InputOptionsNoShadow = ({ title, iconName, gradientColors, onPress, index }: InputOptionsProps) => {
+    const opacity = useSharedValue(0);
+
+    useEffect(() => {
+        opacity.value = withSpring(1, SPRING_CONFIG);
+    }, []);
+
+    const animatedCardStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
     return (
-        <MotiView
-            from={{ opacity: 0, translateX: 20 }}
-            animate={{ opacity: 1, translateX: 0 }}
-            delay={index * 100} // Stagger effect (efecto cascada)
+        <Animated.View
+            entering={FadeInDown
+                .delay(index * 60)
+                .springify()
+                .damping(SPRING_CONFIG.damping)
+                .stiffness(SPRING_CONFIG.stiffness)
+                .mass(SPRING_CONFIG.mass)
+            }
+            exiting={FadeOutDown.duration(150)}
             style={styles.cardContainer}
         >
             <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={onPress}
-                style={styles.card}
             >
-                {/* Icono con Gradiente */}
-                <LinearGradient
-                    colors={gradientColors}
-                    style={styles.avatar}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                >
-                    <MaterialIcons name={iconName} size={20} color="#FFF" />
-                </LinearGradient>
-
-                {/* Texto */}
-                <Text style={styles.cardText}>{title}</Text>
+                <Animated.View style={[styles.cardNoShadow, animatedCardStyle]}>
+                    <LinearGradient
+                        colors={gradientColors}
+                        style={styles.avatarNoShadow}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                    >
+                        <MaterialIcons name={iconName} size={20} color="#FFF" />
+                    </LinearGradient>
+                    <Text style={styles.cardText}>{title}</Text>
+                </Animated.View>
             </TouchableOpacity>
-        </MotiView>
+        </Animated.View>
     );
 };
 
+
 // ==========================================
-// Estilos
+// Estilos CORREGIDOS
 // ==========================================
 
 const styles = StyleSheet.create({
-    // Contenedor absoluto de las opciones
     optionsContainer: {
         position: 'absolute',
-        bottom: 100, // Un poco más arriba del FAB
+        bottom: 90,
         right: 24,
         zIndex: 1300,
-        alignItems: 'flex-end', // Alinear a la derecha
+        alignItems: 'flex-end',
     },
     optionsWrapper: {
-        gap: 12, // Espacio entre las tarjetas (equivalente a spacing={2})
-        width: 200, // Ancho fijo similar a tu { md: '200px' }
+        gap: 12,
+        width: 200,
+        paddingBottom: 8,
     },
-    
-    // FAB Styles
     fabContainer: {
         position: 'absolute',
         bottom: 24,
@@ -159,59 +200,44 @@ const styles = StyleSheet.create({
         width: FAB_SIZE,
         height: FAB_SIZE,
         borderRadius: FAB_SIZE / 2,
-        backgroundColor: '#6200EE', // Tu color primario
+        backgroundColor: '#6200EE',
         justifyContent: 'center',
         alignItems: 'center',
-        // Sombras (Elevation para Android, Shadow para iOS)
-        elevation: 6,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
+        ...Platform.select({
+            android: {
+                elevation: 6
+            },
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4.65
+            }
+        }),
     },
     fabOpen: {
-        backgroundColor: '#3700B3', // Color más oscuro al abrir
-        elevation: 10,
+        backgroundColor: '#3700B3',
+        ...Platform.select({
+            android: { elevation: 8 }
+        }),
     },
-
-    // Tarjeta de Opción (InputOptions)
-    cardContainer: {
-        width: '100%',
-        marginBottom: 8,
-    },
-    card: {
+    cardNoShadow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', // Efecto semi-transparente
+        backgroundColor: '#FFFFFF',
         paddingVertical: 12,
         paddingHorizontal: 16,
-        borderRadius: 12,
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        // Sombras suaves
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
+        borderColor: '#E0E0E0', // Borde sutil en lugar de sombra
     },
-    cardText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#424242', // text.secondary aprox
-    },
-    avatar: {
+    avatarNoShadow: {
         width: 36,
         height: 36,
         borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        // Sombra del icono (simulando el boxShadow del CSS original)
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
+        // Sin elevation ni shadow
     }
 });

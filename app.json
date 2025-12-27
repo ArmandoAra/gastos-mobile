@@ -13,13 +13,21 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Esta app necesita acceso a tus fotos para guardar los reportes.",
+        "NSPhotoLibraryAddUsageDescription": "Esta app necesita guardar archivos en tu galería."
+      }
     },
     "android": {
       "newArchEnabled": true,
-      "ios": {
-        "supportsTablet": true
-      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
