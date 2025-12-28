@@ -203,6 +203,7 @@ export const styles = StyleSheet.create({
   },
   transactionsList: {
     flex: 1,
+    paddingHorizontal: 8,
   },
   dateHeader: {
     flexDirection: 'row',

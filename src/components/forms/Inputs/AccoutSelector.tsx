@@ -77,6 +77,8 @@ export default function AccountSelector({
             >
                 {/* Backdrop Oscuro */}
                 <Animated.View 
+                    layout={FadeIn}
+
                     entering={FadeIn.duration(200)}
                     exiting={FadeOut.duration(200)}
                     style={styles.modalBackdrop}
@@ -90,6 +92,8 @@ export default function AccountSelector({
 
                     {/* Contenedor de la Lista */}
                     <Animated.View 
+                        layout={FadeIn}
+
                         entering={ZoomIn.duration(250)}
                         exiting={ZoomOut.duration(200)}
                         style={styles.modalContent}

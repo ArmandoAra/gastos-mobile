@@ -19,6 +19,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ActivityIndicator } from 'react-native-paper';
+import { useAuthStore } from '../../../stores/authStore';
+import useDataStore from '../../../stores/useDataStore';
+import { useAccountsStore } from '../../../stores/accountsStore';
 
 const UserService = { deleteUser: async () => ({ success: true }) };
 const logout = async () => console.log("Logout executed");
@@ -28,6 +31,9 @@ interface DangerZoneSectionProps {
 }
 
 export default function DangerZoneSection({ userId }: DangerZoneSectionProps) {
+    const { clearTransactions } = useDataStore();
+    const { logout, deleteUser } = useAuthStore();
+    const { deleteAllAccounts } = useAccountsStore();
     // Estados
     const [deleteDataModal, setDeleteDataModal] = useState(false);
     const [deleteAccountModal, setDeleteAccountModal] = useState(false);
@@ -63,20 +69,14 @@ export default function DangerZoneSection({ userId }: DangerZoneSectionProps) {
 
     const handleDeleteAccount = async () => {
         // CORRECCIÓN: Usamos el texto completo por seguridad, no solo 'a'
-        if (confirmText !== 'DELETE MY ACCOUNT') return;
-        
-        setIsDeleting(true);
+
         
         try {
-            const response = await UserService.deleteUser();
+            clearTransactions()
+            deleteAllAccounts();
+            deleteUser();
 
-            if (!response.success) {
-                Alert.alert("Error", "Error deleting account");
-                setIsDeleting(false);
-                return;
-            }
-
-            await logout();
+            logout();
             // Aquí la navegación debería redirigir al Login automáticamente si usas un Auth Listener
             
         } catch (error) {
@@ -153,10 +153,10 @@ export default function DangerZoneSection({ userId }: DangerZoneSectionProps) {
 
                         <TouchableOpacity 
                             onPress={onConfirm}
-                            disabled={confirmText !== matchText || isDeleting}
+                            // disabled={confirmText !== matchText || isDeleting}
                             style={[
                                 styles.deleteButton,
-                                (confirmText !== matchText || isDeleting) && styles.disabledButton,
+                                // (confirmText !== matchText || isDeleting) && styles.disabledButton,
                                 { backgroundColor: ERROR_MAIN }
                             ]}
                         >

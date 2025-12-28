@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
     View, 
     Text, 
@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { TextInput, ActivityIndicator } from 'react-native-paper';
 import useDataStore from '../../../stores/useDataStore';
-import { add } from 'date-fns';
+import { useAuthStore } from '../../../stores/authStore';
 
 // Stores
 
@@ -24,6 +24,7 @@ interface AccountInputMobileProps {
 }
 
 export default function AccountInputMobile({ onClose }: AccountInputMobileProps) {
+    const { user } = useAuthStore(); // Obtener usuario actual desde el store
     // 1. Store & Hooks
     const { createAccount, allAccounts } = useDataStore(); // Asumiendo que createAccount está en el store
     
@@ -32,6 +33,10 @@ export default function AccountInputMobile({ onClose }: AccountInputMobileProps)
     const [typeAccount, setTypeAccount] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        console.log("Current user:", user?.id);
+    }, [user]);
 
     // 3. Handlers
     const handleSave = async () => {
@@ -49,9 +54,13 @@ export default function AccountInputMobile({ onClose }: AccountInputMobileProps)
 
         try {
             // Simulando llamada a API/Store
-            await createAccount({
+            if (user === null) return;
+            createAccount({
                 name: name.trim(),
                 type: typeAccount.trim(),
+                createdAt: new Date(),
+                balance: 0,
+                userId: user?.id || '',
             });
             
             // Éxito: Limpiar y cerrar

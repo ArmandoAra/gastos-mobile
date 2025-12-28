@@ -13,7 +13,8 @@ import Animated, {
     useAnimatedStyle, 
     useSharedValue, 
     withSpring, 
-    FadeInLeft 
+    FadeInLeft,
+    FadeInRight
 } from 'react-native-reanimated';
 import { Icon } from '@expo/vector-icons/build/createIconSet';
 import { IconOption } from '../../../constants/icons';
@@ -66,7 +67,10 @@ export default function CategoryAndAmountInput({
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
                 >
-                    <View style={[styles.iconContainer]}>
+                    <Animated.View
+                        layout={FadeInLeft}
+                        entering={FadeInLeft}
+                        style={[styles.iconContainer]}>
                         <LinearGradient
                             colors={selectedIcon?.gradientColors || ['#ccc', '#999']}
                             style={styles.gradient}
@@ -75,15 +79,19 @@ export default function CategoryAndAmountInput({
                         >
                           {selectedIcon && React.createElement(selectedIcon.icon, { size: 28, color: '#FFF' })}
                         </LinearGradient>
-                    </View>
+                    </Animated.View>
                 </TouchableOpacity>
             </View>
 
             {/* 2. Amount Input */}
-            <View style={styles.amountColumn}>
+            <View
+                style={styles.amountColumn}>
                 <Text style={styles.label}>AMOUNT</Text>
                 
-                <View style={styles.inputWrapper}>
+                <Animated.View
+                    layout={FadeInRight}
+                    entering={FadeInRight}
+                    style={styles.inputWrapper}>
                     <TextInput
                         ref={amountInputRef}
                         value={amount}
@@ -100,7 +108,7 @@ export default function CategoryAndAmountInput({
                         style={styles.input}
                         returnKeyType="done"
                     />
-                </View>
+                </Animated.View>
             </View>
         </View>
     );

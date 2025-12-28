@@ -34,6 +34,8 @@ export default function DaySelectorInput({
 
     return (
         <Animated.View 
+            layout={FadeInLeft}
+
             entering={FadeInLeft.duration(300).delay(100).springify()}
             style={styles.container}
         >
@@ -61,6 +63,8 @@ export default function DaySelectorInput({
             >
                 {/* Backdrop Oscuro */}
                 <Animated.View 
+                    layout={FadeIn}
+
                     entering={FadeIn.duration(200)}
                     exiting={FadeOut.duration(200)}
                     style={styles.modalBackdrop}
@@ -73,6 +77,8 @@ export default function DaySelectorInput({
 
                     {/* Contenido del Modal */}
                     <Animated.View 
+                        layout={ZoomIn}
+
                         entering={ZoomIn.duration(250).springify().damping(18)}
                         exiting={ZoomOut.duration(200)}
                         style={styles.modalContent}

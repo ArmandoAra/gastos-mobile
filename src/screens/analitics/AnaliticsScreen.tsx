@@ -31,6 +31,9 @@ import {
   endOfYear 
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+import ExpenseLineChart from './components/ExpenseLineChart';
+import useDataStore from '../../stores/useDataStore';
+import ExpenseHeatmapMobile from './components/ExpenseHeatmapMobile';
 
 const { width } = Dimensions.get('window');
 
@@ -54,7 +57,8 @@ const MOCK_TRANSACTIONS = [
 // Colores para el gráfico de torta
 const CATEGORY_COLORS = ['#EF5350', '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#26C6DA'];
 
-export default function DashboardScreen() {
+export default function AnaliticsScreen() {
+  const {transactions}  = useDataStore();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
  
   const font = useFont(require("../../../assets/fonts/Quicksand-Regular.ttf"), 12) || null; 
@@ -85,7 +89,7 @@ export default function DashboardScreen() {
         end = endOfMonth(now);
     }
 
-    return MOCK_TRANSACTIONS.filter(t => {
+    return transactions.filter(t => {
       const date = parseISO(t.date);
       return date >= start && date <= end;
     });
@@ -164,7 +168,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container}>
       {/* Selector de Periodo */}
-      <View style={styles.periodSelector}>
+       <View style={styles.periodSelector}>
         {['week', 'month', 'year'].map((p) => (
           <TouchableOpacity 
             key={p}
@@ -177,6 +181,27 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         ))}
       </View>
+
+        <ExpenseLineChart 
+        transactions={filteredTransactions} 
+        viewMode={selectedPeriod === 'year' ? 'year' : selectedPeriod === 'month' ? 'month' : 'year'} year={new Date().getFullYear()} month={new Date().getMonth() + 1} 
+        showIncome={true}
+        showAverage={true}
+        chartStyle="area"
+        height={300}
+        />
+
+        <ExpenseHeatmapMobile 
+        transactions={filteredTransactions}
+        viewMode={selectedPeriod === 'year' ? 'year' : selectedPeriod === 'month' ? 'month' : 'year'}
+        year={new Date().getFullYear()}
+        month={new Date().getMonth() + 1}
+        heatmapType="daily"
+        />
+
+
+
+     
 
       {/* Resumen */}
       <View style={styles.balanceCard}>
@@ -295,7 +320,7 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  container: { flex: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 2 },
   periodSelector: { flexDirection: 'row', padding: 16, gap: 8, backgroundColor: 'white' },
   periodBtn: { flex: 1, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F0F0F0', alignItems: 'center' },
   periodBtnActive: { backgroundColor: '#6200EE' },

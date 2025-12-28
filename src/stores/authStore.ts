@@ -32,6 +32,7 @@ interface AuthState {
     loginWithPin: (pin: string) => Promise<boolean>;
     loginWithBiometrics: () => Promise<boolean>;
     updateUser: (newData: Partial<UserProfile>) => void;
+    deleteUser: () => void;
     logout: () => void;
 }
 
@@ -88,6 +89,10 @@ export const useAuthStore = create<AuthState>()(
                 if (currentUser) {
                     set({ user: { ...currentUser, ...newData } });
                 }
+            },
+
+            deleteUser: () => {
+                set({ user: null, pinHash: null, isSetupComplete: false, isAuthenticated: false, isBiometricEnabled: false });
             },
 
           logout: () => set({ isAuthenticated: false }),

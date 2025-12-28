@@ -2,6 +2,8 @@ import React from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CategoryLabel } from '../api/interfaces';
 
+
+
 // =====================================================================
 // 1. HELPERS Y TIPOS DE ICONOS
 // =====================================================================
@@ -16,11 +18,16 @@ type IconProps = {
 const createIcon = (name: keyof typeof MaterialIcons.glyphMap) => (props: IconProps) => (
     <MaterialIcons name={name} size={props.size || 24} color={props.color || '#FFF'} style={props.style} />
 );
+// Iconos para la barra inferior (usando emojis en App.tsx)
+export const SumarizeIcon = createIcon('summarize');
+export const AnaliticsIcon = createIcon('analytics');
+export const SettingsIcon = createIcon('settings');
+
+
 
 // =====================================================================
 // 2. DEFINICIÓN DE TODOS LOS COMPONENTES DE ICONOS
 // =====================================================================
-
 // --- Income ---
 const WorkIcon = createIcon('work');
 const AttachMoneyIcon = createIcon('attach-money');

@@ -1,19 +1,32 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { View, TouchableOpacity, ScrollView, Text } from "react-native";
 import { styles } from "../../theme/styles";
 import { MOCK_TRANSACTIONS } from "../home/HomeScreen";
 import AddTransactionsButton from "../../components/buttons/AddTransactionsButton";
 import InfoPopUp from "../../components/messages/InfoPopUp";
+import useDataStore from "../../stores/useDataStore";
+import { formatCurrency } from "../../utils/helpers";
+import { MaterialIcons } from "@expo/vector-icons";
+import React from "react";
+import { IconCategory } from "./components/IconCategory";
+import { Transaction, TransactionType } from "../../interfaces/data.interface";
+import { updateTransaction } from '../../../../Gastos/frontend/app/actions/db/Gastos_API';
+import { TransactionItemMobile } from "./components/TransactionItem";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import ModernDateSelector from "../../components/buttons/ModernDateSelector";
 
 
 export function TransactionsScreen() {
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const { deleteTransaction, updateTransaction, deleteSomeAmountInAccount, updateAccountBalance } = useDataStore();
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const { transactions } = useDataStore();
 
     const filteredTransactions = useMemo(() => {
-        let filtered = MOCK_TRANSACTIONS;
+        let filtered = transactions;
 
         if (filter !== 'all') {
             filtered = filtered.filter(t => t.type === filter);
@@ -29,7 +42,7 @@ export function TransactionsScreen() {
         return filtered.sort((a, b) =>
             new Date(b.date).getTime() - new Date(a.date).getTime()
         );
-    }, [filter, searchQuery]);
+    }, [filter, searchQuery, transactions]);
 
     const groupedByDate = useMemo(() => {
         const groups: Record<string, typeof filteredTransactions> = {};
@@ -41,12 +54,52 @@ export function TransactionsScreen() {
             groups[dateKey].push(transaction);
         });
         return groups;
-    }, [filteredTransactions]);
+    }, [filteredTransactions, transactions]);
+
+    // Manejadores de acciones
+    const handleDelete = useCallback(async (
+        id: string,
+        account_id?: string,
+        amount?: number,
+        transactionType?: TransactionType
+    ) => {
+        try {
+            deleteTransaction(id);
+            if (account_id && amount && transactionType) {
+                deleteSomeAmountInAccount(account_id, Math.abs(amount), transactionType);
+            }
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
+        }
+    }, [deleteTransaction, deleteSomeAmountInAccount]);
+
+    const handleSave = useCallback(async (
+        updatedTransaction: Transaction,
+        fromAccount: string | null = null,
+        toAccount: string | null = null,
+    ): Promise<Transaction | null | undefined> => {
+        if (!updatedTransaction) return;
+        try {
+            updateTransaction(updatedTransaction);
+            if (fromAccount !== toAccount) {
+                if (fromAccount) updateAccountBalance(fromAccount, updatedTransaction.amount, updatedTransaction.type as TransactionType);
+                if (toAccount) updateAccountBalance(toAccount, updatedTransaction.amount, updatedTransaction.type as TransactionType);
+            }
+
+        } catch (error) {
+            console.error('Error updating transaction:', error);
+        }
+    }, [updateTransaction, updateAccountBalance]);
+
 
     return (
         <View style={styles.container}>
             {/* message popup */}
             <InfoPopUp />
+            <ModernDateSelector
+                selectedDate={currentDate}
+                onDateChange={setCurrentDate}
+            />
             {/* Filtros */}
             <View style={styles.filterContainer}>
                 <TouchableOpacity
@@ -54,7 +107,7 @@ export function TransactionsScreen() {
                     onPress={() => setFilter('all')}
                 >
                     <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-                        Todas
+                        All
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -62,7 +115,7 @@ export function TransactionsScreen() {
                     onPress={() => setFilter('income')}
                 >
                     <Text style={[styles.filterText, filter === 'income' && styles.filterTextActive]}>
-                        Ingresos
+                        Incomes
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -70,52 +123,38 @@ export function TransactionsScreen() {
                     onPress={() => setFilter('expense')}
                 >
                     <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>
-                        Gastos
+                        Expenses
                     </Text>
                 </TouchableOpacity>
             </View>
 
             {/* Lista de Transacciones */}
+            <GestureHandlerRootView style={{ flex: 1 }}>
             <ScrollView style={styles.transactionsList}>
-                {Object.entries(groupedByDate).map(([date, transactions]) => (
+                    {Object.entries(groupedByDate).map(([date, trans]) => (
                     <View key={date}>
                         <View style={styles.dateHeader}>
                             <Text style={styles.dateHeaderText}>
                                 {format(parseISO(date), 'EEEE, d MMMM', { locale: es })}
                             </Text>
                             <Text style={styles.dateHeaderTotal}>
-                                ${transactions.reduce((sum, t) =>
+                                    ${trans.reduce((sum, t) =>
                                     t.type === 'expense' ? sum - t.amount : sum + t.amount, 0
-                                ).toLocaleString('es-AR')}
-                            </Text>
-                        </View>
-                        {transactions.map(transaction => (
-                            <View key={transaction.id} style={styles.transactionItem}>
-                                <View style={styles.transactionIcon}>
-                                    <Text style={styles.transactionIconText}>
-                                        {transaction.type === 'expense' ? '💸' : '💰'}
-                                    </Text>
-                                </View>
-                                <View style={styles.transactionDetails}>
-                                    <Text style={styles.transactionDescription}>
-                                        {transaction.description}
-                                    </Text>
-                                    <Text style={styles.transactionCategory}>
-                                        {transaction.category_name} • {format(parseISO(transaction.date), 'HH:mm')}
-                                    </Text>
-                                </View>
-                                <Text style={[
-                                    styles.transactionAmount,
-                                    { color: transaction.type === 'expense' ? '#EF5350' : '#4CAF50' }
-                                ]}>
-                                    {transaction.type === 'expense' ? '-' : '+'}
-                                    ${transaction.amount.toLocaleString('es-AR')}
+                                    )}
                                 </Text>
                             </View>
+                            {trans.map(transaction => (
+                                <TransactionItemMobile
+                                    key={transaction.id}
+                                    transaction={transaction}
+                                    onDelete={handleDelete}
+                                    onSave={handleSave}
+                                />
                         ))}
                     </View>
                 ))}
             </ScrollView>
+            </GestureHandlerRootView>
 
             {/* Botón flotante */}
             <AddTransactionsButton />
@@ -123,3 +162,5 @@ export function TransactionsScreen() {
         </View>
     );
 };
+
+

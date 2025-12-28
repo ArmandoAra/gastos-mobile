@@ -211,7 +211,7 @@ const useDataStore = create<State & Actions>()(
                             return {
                                 allAccounts: newAccounts,
                                 selectedAccount: needsNewSelection ? (newAccounts[0]?.id || '') : state.selectedAccount,
-                                transactions: state.transactions.filter(t => t.accountId !== accountId),
+                                transactions: state.transactions.filter(t => t.account_id !== accountId),
                                 error: null,
                             }
                         },

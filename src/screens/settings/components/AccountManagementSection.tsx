@@ -29,9 +29,11 @@ import { TextInput, Chip, HelperText } from 'react-native-paper';
 import useDataStore from '../../../stores/useDataStore';
 import { formatCurrency } from '../../../utils/helpers';
 import AccountInputMobile from './AccountInput';
+import { useAuthStore } from '../../../stores/authStore';
 
 export default function AccountManagementSection() {
     // 1. Hooks & Store
+    const { user } = useAuthStore();
     const { allAccounts, updateAccount, deleteAccountStore } = useDataStore(); // Asumiendo que deleteAccount está en el store
     
     // 2. Estado Local
@@ -54,7 +56,7 @@ export default function AccountManagementSection() {
         }
     };
 
-    const handleSaveEdit = async (id: string) => {
+    const handleSaveEdit = async (id?: string) => {
         try {
             // Validación simple
             if (!tempName.trim()) {
@@ -64,7 +66,9 @@ export default function AccountManagementSection() {
             }
 
             // Llamada al store/API
-            await updateAccount(id, { name: tempName, type: tempType });
+            if (!id) return;
+            updateAccount(id, { name: tempName, type: tempType });
+
             
             setEditingId(null);
             setErrorMessage(null);
@@ -187,7 +191,7 @@ export default function AccountManagementSection() {
                                 
                                 <View style={styles.actionsRowEdit}>
                                     <TouchableOpacity 
-                                        onPress={() => handleSaveEdit(account.id)}
+                                        onPress={() => handleSaveEdit(account?.id)}
                                         style={styles.iconButtonSuccess}
                                     >
                                         <MaterialIcons name="check" size={20} color="#FFF" />

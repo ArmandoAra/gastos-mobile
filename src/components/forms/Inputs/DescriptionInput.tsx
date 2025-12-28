@@ -5,7 +5,7 @@ import {
     TextInput, 
     StyleSheet 
 } from 'react-native';
-import Animated, { FadeInLeft } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInLeft } from 'react-native-reanimated';
 
 interface DescriptionInputProps {
     description: string;
@@ -21,6 +21,8 @@ export default function DescriptionInput({
 
     return (
         <Animated.View 
+            layout={FadeInLeft}
+
             // Animación escalonada (entra después de Category/Amount)
             entering={FadeInLeft.duration(300).delay(50)}
             style={styles.container}

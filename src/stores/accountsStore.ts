@@ -34,6 +34,7 @@ interface AccountsState {
     getAccountById: (id: string) => Account | undefined;
     getTotalBalance: () => number;
     updateBalance: (id: string, amount: number) => void;
+    deleteAllAccounts: () => void;
 }
 
 export const useAccountsStore = create<AccountsState>()(
@@ -77,6 +78,8 @@ export const useAccountsStore = create<AccountsState>()(
                             : acc
                     ),
                 })),
+
+            deleteAllAccounts: () => set({ accounts: [], selectedAccountId: null }),
         }),
         {
             name: 'accounts-storage',

@@ -11,6 +11,7 @@ import { MD3LightTheme, MD3DarkTheme, adaptNavigationTheme, Provider as PaperPro
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SumarizeIcon, AnaliticsIcon, SettingsIcon } from './src/constants/icons';
 
 // Importar i18n
 import './src/i18n';
@@ -18,7 +19,7 @@ import './src/i18n';
 // Importar pantallas
 import { HomeScreen } from './src/screens/home/HomeScreen';
 import { TransactionsScreen } from './src/screens/transactions/TransactionsListScreen';
-import DashboardScreen from './src/screens/analitics/DashboardScreen';
+import DashboardScreen from './src/screens/analitics/AnaliticsScreen';
 import { AccountsListScreen } from './src/screens/accounts/AccountsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
@@ -31,27 +32,32 @@ import { useSettingsStore } from './src/stores/settingsStore';
 // Importar tema
 import { lightTheme, darkTheme } from './src/theme/colors';
 import { SetupScreen } from './src/screens/auth/SetupScreen';
+import AnaliticsScreen from './src/screens/analitics/AnaliticsScreen';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator();
 
+const iconNames: Record<string, keyof typeof MaterialIcons.glyphMap> = {
+  Transactions: 'summarize', // Ejemplo para Summarize
+  Analitics: 'analytics',       // Ejemplo para Analytics
+  Settings: 'settings',         // Ejemplo para Settings
+};
+
 // ============================================
 // ICONOS PERSONALIZADOS (Emojis)
 // ============================================
 const TabBarIcon = ({ name, focused }: { name: string; focused: boolean }) => {
-  const icons: Record<string, string> = {
-    Home: '🏠',
-    Transactions: '💳',
-    Dashboard: '📊',
-    Accounts: '🏦',
-    Settings: '⚙️',
-  };
+  const iconName = iconNames[name] || 'help-outline';
 
   return (
-    <Text style={{ fontSize: focused ? 28 : 24, opacity: focused ? 1 : 0.6 }}>
-      {icons[name] || '📱'}
-    </Text>
+    <MaterialIcons
+      name={iconName}
+      size={focused ? 28 : 24}       // Usar prop size, no fontSize
+      color={focused ? "#667eea" : "#888"} // Define tus colores aquí o usa el del theme
+      style={{ opacity: focused ? 1 : 0.6 }}
+    />
   );
 };
 
@@ -92,14 +98,6 @@ const MainTabs = () => {
       })}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: 'Inicio',
-          headerTitle: '💰 Mi Finanzas'
-        }}
-      />
-      <Tab.Screen
         name="Transactions"
         component={TransactionsScreen}
         options={{
@@ -108,19 +106,11 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
+        name="Analitics"
+        component={AnaliticsScreen}
         options={{
-          title: 'Dashboard',
-          headerTitle: '📈 Dashboard'
-        }}
-      />
-      <Tab.Screen
-        name="Accounts"
-        component={AccountsListScreen}
-        options={{
-          title: 'Cuentas',
-          headerTitle: '🏦 Mis Cuentas'
+          title: 'Analitics',
+          headerTitle: '📈 Analitics'
         }}
       />
       <Tab.Screen

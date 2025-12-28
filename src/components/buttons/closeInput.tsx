@@ -28,11 +28,7 @@ export default function CloseInputButton() {
     // 2. Animación de escala (Press Effect)
     const scale = useSharedValue(1);
 
-    const animatedStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ scale: scale.value }],
-        };
-    });
+
 
     const handlePressIn = () => {
         scale.value = withSpring(0.96); // Efecto de encogimiento sutil
@@ -44,9 +40,11 @@ export default function CloseInputButton() {
 
     return (
         <Animated.View 
+            layout={FadeInLeft}
+
             // Entra deslizándose desde la izquierda (opuesto al botón Save)
             entering={FadeInLeft.duration(300).delay(100).springify()}
-            style={[styles.container, animatedStyle]}
+            style={[styles.container]}
         >
             <TouchableOpacity
                 onPress={handleClose}

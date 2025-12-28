@@ -38,12 +38,6 @@ export default function AddTransactionsButton() {
         rotation.value = withTiming(isAddOptionsOpen ? 45 : 0, { duration: 200 });
     }, [isAddOptionsOpen]);
 
-    // Estilo animado para el icono
-    const animatedIconStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ rotate: `${rotation.value}deg` }],
-        };
-    });
 
     const handleToggleOptions = () => {
         setIsAddOptionsOpen(!isAddOptionsOpen);
@@ -60,6 +54,7 @@ export default function AddTransactionsButton() {
             {/* Opciones del Menú */}
             {isAddOptionsOpen && (
                 <Animated.View
+                    layout={FadeIn}
                     key="options-container"
                     style={styles.optionsContainer}
                     entering={FadeIn.duration(200)}
@@ -96,7 +91,8 @@ export default function AddTransactionsButton() {
             {/* Botón Flotante (FAB) */}
             {!isDateSelectorOpen && (
                 <Animated.View
-                    entering={ZoomIn.springify().damping(12)}
+                    layout={ZoomIn}
+                    entering={ZoomIn.springify()}
                     style={styles.fabContainer}
                 >
                     <TouchableOpacity
@@ -107,7 +103,8 @@ export default function AddTransactionsButton() {
                             isAddOptionsOpen && styles.fabOpen
                         ]}
                     >
-                        <Animated.View style={animatedIconStyle}>
+                        <Animated.View
+                            layout={FadeIn}>
                             <MaterialIcons name="add" size={28} color="#FFF" />
                         </Animated.View>
                     </TouchableOpacity>
@@ -220,6 +217,14 @@ const styles = StyleSheet.create({
         ...Platform.select({
             android: { elevation: 8 }
         }),
+    },
+    cardContainer: {
+        // Espaciado entre tarjetas
+    },
+    cardText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
     },
     cardNoShadow: {
         flexDirection: 'row',
