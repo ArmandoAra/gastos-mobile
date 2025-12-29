@@ -5,7 +5,7 @@ import { Text } from 'react-native';
 
 // Importaciones con llaves (Named Imports)
 import { HomeScreen } from "../screens/home/HomeScreen";
-import { DashboardScreen } from "../screens/analitics/AnaliticsScreen";
+import { DashboardScreen } from "../screens/analitics/AnalyticsScreen";
 import { TransactionsScreen } from "../screens/transactions/TransactionsListScreen";
 
 const Tab = createBottomTabNavigator();

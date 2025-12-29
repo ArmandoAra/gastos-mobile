@@ -6,6 +6,7 @@ import { devtools } from 'zustand/middleware'
 // ============================================
 
 type DateState = {
+    localSelectedDay: Date
     selectedYear: number
     selectedMonth: number
     selectedDay: number
@@ -20,6 +21,7 @@ type Actions = {
     setIsDateSelectorOpen: (isOpen: boolean) => void
     setCurrentDate: () => void
     resetDateFilters: () => void
+    setLocalSelectedDay: (date: Date) => void // Nueva acción para establecer la fecha completa
     // Eliminamos setHasHydrated
 }
 
@@ -28,6 +30,7 @@ type Actions = {
 // ============================================
 
 const initialState: DateState = {
+    localSelectedDay: new Date(),
     selectedYear: new Date().getFullYear(),
     selectedMonth: new Date().getMonth() + 1,
     selectedDay: new Date().getDate(),
@@ -60,12 +63,16 @@ const useDateStore = create<DateState & Actions>()(
                 set({ isDateSelectorOpen: isOpen }, false, 'setIsDateSelectorOpen')
             },
 
+            setLocalSelectedDay: (date: Date) => {
+                set({
+                    localSelectedDay: date,
+                }, false, 'setLocalSelectedDay')
+            },
+
             setCurrentDate: () => {
                 const now = new Date()
                 set({
-                    selectedYear: now.getFullYear(),
-                    selectedMonth: now.getMonth() + 1,
-                    selectedDay: now.getDate(),
+                    localSelectedDay: now,
                 }, false, 'setCurrentDate')
             },
 

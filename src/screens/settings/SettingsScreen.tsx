@@ -66,34 +66,7 @@ export const SettingsScreen = () => {
                 </View>
             </Animated.View>
 
-            {/* 2. User Profile Section (Del estilo RN proporcionado) */}
-            {/* <Animated.View entering={EnteringAnimation(200)} style={styles.section}>
-                <View style={styles.userCard}>
-                    <View style={styles.userAvatar}>
-                        <Text style={styles.userAvatarText}>
-                            {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
-                        </Text>
-                    </View>
-                    <View style={styles.userInfo}>
-                        <Text style={styles.userName}>{user?.name || 'Usuario'}</Text>
-                        <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
-                    </View>
-                </View>
-            </Animated.View> */}
             <UserProfileSection />
-
-            {/* 3. Account Management (Traducido usando estilos RN) */}
-            {/* <Animated.View entering={EnteringAnimation(300)} style={styles.section}>
-                <Text style={styles.sectionTitle}>Account Management</Text>
-                <TouchableOpacity style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>Edit Profile</Text>
-                    <Text style={localStyles.chevron}>›</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>Notifications</Text>
-                    <Text style={localStyles.chevron}>›</Text>
-                </TouchableOpacity>
-            </Animated.View> */}
             <AccountManagementSection />
 
             {/* 4. Appearance (Del estilo RN proporcionado) */}
@@ -155,14 +128,6 @@ export const SettingsScreen = () => {
             </Animated.View>
 
             {/* 7. Danger Zone (Traducido del MUI a estilos RN) */}
-            {/* <Animated.View entering={EnteringAnimation(700)} style={[styles.section, localStyles.dangerZoneSection]}>
-                <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>Danger Zone</Text>
-                <TouchableOpacity style={styles.settingItem}>
-                    <Text style={[styles.settingLabel, { color: '#ef4444' }]}>Delete Account</Text>
-                    <Text style={{ fontSize: 12, color: '#999' }}>Irreversible</Text>
-                </TouchableOpacity>
-            </Animated.View> */}
-
             <DataManagementSection />
             <DangerZoneSection userId={user?.id} />
 

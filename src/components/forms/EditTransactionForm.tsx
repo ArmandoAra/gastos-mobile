@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     View, 
     Text, 
@@ -8,29 +8,42 @@ import {
     Platform, 
     KeyboardAvoidingView, 
     ScrollView,
-    Alert
+    Alert,
+    Dimensions
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import Animated, {
+    FadeIn,
+    FadeOut,
+    SlideInUp,
+    SlideOutUp
+} from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur'; // Opcional para efecto glass
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Stores & Utils
-import { calculateDaysInMonth, getNormalizedDateParts } from '../../utils/helpers';
+import { calculateDaysInMonth } from '../../utils/helpers';
 import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
 
-// Componentes Hijos (Debes adaptarlos también a RN)
-// Aquí asumo que ya tienes o crearás versiones móviles de estos inputs
-import CategoryAndAmountInput from './Inputs/CategoryAndAmountInput'; 
-import DescriptionInput from './Inputs/DescriptionInput';
-import DaySelectorInput from './Inputs/DaySelectorInput';
-import AccountSelector from './Inputs/AccoutSelector';
-import IconsSelectorModal from './Inputs/IconsSelector'; // Reemplazo de Popover
-import { Transaction } from '../../interfaces/data.interface';
-import { MessageType } from '../../interfaces/message.interface';
-import IconsSelector from './Inputs/IconsSelector';
-import useDataStore from '../../stores/useDataStore';
+// Hooks
+import { useTransactionForm } from '../../hooks/useTransactionForm';
 import useMessage from '../../stores/useMessage';
 import useDateStore from '../../stores/useDateStore';
+
+// Interfaces
+import { Transaction } from '../../interfaces/data.interface';
+import { MessageType } from '../../interfaces/message.interface';
+
+// Componentes Hijos
+import CategoryAndAmountInput from './Inputs/CategoryAndAmountInput'; 
+import DescriptionInput from './Inputs/DescriptionInput';
+import AccountSelector from './Inputs/AccoutSelector';
+import IconsSelector from './Inputs/IconsSelector';
+import ModernCalendarSelector from '../buttons/ModernDateSelector';
+import { set } from 'date-fns';
+import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
+
+const { height } = Dimensions.get('window');
 
 interface EditTransactionFormProps {
     open: boolean;
@@ -51,51 +64,61 @@ export default function EditTransactionFormMobile({
     onClose,
     onSave,
 }: EditTransactionFormProps) {
-    // 1. Stores
-    const { allAccounts, selectedAccount } = useDataStore();
-    const { selectedMonth, selectedYear } = useDateStore();
+    const insets = useSafeAreaInsets();
+
+
+    // Hooks
+    const {
+        localSelectedDay,
+        amount,
+        description,
+        selectedAccount,
+        allAccounts,
+        amountInputRef,
+        setAmount,
+        setDescription,
+        setLocalSelectedDay,
+        setSelectedAccount // Asegúrate de tener esto en tu hook o useState local
+    } = useTransactionForm();
+
     const { showMessage } = useMessage();
 
-    // 2. Variables derivadas
-    const daysInMonth = calculateDaysInMonth(selectedMonth, selectedYear);
-    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-    // 3. Estados Locales
-    const [amount, setAmount] = useState("");
-    const [description, setDescription] = useState("");
-    const [selectedDay, setSelectedDay] = useState<number>(1);
-    const [selectedIcon, setSelectedIcon] = useState<IconOption | null>(null);
+    // Estados Locales
     const [newAccount, setNewAccount] = useState<string>(selectedAccount);
+    const [oldDate, setOldDate] = useState<Date>(new Date(transaction?.date || new Date()));
     const [isLoading, setIsLoading] = useState(false);
-    
-    // Estado para controlar el modal de selección de iconos (reemplaza anchorEl)
     const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
 
-    // Refs
-    // En RN los refs de inputs son diferentes, pero útiles para focus
-    const amountInputRef = useRef<any>(null); 
-
-    // 4. Efecto de Inicialización
-    useEffect(() => {
-        if (transaction && open) {
-            setAmount(Math.abs(transaction.amount).toString());
-            setDescription(transaction.description || "");
-            setNewAccount(transaction.account_id || selectedAccount);
-
-            const { day } = getNormalizedDateParts(transaction.date);
-            setSelectedDay(day);
-
-            const matchingIcon = iconOptions.find(
-                (icon) => icon.label === transaction.category_name
-            );
-            setSelectedIcon(matchingIcon || iconOptions[0]);
-        }
-    }, [transaction, open, iconOptions]);
-
-    // 5. Handlers
-    const handleIconPress = () => {
-        setIsIconSelectorOpen(true);
+    // Inicializar Icono
+    const getInitialIcon = (): IconOption | null => {
+        if (!transaction) return null;
+        const matchingIcon = iconOptions.find((icon) => icon.label === transaction.category_name);
+        if (matchingIcon) return matchingIcon;
+        const defaultList = ICON_OPTIONS[transaction.type === "income" ? IconKey.income : IconKey.spend];
+        return defaultList?.[0] || null;
     };
+
+    const [selectedIcon, setSelectedIcon] = useState<IconOption | null>(getInitialIcon());
+
+
+    const date = new Date(transaction?.date || new Date()).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    const title = transaction?.type === 'expense' ? 'Edit Expense' : 'Edit Income';
+    const titleColor = transaction?.type === 'expense' ? '#EF5350' : '#667eea';
+
+    // Sincronizar estado local de cuenta con el hook si es necesario
+    // O usar newAccount directamente en el submit
+    useEffect(() => {
+        if (transaction) {
+            setSelectedAccount(transaction.account_id);
+            setNewAccount(transaction.account_id);
+            setOldDate(new Date(transaction.date));
+            setAmount(Math.abs(transaction.amount).toString());
+            setDescription(transaction.description || '');
+        }
+    }, [transaction]);
+
+    // Handlers
+    const handleIconPress = () => setIsIconSelectorOpen(true);
 
     const handleSelectIcon = (icon: IconOption) => {
         setSelectedIcon(icon);
@@ -105,47 +128,32 @@ export default function EditTransactionFormMobile({
     const handleUpdate = async () => {
         if (!transaction || !selectedIcon) return;
 
-        // Validaciones
         if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) === 0) {
             Alert.alert("Invalid Amount", "Please enter a valid amount.");
-            if (amountInputRef.current) {
-                amountInputRef.current.focus();
-            }
+            amountInputRef.current?.focus();
             return;
         }
 
         setIsLoading(true);
 
-        // Construcción de Fecha (Misma lógica que web)
-        const local = new Date(
-            selectedYear,
-            selectedMonth - 1,
-            selectedDay || 1,
-            new Date().getHours(),
-            new Date().getMinutes(),
-            new Date().getSeconds()
-        );
-
         try {
             const updatedTransaction: Transaction = {
                 ...transaction,
-                amount: transaction.amount < 0
+                amount: transaction.type === 'expense'
                     ? -Math.abs(parseFloat(amount))
                     : Math.abs(parseFloat(amount)),
                 description,
-                date: new Date(local.getTime()).toISOString(),
+                date: oldDate.toISOString(),
                 category_name: selectedIcon.label,
                 account_id: newAccount,
             };
 
-            onSave(updatedTransaction, transaction.account_id || null, newAccount || null);
-            
+            await onSave(updatedTransaction, transaction.account_id || null, newAccount || null);
             showMessage(MessageType.UPDATED, "Transaction updated successfully.");
             onClose(false);
 
         } catch (error) {
             showMessage(MessageType.ERROR, "Error updating transaction.");
-            console.error("Error updating transaction:", error);
         } finally {
             setIsLoading(false);
         }
@@ -153,10 +161,9 @@ export default function EditTransactionFormMobile({
 
     if (!transaction) return null;
 
-    // Determinar si es gasto o ingreso para colores/textos
-    const isExpense = transaction.amount < 0;
+    const isExpense = transaction.type === 'expense';
     const typeLabel = isExpense ? 'Expense' : 'Income';
-    const accentColor = isExpense ? '#f43f5e' : '#10b981'; // Rojo o Verde
+    const headerColor = isExpense ? '#EF5350' : '#667eea';
 
     return (
         <Modal
@@ -164,158 +171,198 @@ export default function EditTransactionFormMobile({
             transparent
             animationType="none"
             onRequestClose={() => onClose(false)}
+            statusBarTranslucent
         >
-            <KeyboardAvoidingView 
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={styles.modalOverlay}
+            {/* Backdrop con Blur */}
+            {open && (
+                <Animated.View
+                    entering={FadeIn.duration(200)}
+                    exiting={FadeOut.duration(200)}
+                    style={StyleSheet.absoluteFill}
+                >
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
+                        <TouchableOpacity
+                            style={StyleSheet.absoluteFill}
+                            activeOpacity={1}
+                            onPress={() => onClose(false)} 
+                        />
+                    </BlurView>
+                </Animated.View>
+            )}
+
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                style={styles.container}
             >
-                {/* Backdrop borroso/oscuro */}
-                <TouchableOpacity 
-                    style={StyleSheet.absoluteFill} 
-                    activeOpacity={1} 
-                    onPress={() => onClose(false)}
-                >
-                    <View style={styles.backdrop} />
-                </TouchableOpacity>
-
-                {/* Contenido del Modal */}
-                <Animated.View 
-                    entering={ZoomIn.duration(300)}
-                    exiting={ZoomOut.duration(200)}
-                    style={styles.modalContent}
-                >
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={[styles.headerTitle, { color: '#667eea' }]}>
-                            Edit {typeLabel}
-                        </Text>
-                        <TouchableOpacity onPress={() => onClose(false)} style={styles.closeButton}>
-                            <MaterialIcons name="close" size={24} color="#666" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView contentContainerStyle={styles.scrollContent}>
-                        
-                        {/* 1. Category & Amount Input */}
-                        <CategoryAndAmountInput
-                            selectedIcon={selectedIcon ?? ICON_OPTIONS[isExpense ? IconKey.spend : IconKey.income][0]}
-                            amount={amount}
-                            amountInputRef={amountInputRef}
-                            handleIconClick={handleIconPress}
-                            setAmount={setAmount}
-                        />
-
-                        {/* 2. Description Input */}
-                        <DescriptionInput
-                            description={description}
-                            setDescription={setDescription}
-                        />
-
-                        {/* 3. Day Selector */}
-                        <DaySelectorInput
-                            label="Select Day"
-                            selectedDay={selectedDay || 1}
-                            setSelectedDay={setSelectedDay}
-                            days={days}
-                        />
-
-                        {/* 4. Account Selector */}
-                        <AccountSelector
-                            label="Select Account"
-                            accountSelected={newAccount}
-                            setAccountSelected={setNewAccount}
-                            accounts={allAccounts}
-                        />
-
-                        {/* Botones de Acción */}
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity 
-                                onPress={() => onClose(false)} 
-                                style={styles.cancelButton}
-                                disabled={isLoading}
-                            >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity 
-                                onPress={handleUpdate} 
-                                style={[styles.saveButton, { backgroundColor: '#667eea' }]}
-                                disabled={isLoading}
-                            >
-                                <Text style={styles.saveButtonText}>
-                                    {isLoading ? 'Saving...' : 'Save Changes'}
-                                </Text>
+                {open && (
+                    <Animated.View 
+                        entering={SlideInUp.duration(200)}
+                        exiting={SlideOutUp.duration(200)}
+                        style={[
+                            styles.topSheet,
+                            { paddingTop: insets.top + 10 }
+                        ]}
+                    >
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <TransactionHeaderTitle
+                                title={title}
+                                date={
+                                    oldDate.getTime() !== new Date(transaction.date).getTime()
+                                        ? oldDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+                                        : date
+                                }
+                                titleColor={
+                                    oldDate.getTime() !== new Date(transaction.date).getTime()
+                                        ? '#3B9797'
+                                        : titleColor
+                                }
+                            />
+                            <TouchableOpacity onPress={() => onClose(false)} style={styles.closeButton}>
+                                <MaterialIcons name="close" size={20} color="#555" />
                             </TouchableOpacity>
                         </View>
 
-                    </ScrollView>
-                </Animated.View>
+                        {/* Content Scrollable */}
+                        <ScrollView
+                            contentContainerStyle={styles.scrollContent}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {/* 1. Category & Amount */}
+                            <CategoryAndAmountInput
+                                selectedIcon={selectedIcon}
+                                amount={amount}
+                                amountInputRef={amountInputRef}
+                                handleIconClick={handleIconPress}
+                                setAmount={setAmount}
+                            />
+
+                            {/* 2. Description */}
+                            <DescriptionInput
+                                description={description}
+                                setDescription={setDescription}
+                            />
+
+                            {/* 3. Row: Account & Date */}
+                            <View style={styles.rowSelectors}>
+                                <View style={{ flex: 7 }}>
+                                    <AccountSelector
+                                        label="Account"
+                                        accountSelected={newAccount}
+                                        setAccountSelected={setNewAccount}
+                                        accounts={allAccounts}
+                                    />
+                                </View>
+                                <View style={{ width: 10 }} />
+                                <View style={{ flex: 1 }}>
+                                    <ModernCalendarSelector
+                                        selectedDate={oldDate}
+                                        onDateChange={setOldDate}
+                                    />
+                                </View>
+                            </View>
+
+                            {/* 4. Action Buttons */}
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity
+                                    onPress={() => onClose(false)}
+                                    style={styles.cancelButton}
+                                    disabled={isLoading}
+                                >
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={handleUpdate} 
+                                    style={[styles.saveButton, { backgroundColor: headerColor }]}
+                                    disabled={isLoading}
+                                >
+                                    <Text style={styles.saveButtonText}>
+                                        {isLoading ? 'Saving...' : 'Save Changes'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                        </ScrollView>
+
+                        {/* Icon Selector */}
+                        {isIconSelectorOpen && (
+                            <IconsSelector
+                                popoverOpen={isIconSelectorOpen}
+                                handleClosePopover={() => setIsIconSelectorOpen(false)}
+                                iconOptions={ICON_OPTIONS[
+                                    transaction.type === "income" ? IconKey.income : IconKey.spend
+                                ] as unknown as IconOption[]}
+                                handleSelectIcon={handleSelectIcon}
+                                selectedIcon={selectedIcon}
+                                // Si IconsSelector necesita anchorEl, puedes pasar null o manejarlo diferente en móvil
+                            />
+                        )}
+
+                    </Animated.View>
+                )}
             </KeyboardAvoidingView>
-
-            {/* Modal Selector de Iconos (Anidado o separado) */}
-            <IconsSelector
-                popoverOpen={isIconSelectorOpen}
-                handleClosePopover={() => setIsIconSelectorOpen(false)}
-                iconOptions={iconOptions}
-                handleSelectIcon={handleSelectIcon}
-                selectedIcon={selectedIcon}
-            />
-
         </Modal>
     );
 }
 
 const styles = StyleSheet.create({
-    modalOverlay: {
+    container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
+        justifyContent: 'flex-start', // Pegado arriba
     },
-    backdrop: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContent: {
+    topSheet: {
         width: '100%',
-        maxWidth: 400,
-        backgroundColor: '#FFF', // O un color semitransparente si usas BlurView
-        borderRadius: 20,
-        padding: 20,
-        maxHeight: '80%', // Evita que sea muy alto
+        backgroundColor: '#FFFFFF',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.1,
         shadowRadius: 20,
         elevation: 10,
+        paddingBottom: 20,
+        maxHeight: '85%',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        paddingHorizontal: 20,
+        paddingBottom: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-        paddingBottom: 10,
+        borderBottomColor: '#F0F0F0',
+        marginBottom: 10,
     },
     headerTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
     },
     closeButton: {
-        padding: 4,
+        padding: 6,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 20,
     },
     scrollContent: {
-        gap: 16, // Espaciado vertical entre inputs
+        paddingHorizontal: 20,
+        gap: 16,
+        paddingBottom: 20,
+    },
+    rowSelectors: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        zIndex: 10,
     },
     actionButtons: {
         flexDirection: 'row',
         gap: 12,
-        marginTop: 20,
+        marginTop: 10,
     },
     cancelButton: {
         flex: 1,
-        padding: 12,
+        paddingVertical: 14,
         borderRadius: 12,
         backgroundColor: '#f5f5f5',
         alignItems: 'center',
@@ -326,8 +373,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     saveButton: {
-        flex: 1,
-        padding: 12,
+        flex: 2, // Botón de guardar más grande para énfasis
+        paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
     },

@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#6200EE',
-    padding: 20,
+    padding: 10,
     paddingTop: 50,
   },
   headerTitle: {

@@ -34,10 +34,6 @@ export default function AccountInputMobile({ onClose }: AccountInputMobileProps)
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        console.log("Current user:", user?.id);
-    }, [user]);
-
     // 3. Handlers
     const handleSave = async () => {
         // Ocultar teclado

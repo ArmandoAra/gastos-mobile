@@ -12,7 +12,6 @@ import { useSettingsStore } from "../stores/settingsStore";
 import useDataStore from "../stores/useDataStore";
 import { IconKey, IconOption, ICON_OPTIONS } from "../constants/icons";
 import { Transaction, TransactionType } from "../types/schemas";
-import { useTransactionsStore } from "../stores/transactionsStore";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "../stores/authStore";
@@ -24,7 +23,7 @@ import { useAuthStore } from "../stores/authStore";
 const INITIAL_FORM_STATE = {
     amount: "",
     description: "",
-    selectedDay: new Date().getDate(),
+    selectedDay: new Date(),
 };
 
 // ============================================
@@ -36,13 +35,12 @@ const INITIAL_FORM_STATE = {
 export function useTransactionForm() {
     const {user} =useAuthStore();
     const { selectedAccount, allAccounts, setSelectedAccount, addTransactionStore, updateAccountBalance } = useDataStore();
-    const { selectedYear, selectedMonth, selectedDay } = useDateStore();
     const { showMessage } = useMessage();
     const { setInputNameActive, inputNameActive } = useSettingsStore();
     
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
-    const [localSelectedDay, setLocalSelectedDay] = useState(INITIAL_FORM_STATE.selectedDay);
+    const { localSelectedDay, setLocalSelectedDay } = useDateStore();
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
@@ -68,15 +66,15 @@ export function useTransactionForm() {
     }, [iconsKey]);
 
     // Calcular días del mes (memoizado)
-    const daysInMonth = useMemo(
-        () => calculateDaysInMonth(selectedYear, selectedMonth),
-        [selectedYear, selectedMonth]
-    );
+    // const daysInMonth = useMemo(
+    //     () => calculateDaysInMonth(selectedYear, selectedMonth),
+    //     [selectedYear, selectedMonth]
+    // );
 
-    const days = useMemo(
-        () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
-        [daysInMonth]
-    );
+    // const days = useMemo(
+    //     () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    //     [daysInMonth]
+    // );
 
     // Reset form cuando se cierra el dialog
     useEffect(() => {
@@ -123,14 +121,7 @@ export function useTransactionForm() {
     // Preparar datos de la transacción
     const prepareTransactionData: () => Transaction = useCallback(() => {
         const now = new Date();
-        const date = new Date(
-            selectedYear,
-            selectedMonth - 1,
-            (selectedDay === null || selectedDay === 0) ? localSelectedDay : selectedDay,
-            now.getHours(),
-            now.getMinutes(),
-            now.getSeconds()
-        );
+        const date = localSelectedDay || new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         const isIncome = inputNameActive === InputNameActive.INCOME;
         const parsedAmount = parseFloat(amount);
@@ -147,7 +138,7 @@ export function useTransactionForm() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         };
-    }, [selectedYear, selectedMonth, selectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount]);
+    }, [localSelectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount]);
 
     // Manejar guardado
     const handleSave = useCallback(async () => {
@@ -169,13 +160,11 @@ export function useTransactionForm() {
         // State
         amount,
         description,
-        selectedDay,
         selectedIcon,
         selectedAccount,
         allAccounts,
         anchorEl,
         isSubmitting,
-        days,
         inputNameActive,
         amountInputRef,
         localSelectedDay,
@@ -186,6 +175,7 @@ export function useTransactionForm() {
         setDescription,
         setLocalSelectedDay,
         setSelectedAccount,
+        setSelectedIcon,
         
         // Handlers
         handleIconClick,

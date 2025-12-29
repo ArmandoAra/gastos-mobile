@@ -1,123 +1,106 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  StatusBar,
-  Platform
-} from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { MD3LightTheme, MD3DarkTheme, adaptNavigationTheme, Provider as PaperProvider } from 'react-native-paper';
+import { StyleSheet, StatusBar, Platform, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { 
+  MD3LightTheme,
+  MD3DarkTheme,
+  Provider as PaperProvider,
+  MD3Theme
+} from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SumarizeIcon, AnaliticsIcon, SettingsIcon } from './src/constants/icons';
 
-// Importar i18n
+// --- Imports Locales (Ajusta las rutas según tu proyecto) ---
 import './src/i18n';
-
-// Importar pantallas
 import { HomeScreen } from './src/screens/home/HomeScreen';
 import { TransactionsScreen } from './src/screens/transactions/TransactionsListScreen';
-import DashboardScreen from './src/screens/analitics/AnaliticsScreen';
-import { AccountsListScreen } from './src/screens/accounts/AccountsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { PinScreen } from './src/screens/auth/PinScreen';
+import { SetupScreen } from './src/screens/auth/SetupScreen';
 
-// Importar stores
 import { useAuthStore } from './src/stores/authStore';
 import { useSettingsStore } from './src/stores/settingsStore';
-
-// Importar tema
 import { lightTheme, darkTheme } from './src/theme/colors';
-import { SetupScreen } from './src/screens/auth/SetupScreen';
-import AnaliticsScreen from './src/screens/analitics/AnaliticsScreen';
-import { MaterialIcons } from '@expo/vector-icons';
 
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-const RootStack = createNativeStackNavigator();
+// Importamos nuestros tipos y componentes tipados
+import {
+  RootStackParamList,
+  AppStackParamList,
+  MainTabParamList,
+  ThemeColors
+} from './src/types/navigation';
+import { CustomTabBar } from './src/components/TabBar/CustomTabBar';
+import { ModernHeader } from './src/components/navigation/ModernHeader';
+import AnalyticsScreen from './src/screens/analitics/AnalyticsScreen';
 
-const iconNames: Record<string, keyof typeof MaterialIcons.glyphMap> = {
-  Transactions: 'summarize', // Ejemplo para Summarize
-  Analitics: 'analytics',       // Ejemplo para Analytics
-  Settings: 'settings',         // Ejemplo para Settings
-};
 
-// ============================================
-// ICONOS PERSONALIZADOS (Emojis)
-// ============================================
-const TabBarIcon = ({ name, focused }: { name: string; focused: boolean }) => {
-  const iconName = iconNames[name] || 'help-outline';
-
-  return (
-    <MaterialIcons
-      name={iconName}
-      size={focused ? 28 : 24}       // Usar prop size, no fontSize
-      color={focused ? "#667eea" : "#888"} // Define tus colores aquí o usa el del theme
-      style={{ opacity: focused ? 1 : 0.6 }}
-    />
-  );
-};
+// --- Creación de Navigators Tipados ---
+const Tab = createBottomTabNavigator<MainTabParamList>();
+const Stack = createNativeStackNavigator<AppStackParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 // ============================================
 // MAIN TAB NAVIGATOR
 // ============================================
 const MainTabs = () => {
   const { theme } = useSettingsStore();
-  const colors = theme === 'dark' ? darkTheme : lightTheme;
+
+  // Aserción de tipo o fallback seguro
+  const currentColors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+
+  // Fallback si textSecondary no existe en tu tema original
+  const safeColors: ThemeColors = {
+    ...currentColors,
+    textSecondary: currentColors.textSecondary || '#94a3b8'
+  };
 
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused }) => (
-          <TabBarIcon name={route.name} focused={focused} />
-        ),
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 10,
-          paddingTop: 10,
-          height: Platform.OS === 'ios' ? 85 : 65,
+      tabBar={(props) => <CustomTabBar {...props} colors={currentColors} />}
+      screenOptions={{
+        // Aquí decimos: "Usa mi header custom"
+        header: ({ options, route }) => {
+          // Lógica para decidir qué mostrar según la pantalla
+          const isHome = route.name === 'Transactions'; // O 'Home' si tienes una dashboard
+
+          return (
+            <ModernHeader
+              // Si es la pantalla principal, mostramos Avatar y saludo. Si no, título normal.
+              title={options.title}
+              subtitle={isHome ? undefined : 'View Details'} // undefined deja que el saludo automático actúe
+              showAvatar={isHome}
+              showNotification={isHome}
+              showBack={false} // En tabs no suele haber back
+              colors={currentColors}
+            />
+          );
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        headerStyle: {
-          backgroundColor: colors.primary,
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      })}
+        tabBarStyle: { /* ... tu estilo transparente ... */ },
+      }}
     >
       <Tab.Screen
         name="Transactions"
         component={TransactionsScreen}
         options={{
-          title: 'Transacciones',
+          title: 'Transactions',
           headerTitle: '📊 Transacciones'
         }}
       />
       <Tab.Screen
-        name="Analitics"
-        component={AnaliticsScreen}
+        name="Analytics"
+        component={AnalyticsScreen}
         options={{
-          title: 'Analitics',
-          headerTitle: '📈 Analitics'
+          title: 'Analytics',
+          headerTitle: '📈 Analytics'
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'Ajustes',
+          title: 'Settings',
           headerTitle: '⚙️ Configuración'
         }}
       />
@@ -126,37 +109,21 @@ const MainTabs = () => {
 };
 
 // ============================================
-// APP STACK (Para modales y otras pantallas)
+// APP STACK
 // ============================================
 const AppStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: true,
-        presentation: 'modal',
+        headerShown: false, // Ocultamos header del stack porque las Tabs tienen el suyo
+        presentation: 'card', // 'modal' si prefieres animaciones verticales
       }}
     >
       <Stack.Screen
         name="MainTabs"
         component={MainTabs}
-        options={{ headerShown: false }}
       />
-    </Stack.Navigator>
-  );
-};
-
-// ============================================
-// AUTH STACK
-// ============================================
-const AuthStack = () => {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Pin" component={PinScreen} />
+      {/* Aquí podrías agregar pantallas secundarias que tapen la tab bar */}
     </Stack.Navigator>
   );
 };
@@ -169,22 +136,23 @@ const RootNavigator = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Pequeño delay para dejar que MMKV cargue
-    setTimeout(() => setIsReady(true), 500);
+    // Simular carga de persistencia
+    const timer = setTimeout(() => setIsReady(true), 500);
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!isReady) return null; // O tu Loading Screen
+  if (!isReady) {
+    // Retornar null o un componente de Splash Screen real
+    return <View style={styles.loadingContainer} />;
+  }
 
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       {!isSetupComplete ? (
-        // Caso 1: Primera vez que abre la app (Crear usuario y PIN)
         <RootStack.Screen name="Setup" component={SetupScreen} />
       ) : !isAuthenticated ? (
-        // Caso 2: Usuario existe pero la app está bloqueada
         <RootStack.Screen name="LockScreen" component={PinScreen} />
-      ) : (
-            // Caso 3: Usuario autenticado -> Entrar a la app
+        ) : (
         <RootStack.Screen name="MainApp" component={AppStack} />
       )}
     </RootStack.Navigator>
@@ -197,18 +165,19 @@ const RootNavigator = () => {
 const App = () => {
   const { theme } = useSettingsStore();
   const isDark = theme === 'dark';
-  const colors = isDark ? darkTheme : lightTheme;
+  const customColors = isDark ? darkTheme : lightTheme;
 
-  // Combinamos tu configuración de colores con el sistema MD3 de Paper
-  const paperTheme = {
+  // Fusión de temas (Paper + Custom) con tipado seguro
+  const paperTheme: MD3Theme = {
     ...(isDark ? MD3DarkTheme : MD3LightTheme),
     colors: {
       ...(isDark ? MD3DarkTheme.colors : MD3LightTheme.colors),
-      primary: colors.primary,
-      secondary: colors.accent, // Paper usa 'secondary' en lugar de 'accent' en MD3
-      background: colors.background,
-      surface: colors.surface,
-      error: colors.error,
+      primary: customColors.primary,
+      secondary: customColors.accent,
+      background: customColors.background,
+      surface: customColors.surface,
+      error: customColors.error,
+      // elevation es necesario en MD3, lo dejamos por defecto
     },
   };
 
@@ -218,9 +187,8 @@ const App = () => {
         <NavigationContainer>
           <StatusBar
             barStyle={isDark ? 'light-content' : 'dark-content'}
-            backgroundColor={colors.primary}
+            backgroundColor={customColors.primary}
           />
-          {/* Eliminamos SafeAreaView de aquí para que el Navigator controle el layout */}
           <RootNavigator />
         </NavigationContainer>
       </PaperProvider>
@@ -228,27 +196,10 @@ const App = () => {
   );
 };
 
-// ============================================
-// STYLES
-// ============================================
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-  loadingText: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  loadingSubtext: {
-    fontSize: 18,
-    color: '#757575',
-    fontWeight: '600',
+    backgroundColor: '#1e293b', // Color de carga seguro
   },
 });
 

@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Transaction } from '../../../interfaces/data.interface';
-
 
 interface ExpenseLineChartProps {
   transactions: Transaction[];
@@ -19,16 +18,19 @@ interface ExpenseLineChartProps {
   height?: number;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-// --- Colores (Simulando Tailwind Slate Dark) ---
+// Detectar pantalla pequeña
+const isSmallScreen = SCREEN_WIDTH < 380;
+const isMediumScreen = SCREEN_WIDTH >= 380 && SCREEN_WIDTH < 768;
+
 const COLORS = {
-  bg: '#1e293b', // slate-800
-  cardBorder: '#334155', // slate-700
+  bg: '#1e293b',
+  cardBorder: '#334155',
   textMain: '#FFFFFF',
-  textMuted: '#94a3b8', // slate-400
+  textMuted: '#94a3b8',
   expense: '#EF4444',
   income: '#10B981',
   avg: '#F59E0B',
@@ -46,12 +48,12 @@ export default function ExpenseLineChart({
   showIncome = false,
   showAverage = true,
   chartStyle = 'area',
-  height = 300
+  height = isSmallScreen ? 220 : isMediumScreen ? 260 : 300
 }: ExpenseLineChartProps) {
 
   const [selectedMetric, setSelectedMetric] = useState<'total' | 'average'>('total');
 
-  // --- Lógica de Procesamiento de Datos (Idéntica a la web) ---
+  // Lógica de Procesamiento de Datos
   const chartData = useMemo(() => {
     if (viewMode === 'year') {
       const monthlyData: Record<number, { expenses: number; income: number; count: number }> = {};
@@ -75,10 +77,10 @@ export default function ExpenseLineChart({
         const data = monthlyData[i] || { expenses: 0, income: 0, count: 0 };
         return {
           label: MONTHS_SHORT[i],
-          value: data.expenses, // Para el gráfico principal
+          value: data.expenses,
           income: data.income,
           average: data.count > 0 ? data.expenses / data.count : 0,
-          expenses: data.expenses, // Backup value
+          expenses: data.expenses,
           count: data.count
         };
       });
@@ -115,11 +117,10 @@ export default function ExpenseLineChart({
         };
       });
     }
-    // Simplificación: Omitimos multi-year complejo para este ejemplo de traducción directa
     return [];
-  }, [transactions, viewMode, year, month, compareYears]);
+  }, [transactions, viewMode, year, month]);
 
-  // --- Estadísticas ---
+  // Estadísticas
   const stats = useMemo(() => {
     const expenseTransactions = transactions.filter(t => t.type === 'expense');
     const incomeTransactions = transactions.filter(t => t.type === 'income');
@@ -144,13 +145,12 @@ export default function ExpenseLineChart({
     return { totalExpenses, totalIncome, avgExpense, peaks: peaks.length, trend, trendPercent };
   }, [transactions, chartData]);
 
-  // --- Preparar datos para gifted-charts ---
+  // Preparar datos para gifted-charts
   const formattedChartData = chartData.map(item => ({
     value: selectedMetric === 'average' ? item.average : item.value,
     label: item.label,
-    dataPointText: '', // Ocultar texto encima del punto por defecto
-    // Configuración visual por punto
-    labelTextStyle: { color: COLORS.textMuted, fontSize: 10 },
+    dataPointText: '',
+    labelTextStyle: { color: COLORS.textMuted, fontSize: isSmallScreen ? 8 : 9 },
   }));
 
   const incomeChartData = showIncome ? chartData.map(item => ({
@@ -158,19 +158,29 @@ export default function ExpenseLineChart({
     label: item.label,
   })) : [];
 
+  // Calcular ancho dinámico del chart
+  const chartWidth = SCREEN_WIDTH - (isSmallScreen ? 40 : 60);
+  const spacing = viewMode === 'month'
+    ? (isSmallScreen ? 10 : 15)
+    : (isSmallScreen ? 20 : 30);
+
   return (
     <Animated.View entering={FadeInUp.duration(600)} style={styles.container}>
       
-      {/* --- HEADER --- */}
+      {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerTitleContainer}>
           <LinearGradient colors={[COLORS.blue, COLORS.purple]} style={styles.iconBox}>
-             <Ionicons name="stats-chart" size={24} color="white" />
+            <Ionicons name="stats-chart" size={isSmallScreen ? 20 : 24} color="white" />
           </LinearGradient>
-          <View>
+          <View style={styles.headerTextContainer}>
             <Text style={styles.title}>Expense Trends</Text>
-            <Text style={styles.subtitle}>
-              {viewMode === 'year' ? `${year} - Monthly` : viewMode === 'month' ? `${MONTHS_FULL[month! - 1]} - Daily` : 'Comparison'}
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {viewMode === 'year'
+                ? `${year} - Monthly`
+                : viewMode === 'month'
+                  ? `${MONTHS_FULL[month! - 1]} - Daily`
+                  : 'Comparison'}
             </Text>
           </View>
         </View>
@@ -180,201 +190,303 @@ export default function ExpenseLineChart({
           <TouchableOpacity 
             onPress={() => setSelectedMetric('total')}
             style={[styles.toggleBtn, selectedMetric === 'total' && styles.toggleBtnActive]}
+            activeOpacity={0.7}
           >
-            {selectedMetric === 'total' && <LinearGradient colors={[COLORS.blue, COLORS.purple]} style={StyleSheet.absoluteFill} />}
-            <Text style={[styles.toggleText, selectedMetric === 'total' && styles.textWhite]}>Total</Text>
+            {selectedMetric === 'total' && (
+              <LinearGradient
+                colors={[COLORS.blue, COLORS.purple]}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              />
+            )}
+            <Text style={[styles.toggleText, selectedMetric === 'total' && styles.textWhite]}>
+              Total
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => setSelectedMetric('average')}
             style={[styles.toggleBtn, selectedMetric === 'average' && styles.toggleBtnActive]}
+            activeOpacity={0.7}
           >
-            {selectedMetric === 'average' && <LinearGradient colors={[COLORS.blue, COLORS.purple]} style={StyleSheet.absoluteFill} />}
-            <Text style={[styles.toggleText, selectedMetric === 'average' && styles.textWhite]}>Avg</Text>
+            {selectedMetric === 'average' && (
+              <LinearGradient
+                colors={[COLORS.blue, COLORS.purple]}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              />
+            )}
+            <Text style={[styles.toggleText, selectedMetric === 'average' && styles.textWhite]}>
+              Avg
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* --- STATS CARDS --- */}
-      <View style={styles.statsGrid}>
-        <StatsCard 
-          label="Total Expenses" 
-          value={`$${stats.totalExpenses.toFixed(0)}`} 
-          color={COLORS.expense} 
-          icon="arrow-down"
-        />
-        <StatsCard 
-          label="Average" 
-          value={`$${stats.avgExpense.toFixed(0)}`} 
-          color={COLORS.blue} 
-          icon="pause"
-        />
-        <StatsCard 
-          label="Anomalies" 
-          value={stats.peaks.toString()} 
-          subValue="Peaks"
-          color={COLORS.purple} 
-          icon="alert-circle"
-        />
-        <StatsCard 
-          label="Trend" 
-          value={stats.trend} 
-          subValue={`${Math.abs(stats.trendPercent).toFixed(1)}%`}
-          color={stats.trend === 'up' ? COLORS.orange : stats.trend === 'down' ? COLORS.income : COLORS.textMuted} 
-          icon={stats.trend === 'up' ? 'trending-up' : 'trending-down'}
-        />
-      </View>
+      {/* STATS CARDS - ScrollView horizontal en pantallas pequeñas */}
+      <ScrollView
+        horizontal={isSmallScreen}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.statsScrollContent}
+      >
+        <View style={styles.statsGrid}>
+          <StatsCard 
+            label="Total"
+            value={`$${stats.totalExpenses.toFixed(0)}`}
+            color={COLORS.expense}
+            icon="arrow-down"
+            isSmall={isSmallScreen}
+          />
+          <StatsCard
+            label="Average"
+            value={`$${stats.avgExpense.toFixed(0)}`}
+            color={COLORS.blue}
+            icon="pause"
+            isSmall={isSmallScreen}
+          />
+          <StatsCard 
+            label="Peaks"
+            value={stats.peaks.toString()} 
+            subValue="Anomalies"
+            color={COLORS.purple}
+            icon="alert-circle"
+            isSmall={isSmallScreen}
+          />
+          <StatsCard
+            label="Trend"
+            value={stats.trend}
+            subValue={`${Math.abs(stats.trendPercent).toFixed(1)}%`}
+            color={stats.trend === 'up' ? COLORS.orange : stats.trend === 'down' ? COLORS.income : COLORS.textMuted}
+            icon={stats.trend === 'up' ? 'trending-up' : 'trending-down'}
+            isSmall={isSmallScreen}
+          />
+        </View>
+      </ScrollView>
 
-      {/* --- CHART --- */}
-      
-    <View style={{ marginVertical: 20, marginLeft: -10 }}>
-      <LineChart
-        data={formattedChartData}
-        data2={showIncome ? incomeChartData : undefined}
-        height={height}
-        width={SCREEN_WIDTH - 60}
-        spacing={viewMode === 'month' ? 20 : 40}
-        initialSpacing={20}
-        color1={COLORS.expense}
-        color2={COLORS.income}
-        thickness={3}
-        hideDataPoints={false}
-        dataPointsColor1={COLORS.expense}
-        dataPointsColor2={COLORS.income}
-        startFillColor1={COLORS.expense}
-        startOpacity={0.8}
-        endOpacity={0.1}
-        areaChart={chartStyle === 'area'}
-        curved
-        isAnimated
-        yAxisTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
-        xAxisLabelTextStyle={{ color: COLORS.textMuted, fontSize: 10 }}
-        yAxisColor={COLORS.cardBorder}
-        xAxisColor={COLORS.cardBorder}
-        rulesColor={COLORS.cardBorder}
-        rulesType="dashed"
-        pointerConfig={{
-        pointerStripHeight: 160,
-        pointerStripColor: 'lightgray',
-        pointerStripWidth: 2,
-        pointerColor: 'lightgray',
-        radius: 6,
-        pointerLabelWidth: 100,
-        pointerLabelHeight: 90,
-        activatePointersOnLongPress: false,
-        autoAdjustPointerLabelPosition: false,
-        pointerLabelComponent: (items: Array<{ value: number; label: string; dataPointText: string; labelTextStyle: { color: string; fontSize: number } }>) => {
-          const item = items[0];
-          return (
-            <View style={styles.tooltip}>
-            <Text style={styles.tooltipTitle}>{item.label}</Text>
-            <Text style={styles.tooltipValue}>${Number(item.value).toFixed(2)}</Text>
-            </View>
-          );
-        },
-        }}
-      />
-    </View>
+      {/* CHART - ScrollView horizontal para días del mes */}
+      <ScrollView
+        horizontal={viewMode === 'month'}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chartScrollContent}
+      >
+        <View style={styles.chartWrapper}>
+          <LineChart
+            data={formattedChartData}
+            data2={showIncome ? incomeChartData : undefined}
+            height={height}
+            width={viewMode === 'month' ? Math.max(chartWidth, chartData.length * spacing) : chartWidth}
+            spacing={spacing}
+            initialSpacing={isSmallScreen ? 10 : 15}
+            color1={COLORS.expense}
+            color2={COLORS.income}
+            thickness={isSmallScreen ? 2 : 3}
+            hideDataPoints={viewMode === 'month' && chartData.length > 15}
+            dataPointsRadius={isSmallScreen ? 3 : 4}
+            dataPointsColor1={COLORS.expense}
+            dataPointsColor2={COLORS.income}
+            startFillColor1={COLORS.expense}
+            startOpacity={0.8}
+            endOpacity={0.1}
+            areaChart={chartStyle === 'area'}
+            curved
+            isAnimated
+            animationDuration={800}
+            yAxisTextStyle={{ color: COLORS.textMuted, fontSize: isSmallScreen ? 8 : 9 }}
+            xAxisLabelTextStyle={{ color: COLORS.textMuted, fontSize: isSmallScreen ? 8 : 9 }}
+            yAxisColor={COLORS.cardBorder}
+            xAxisColor={COLORS.cardBorder}
+            rulesColor={COLORS.cardBorder}
+            rulesType="dashed"
+            showVerticalLines={!isSmallScreen}
+            verticalLinesColor={COLORS.cardBorder + '40'}
+            pointerConfig={{
+              pointerStripHeight: height - 20,
+              pointerStripColor: COLORS.textMuted,
+              pointerStripWidth: 1,
+              pointerColor: COLORS.textMuted,
+              radius: 5,
+              pointerLabelWidth: isSmallScreen ? 80 : 100,
+              pointerLabelHeight: isSmallScreen ? 70 : 85,
+              activatePointersOnLongPress: false,
+              autoAdjustPointerLabelPosition: true,
+              pointerLabelComponent: (items: Array<{ value: number; label: string }>) => {
+                const item = items[0];
+                return (
+                  <View style={styles.tooltip}>
+                    <Text style={styles.tooltipTitle}>{item.label}</Text>
+                    <Text style={styles.tooltipValue}>${Number(item.value).toFixed(2)}</Text>
+                  </View>
+                );
+              },
+            }}
+          />
+        </View>
+      </ScrollView>
 
-      {/* --- INSIGHTS --- */}
-      <View style={styles.insightsContainer}>
-        <Text style={styles.insightsHeader}>INSIGHTS</Text>
-        <View style={styles.insightsRow}>
+      {/* INSIGHTS */}
+      {(stats.peaks > 0 || stats.trend !== 'stable') && (
+        <View style={styles.insightsContainer}>
+          <Text style={styles.insightsHeader}>INSIGHTS</Text>
+          <View style={styles.insightsColumn}>
             {stats.peaks > 0 && (
-                <View style={[styles.insightCard, { backgroundColor: 'rgba(249, 115, 22, 0.1)', borderColor: 'rgba(249, 115, 22, 0.3)' }]}>
-                    <Text style={[styles.insightTitle, { color: COLORS.orange }]}>⚠️ Spending Anomalies</Text>
-                    <Text style={styles.insightText}>Detected {stats.peaks} spending spikes.</Text>
+              <Animated.View
+                entering={FadeInDown.delay(100)}
+                style={[styles.insightCard, {
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                  borderColor: 'rgba(249, 115, 22, 0.3)'
+                }]}
+              >
+                <View style={styles.insightHeader}>
+                  <Ionicons name="alert-circle" size={16} color={COLORS.orange} />
+                  <Text style={[styles.insightTitle, { color: COLORS.orange }]}>
+                    Spending Spikes
+                  </Text>
                 </View>
+                <Text style={styles.insightText}>
+                  Detected {stats.peaks} anomalies above average
+                </Text>
+              </Animated.View>
             )}
             
             {stats.trend !== 'stable' && (
-                 <View style={[styles.insightCard, { 
-                     backgroundColor: stats.trend === 'up' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                     borderColor: stats.trend === 'up' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'
-                 }]}>
-                    <Text style={[styles.insightTitle, { color: stats.trend === 'up' ? COLORS.expense : COLORS.income }]}>
-                        {stats.trend === 'up' ? '📈 Rising Expenses' : '📉 Decreasing Expenses'}
-                    </Text>
-                    <Text style={styles.insightText}>
-                        {stats.trend === 'up' ? 'Increased' : 'Decreased'} by {Math.abs(stats.trendPercent).toFixed(1)}%
-                    </Text>
+              <Animated.View
+                entering={FadeInDown.delay(200)}
+                style={[styles.insightCard, {
+                  backgroundColor: stats.trend === 'up'
+                    ? 'rgba(239, 68, 68, 0.1)'
+                    : 'rgba(16, 185, 129, 0.1)',
+                  borderColor: stats.trend === 'up'
+                    ? 'rgba(239, 68, 68, 0.3)'
+                    : 'rgba(16, 185, 129, 0.3)'
+                }]}
+              >
+                <View style={styles.insightHeader}>
+                  <Ionicons
+                    name={stats.trend === 'up' ? 'trending-up' : 'trending-down'}
+                    size={16}
+                    color={stats.trend === 'up' ? COLORS.expense : COLORS.income}
+                  />
+                  <Text style={[styles.insightTitle, {
+                    color: stats.trend === 'up' ? COLORS.expense : COLORS.income
+                  }]}>
+                    {stats.trend === 'up' ? 'Rising Trend' : 'Declining Trend'}
+                  </Text>
                 </View>
+                <Text style={styles.insightText}>
+                  {stats.trend === 'up' ? 'Increased' : 'Decreased'} by {Math.abs(stats.trendPercent).toFixed(1)}% vs previous period
+                </Text>
+              </Animated.View>
             )}
+          </View>
         </View>
-      </View>
+      )}
 
     </Animated.View>
   );
 }
 
 // Componente auxiliar para tarjetas de estadísticas
-const StatsCard = ({ label, value, subValue, color, icon }: any) => (
-  <View style={[styles.statsCard, { borderColor: color + '40', backgroundColor: color + '15' }]}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-      <Ionicons name={icon as any} size={12} color={color} style={{ marginRight: 4 }} />
-      <Text style={[styles.statsLabel, { color: color + 'CC' }]}>{label}</Text>
+interface StatsCardProps {
+  label: string;
+  value: string;
+  subValue?: string;
+  color: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  isSmall?: boolean;
+}
+
+const StatsCard = ({ label, value, subValue, color, icon, isSmall }: StatsCardProps) => (
+  <View style={[
+    styles.statsCard,
+    { borderColor: color + '40', backgroundColor: color + '15' },
+    isSmall && styles.statsCardSmall
+  ]}>
+    <View style={styles.statsCardHeader}>
+      <Ionicons name={icon} size={isSmall ? 10 : 12} color={color} />
+      <Text style={[styles.statsLabel, { color: color + 'CC' }, isSmall && styles.statsLabelSmall]}>
+        {label}
+      </Text>
     </View>
-    <Text style={styles.statsValue}>{value}</Text>
-    {subValue && <Text style={styles.statsSubValue}>{subValue}</Text>}
+    <Text style={[styles.statsValue, isSmall && styles.statsValueSmall]} numberOfLines={1}>
+      {value}
+    </Text>
+    {subValue && (
+      <Text style={[styles.statsSubValue, isSmall && styles.statsSubValueSmall]}>
+        {subValue}
+      </Text>
+    )}
   </View>
 );
+
+const viewMode = 'month'; // This should be passed as a prop or state in real usage
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.bg,
-    borderRadius: 24,
-    padding: 16,
+    borderRadius: isSmallScreen ? 16 : 20,
+    padding: isSmallScreen ? 12 : 16,
     marginVertical: 10,
+    marginHorizontal: isSmallScreen ? 8 : 0,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      }
+    }),
   },
   header: {
-    marginBottom: 20,
+    marginBottom: isSmallScreen ? 12 : 16,
   },
   headerTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   iconBox: {
-    width: 48,
-    height: 48,
+    width: isSmallScreen ? 40 : 48,
+    height: isSmallScreen ? 40 : 48,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
+  headerTextContainer: {
+    flex: 1,
+  },
   title: {
-    fontSize: 20,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: 'bold',
     color: COLORS.textMain,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 11 : 13,
     color: COLORS.textMuted,
+    marginTop: 2,
   },
   toggleContainer: {
     flexDirection: 'row',
     backgroundColor: COLORS.cardBorder,
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: 10,
+    padding: 3,
     alignSelf: 'flex-start',
   },
   toggleBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingVertical: isSmallScreen ? 5 : 6,
+    paddingHorizontal: isSmallScreen ? 12 : 16,
     borderRadius: 8,
     overflow: 'hidden',
   },
-  toggleBtnActive: {
-    // estilos activos manejados por el gradiente hijo
-  },
+  toggleBtnActive: {},
   toggleText: {
-    fontSize: 12,
+    fontSize: isSmallScreen ? 11 : 12,
     fontWeight: '600',
     color: COLORS.textMuted,
     zIndex: 1,
@@ -382,81 +494,114 @@ const styles = StyleSheet.create({
   textWhite: {
     color: 'white',
   },
+  statsScrollContent: {
+    paddingRight: isSmallScreen ? 16 : 0,
+  },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'space-between',
+    flexWrap: isSmallScreen ? 'nowrap' : 'wrap',
+    gap: isSmallScreen ? 8 : 10,
+    marginBottom: 16,
   },
   statsCard: {
-    width: '48%', // Grid de 2 columnas
-    padding: 12,
+    width: isSmallScreen ? 110 : isMediumScreen ? '48%' : '48%',
+    padding: isSmallScreen ? 10 : 12,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 8,
+  },
+  statsCardSmall: {
+    padding: 8,
+  },
+  statsCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 4,
   },
   statsLabel: {
-    fontSize: 10,
+    fontSize: isSmallScreen ? 9 : 10,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
+  statsLabelSmall: {
+    fontSize: 8,
+  },
   statsValue: {
-    fontSize: 18,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: 'bold',
     color: COLORS.textMain,
     textTransform: 'capitalize',
   },
-  statsSubValue: {
-    fontSize: 10,
-    color: COLORS.textMuted,
+  statsValueSmall: {
+    fontSize: 14,
   },
-  // Tooltip del gráfico
+  statsSubValue: {
+    fontSize: isSmallScreen ? 9 : 10,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  statsSubValueSmall: {
+    fontSize: 8,
+  },
+  chartScrollContent: {
+    paddingRight: viewMode === 'month' ? 16 : 0,
+  },
+  chartWrapper: {
+    marginVertical: isSmallScreen ? 12 : 16,
+    marginLeft: isSmallScreen ? -5 : -10,
+  },
   tooltip: {
     backgroundColor: COLORS.bg,
-    padding: 8,
+    padding: isSmallScreen ? 6 : 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
+    minWidth: isSmallScreen ? 70 : 80,
   },
   tooltipTitle: {
     color: COLORS.textMuted,
-    fontSize: 12,
+    fontSize: isSmallScreen ? 10 : 11,
     marginBottom: 4,
   },
   tooltipValue: {
     color: COLORS.textMain,
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
   },
-  // Insights
   insightsContainer: {
-    marginTop: 10,
-    paddingTop: 16,
+    marginTop: isSmallScreen ? 8 : 12,
+    paddingTop: isSmallScreen ? 12 : 16,
     borderTopWidth: 1,
     borderTopColor: COLORS.cardBorder,
   },
   insightsHeader: {
-    fontSize: 12,
+    fontSize: isSmallScreen ? 10 : 11,
     fontWeight: '700',
     color: COLORS.textMuted,
-    marginBottom: 12,
+    marginBottom: 10,
     letterSpacing: 1,
   },
-  insightsRow: {
-      gap: 10
+  insightsColumn: {
+    gap: 8,
   },
   insightCard: {
-      padding: 12,
-      borderRadius: 12,
-      borderWidth: 1,
+    padding: isSmallScreen ? 10 : 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  insightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
   },
   insightTitle: {
-      fontSize: 12,
-      fontWeight: 'bold',
-      marginBottom: 4,
+    fontSize: isSmallScreen ? 11 : 12,
+    fontWeight: 'bold',
   },
   insightText: {
-      fontSize: 12,
-      color: COLORS.textMuted
+    fontSize: isSmallScreen ? 10 : 11,
+    color: COLORS.textMuted,
+    lineHeight: isSmallScreen ? 14 : 16,
   }
 });

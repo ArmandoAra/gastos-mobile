@@ -23,8 +23,6 @@ import { useAuthStore } from '../../../stores/authStore';
 import useDataStore from '../../../stores/useDataStore';
 import { useAccountsStore } from '../../../stores/accountsStore';
 
-const UserService = { deleteUser: async () => ({ success: true }) };
-const logout = async () => console.log("Logout executed");
 
 interface DangerZoneSectionProps {
     userId?: string;
@@ -60,8 +58,7 @@ export default function DangerZoneSection({ userId }: DangerZoneSectionProps) {
         setIsDeleting(true);
         // Simular eliminación
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        console.log('All data deleted');
+
         setIsDeleting(false);
         closeModals();
         Alert.alert("Success", "All data has been deleted.");

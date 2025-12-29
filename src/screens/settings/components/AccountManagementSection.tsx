@@ -103,9 +103,6 @@ export default function AccountManagementSection() {
         );
     };
 
-    useEffect(() => {
-        console.log("All Accounts Updated:", allAccounts);
-    }, [allAccounts]);
 
     return (
         <View

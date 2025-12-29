@@ -7,43 +7,40 @@ import {
     Modal,
     Dimensions,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    ScrollView // Agregamos ScrollView para pantallas pequeñas
 } from 'react-native';
-import { BlurView } from 'expo-blur'; // Instalar: npx expo install expo-blur
+import { BlurView } from 'expo-blur';
 import Animated, {
     FadeIn,
     FadeOut,
-    ZoomIn,
-    ZoomOut
+    SlideInUp, // Animación para que entre desde arriba
+    SlideOutUp
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Hooks y Stores (Asumiendo que ya tienes estos archivos adaptados o son lógicos)
-import { useSettingsStore } from '../../stores/settingsStore';
-
+// Hooks y Stores
 import { useTransactionForm } from '../../hooks/useTransactionForm';
-
-
-// Componentes Hijos (Debes tener sus versiones móviles)
-import CloseInputButton from "../buttons/closeInput";
-import SubmitButton, { addOption } from "../buttons/submitButton";
-import IconsSelectorPopover from "./Inputs/IconsSelector"; // En RN esto suele ser un Modal aparte o una vista condicional
-import CategoryAndAmountInput from "./Inputs/CategoryAndAmountInput";
-import DaySelectorInput from "./Inputs/DaySelectorInput";
-import DescriptionInput from "./Inputs/DescriptionInput";
-import AccountSelector from "./Inputs/AccoutSelector";
 import { InputNameActive } from '../../interfaces/settings.interface';
 import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
-import useDateStore from '../../stores/useDateStore';
 
-const { width, height } = Dimensions.get('window');
+// Componentes Hijos
+import CloseInputButton from "../buttons/closeInput";
+import SubmitButton, { addOption } from "../buttons/submitButton";
+import IconsSelectorPopover from "./Inputs/IconsSelector";
+import CategoryAndAmountInput from "./Inputs/CategoryAndAmountInput";
+import DescriptionInput from "./Inputs/DescriptionInput";
+import AccountSelector from "./Inputs/AccoutSelector";
+import ModernCalendarSelector from '../buttons/ModernDateSelector';
+import { formatDate } from '../../utils/formatters';
+import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
 
+const { width } = Dimensions.get('window');
 
 export default function AddTransactionForm() {
     const insets = useSafeAreaInsets();
 
-    // Hooks de lógica
     const {
         amount,
         description,
@@ -53,7 +50,6 @@ export default function AddTransactionForm() {
         allAccounts,
         anchorEl, 
         isSubmitting,
-        days,
         inputNameActive,
         amountInputRef,
         popoverOpen,
@@ -68,76 +64,73 @@ export default function AddTransactionForm() {
         handleIconClick
     } = useTransactionForm();
 
-    const { selectedDay } = useDateStore();
-
-    // Determinar si el modal está visible
     const isOpen = inputNameActive !== InputNameActive.NONE;
-
-    // Título dinámico
-    const title = inputNameActive === InputNameActive.SPEND ? 'Add new Expense' : 'Add new Income';
-    const titleColor = inputNameActive === InputNameActive.SPEND ? '#EF5350' : '#667eea'; // Rojo para gasto, Azul para ingreso
+    const date = new Date(localSelectedDay).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    const title = inputNameActive === InputNameActive.SPEND ? 'New Expense' : 'New Income';
+    const titleColor = inputNameActive === InputNameActive.SPEND ? '#EF5350' : '#667eea';
 
     return (
         <Modal
-            animationType="none" // Usamos Reanimated para la animación interna
+            animationType="none"
             transparent={true}
             visible={isOpen}
-            onRequestClose={handleClose} // Hardware back button en Android
+            onRequestClose={handleClose}
             statusBarTranslucent
         >
-            {/* Contenedor Principal: KeyboardAvoidingView mueve todo cuando sale el teclado */}
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardContainer}
-            >
-                {/* Fondo Borroso (Backdrop) */}
-                {isOpen && (
-                    <Animated.View
-                        entering={FadeIn.duration(200)}
-                        exiting={FadeOut.duration(200)}
-                        style={StyleSheet.absoluteFill}
-                    >
-                        <BlurView
-                            intensity={20}
-                            tint="dark"
-                            style={StyleSheet.absoluteFill}
-                        >
-                            {/* Capa extra oscura si el blur no es suficiente */}
-                            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }} />
-                        </BlurView>
-
-                        {/* Área tocable para cerrar al hacer clic fuera */}
+            {/* Fondo Oscuro / Blur */}
+            {isOpen && (
+                <Animated.View
+                    entering={FadeIn.duration(200)}
+                    exiting={FadeOut.duration(200)}
+                    style={StyleSheet.absoluteFill}
+                >
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
                         <TouchableOpacity
                             style={StyleSheet.absoluteFill}
                             activeOpacity={1}
-                            onPress={handleClose}
+                            onPress={handleClose} 
                         />
-                    </Animated.View>
-                )}
+                    </BlurView>
+                </Animated.View>
+            )}
 
-                {/* Tarjeta del Formulario */}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.container}
+            >
+                {/* Tarjeta del Formulario (Animación SlideInUp) */}
                 {isOpen && (
-                    <View
-                        style={[styles.card, { marginTop: insets.top + 20 }]}
+                    <Animated.View
+                        entering={SlideInUp}
+                        exiting={SlideOutUp.duration(200)}
+                        style={[
+                            styles.topSheet,
+                            { paddingTop: insets.top + 10 } // Respetar el notch/isla
+                        ]}
                     >
                         {/* Header */}
                         <View style={styles.header}>
-                            <Text style={[styles.title, { color: titleColor }]}>
-                                {title}
-                            </Text>
+                            <TransactionHeaderTitle
+                                title={title}
+                                date={date}
+                                titleColor={titleColor}
+                            />
                             <TouchableOpacity
                                 onPress={handleClose}
                                 disabled={isSubmitting}
                                 style={styles.closeButton}
                             >
-                                <MaterialIcons name="close" size={24} color="#757575" />
+                                <MaterialIcons name="close" size={20} color="#555" />
                             </TouchableOpacity>
                         </View>
 
-                        {/* Content */}
-                        <View style={styles.content}>
-
-                            {/* Amount & Icon */}
+                        {/* ScrollView para asegurar que todo sea accesible si la pantalla es chica */}
+                        <ScrollView
+                            contentContainerStyle={styles.scrollContent}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {/* 1. Categoría y Monto (Lo más importante) */}
                             <CategoryAndAmountInput
                                 selectedIcon={selectedIcon}
                                 amount={amount}
@@ -146,45 +139,45 @@ export default function AddTransactionForm() {
                                 handleIconClick={handleIconClick}
                             />
 
-                            {/* Description */}
+                            {/* 2. Descripción */}
                             <DescriptionInput
                                 description={description}
                                 setDescription={setDescription}
                             />
 
-                            {/* Day Selector (Solo si no hay día seleccionado globalmente) */}
-                            {(selectedDay === null || selectedDay === 0) && (
-                                <DaySelectorInput
-                                    label="Day of Month"
-                                    selectedDay={localSelectedDay}
-                                    setSelectedDay={setLocalSelectedDay}
-                                    days={days}
-                                />
-                            )}
-
-                            {/* Account Selector */}
-                            <AccountSelector
-                                label="Select Account"
-                                accountSelected={selectedAccount}
-                                setAccountSelected={setSelectedAccount}
-                                accounts={allAccounts}
-                            />
-
-                            {/* Action Buttons */}
-                            <View style={styles.footer}>
-                                <CloseInputButton />
-                                {amount.trim() !== '' && selectedAccount !== null &&
-
-                                    <SubmitButton
-                                        handleSave={handleSave}
-                                        selectedIcon={selectedIcon}
-                                        option={inputNameActive === InputNameActive.SPEND ? addOption.Spend : addOption.Income}
-                                    loading={isSubmitting} // Asumiendo que tu botón soporta prop de carga
-                                />
-                                }
+                            {/* 3. Fila de Selectores (Cuenta y Fecha) en horizontal para ahorrar espacio */}
+                            <View style={styles.rowSelectors}>
+                                <View style={{ flex: 7 }}>
+                                    <AccountSelector
+                                        label="Account"
+                                        accountSelected={selectedAccount}
+                                        setAccountSelected={setSelectedAccount}
+                                        accounts={allAccounts}
+                                    />
+                                </View>
+                                <View style={{ width: 10 }} />
+                                <View style={{ flex: 1 }}>
+                                    <ModernCalendarSelector
+                                        selectedDate={localSelectedDay}
+                                        onDateChange={setLocalSelectedDay}
+                                    />
+                                </View>
                             </View>
-                        </View>
 
+                            {/* 4. Botones de Acción */}
+                            <View style={styles.footer}>
+                                <SubmitButton
+                                    handleSave={handleSave}
+                                    selectedIcon={selectedIcon}
+                                    option={inputNameActive === InputNameActive.SPEND ? addOption.Spend : addOption.Income}
+                                    loading={isSubmitting}
+                                    // Deshabilitar si no hay monto o cuenta
+                                    disabled={amount.trim() === '' || selectedAccount === null}
+                                />
+                            </View>
+                        </ScrollView>
+
+                        {/* Popover de Iconos (Renderizado condicionalmente aquí o fuera) */}
                         {popoverOpen && (
                             <IconsSelectorPopover
                                 popoverOpen={popoverOpen}
@@ -198,67 +191,65 @@ export default function AddTransactionForm() {
                             />
                         )}
 
-                    </View>
+                    </Animated.View>
                 )}
             </KeyboardAvoidingView>
         </Modal>
     );
 }
 
-// ============================================
-// 🎨 ESTILOS (Sin Sombras)
-// ============================================
 const styles = StyleSheet.create({
-    keyboardContainer: {
+    container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        // No background color here, handled by BlurView
+        justifyContent: 'flex-start', // Alinea todo arriba
     },
-    card: {
-        width: width * 0.9, // 90% del ancho de pantalla
-        maxWidth: 500,
-        backgroundColor: '#FFFFFF', // Fondo sólido para evitar glitches
-        borderRadius: 24,
-
-        // BORDE EN LUGAR DE SOMBRA
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-
-        // Cero elevación para evitar destellos
-        elevation: 0,
-        shadowOpacity: 0,
-
-        overflow: 'hidden', // Asegura que nada se salga de los bordes redondeados
-        marginBottom: 20,
+    topSheet: {
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+        paddingBottom: 20,
+        maxHeight: '85%', // Evita que ocupe toda la pantalla
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 10,
+        paddingBottom: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#F5F5F5', // Separador sutil
+        borderBottomColor: '#F0F0F0',
+        marginBottom: 10,
     },
     title: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
     },
     closeButton: {
-        padding: 4,
+        padding: 6,
         backgroundColor: '#F5F5F5',
         borderRadius: 20,
     },
-    content: {
-        padding: 20,
-        gap: 16, // Espacio vertical entre inputs
+    scrollContent: {
+        paddingHorizontal: 20,
+        gap: 16,
+        paddingBottom: 20, // Espacio extra al final del scroll
+    },
+    rowSelectors: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        zIndex: 10, // Para asegurar que los dropdowns se vean por encima si es necesario
     },
     footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 16,
+        width: '100%',
+        display: 'flex',
         marginTop: 10,
+        alignItems: 'center',
     }
 });

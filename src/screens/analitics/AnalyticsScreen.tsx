@@ -34,6 +34,7 @@ import { es } from 'date-fns/locale';
 import ExpenseLineChart from './components/ExpenseLineChart';
 import useDataStore from '../../stores/useDataStore';
 import ExpenseHeatmapMobile from './components/ExpenseHeatmapMobile';
+import DailyExpenseViewMobile from './components/DailyExpenseView';
 
 const { width } = Dimensions.get('window');
 
@@ -57,7 +58,7 @@ const MOCK_TRANSACTIONS = [
 // Colores para el gráfico de torta
 const CATEGORY_COLORS = ['#EF5350', '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#26C6DA'];
 
-export default function AnaliticsScreen() {
+export default function AnalyticsScreen() {
   const {transactions}  = useDataStore();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
  
@@ -182,14 +183,14 @@ export default function AnaliticsScreen() {
         ))}
       </View>
 
-        <ExpenseLineChart 
-        transactions={filteredTransactions} 
-        viewMode={selectedPeriod === 'year' ? 'year' : selectedPeriod === 'month' ? 'month' : 'year'} year={new Date().getFullYear()} month={new Date().getMonth() + 1} 
-        showIncome={true}
-        showAverage={true}
-        chartStyle="area"
-        height={300}
-        />
+      <DailyExpenseViewMobile
+        transactions={filteredTransactions}
+        year={new Date().getFullYear()}
+        month={new Date().getMonth() + 1}
+        day={new Date().getDate()}
+      />
+
+
 
         <ExpenseHeatmapMobile 
         transactions={filteredTransactions}
@@ -199,120 +200,19 @@ export default function AnaliticsScreen() {
         heatmapType="daily"
         />
 
+      <ExpenseLineChart
+        transactions={filteredTransactions}
+        viewMode={selectedPeriod === 'year' ? 'year' : selectedPeriod === 'month' ? 'month' : 'year'} year={new Date().getFullYear()} month={new Date().getMonth() + 1}
+        showIncome={true}
+        showAverage={true}
+        chartStyle="area"
+        height={300}
+      />
 
 
-     
 
-      {/* Resumen */}
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={[styles.balanceAmount, { color: stats.balance >= 0 ? '#4CAF50' : '#EF5350' }]}>
-          ${stats.balance.toLocaleString('es-AR')}
-        </Text>
-        <View style={styles.balanceRow}>
-          <View>
-            <Text style={styles.balanceItemLabel}>Ingresos</Text>
-            <Text style={{color: '#4CAF50', fontWeight:'bold'}}>${stats.totalIncome}</Text>
-          </View>
-          <View>
-            <Text style={styles.balanceItemLabel}>Gastos</Text>
-            <Text style={{color: '#EF5350', fontWeight:'bold'}}>${stats.totalExpenses}</Text>
-          </View>
-        </View>
-      </View>
 
-      {/* 1. GRÁFICO DE BARRAS (CartesianChart + Bar) */}
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>📊 Gastos Diarios</Text>
-        <View style={{ height: 250, width: '100%' }}>
-            <CartesianChart
-              data={dailyExpenses}
-              xKey="x"
-              yKeys={["y"]}
-              // Configuración de Ejes (requiere font)
-              axisOptions={{
-                font, 
-                tickCount: 5,
-                lineColor: "#e0e0e0",
-                labelColor: "#757575",
-              }}
-              // Espaciado interno para que no se corten las barras
-              domainPadding={{ left: 20, right: 20, top: 30 }}
-            >
-              {({ points, chartBounds }) => (
-                // Renderizamos las barras usando los puntos calculados por el chart
-                <Bar
-                  points={points.y}
-                  chartBounds={chartBounds}
-                  color="#6200EE"
-                  roundedCorners={{ topLeft: 5, topRight: 5 }}
-                  // Espaciado entre barras
-                  innerPadding={0.5} 
-                />
-              )}
-            </CartesianChart>
-        </View>
-      </View>
 
-      {/* 2. GRÁFICO DE TORTA - Usando leyenda visual con barras */}
-      {expensesPieData.length > 0 && (
-        <View style={styles.chartContainer}>
-          <Text style={styles.chartTitle}>🎯 Categorías</Text>
-          <View style={{ height: 300, justifyContent: 'center', paddingVertical: 20 }}>
-            {expensesPieData.map((item, index) => {
-              const total = expensesPieData.reduce((sum, d) => sum + d.value, 0);
-              const percentage = ((item.value / total) * 100).toFixed(1);
-              
-              return (
-                <View key={index} style={{ marginBottom: 12 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '500' }}>{item.label}</Text>
-                    <Text style={{ fontSize: 14, color: '#757575' }}>${item.value.toFixed(2)} ({percentage}%)</Text>
-                  </View>
-                  <View style={{ height: 8, backgroundColor: '#E0E0E0', borderRadius: 4, overflow: 'hidden' }}>
-                    <View 
-                    style={{ 
-                      height: '100%', 
-                      backgroundColor: item.color,
-                      borderRadius: 4 
-                    }} />
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {/* 3. GRÁFICO DE LÍNEA (CartesianChart + Line) */}
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>📈 Tendencia</Text>
-        <View style={{ height: 250, width: '100%' }}>
-            <CartesianChart
-              data={trendData}
-              xKey="x"
-              yKeys={["y"]}
-              axisOptions={{
-                font,
-                lineColor: "#e0e0e0",
-              }}
-              domainPadding={{ top: 30, bottom: 30 }}
-            >
-              {({ points, chartBounds }) => (
-                <>
-                  <Line
-                    points={points.y}
-                    color="#FF6B6B"
-                    strokeWidth={3}
-                    curveType="natural" // Curva suave
-                  />
-                  {/* Opcional: Puntos en cada dato */}
-                  {/* <Scatter points={points.y} shape="circle" radius={4} style="fill" color="#FF6B6B" /> */}
-                </>
-              )}
-            </CartesianChart>
-        </View>
-      </View>
 
       <View style={{ height: 40 }} />
     </ScrollView>

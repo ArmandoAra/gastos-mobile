@@ -29,11 +29,13 @@ interface SubmitButtonProps {
     selectedIcon: { id: string; gradientColors: [string, string] } | null;
     option?: addOption;
     loading?: boolean; // Prop extra recomendada para móviles
+    disabled?: boolean; // Nueva prop para deshabilitar el botón
 }
 
 export default function SubmitButton({
     handleSave,
     selectedIcon,
+    disabled,
     option,
     loading = false
 }: SubmitButtonProps) {
@@ -66,7 +68,7 @@ export default function SubmitButton({
                 onPress={handleSave}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
-                disabled={loading}
+            disabled={disabled}
                 activeOpacity={0.9}
                 style={styles.touchable}
             >
@@ -90,13 +92,17 @@ export default function SubmitButton({
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1, // Ocupa el espacio restante en la fila (junto al botón cerrar)
         height: 48,
-    },
-    touchable: {
-        flex: 1,
+        width: '100%',
         borderRadius: 12,
         overflow: 'hidden', // Asegura que el gradiente respete el borde
+    },
+    touchable: {
+        width: '100%',
+        height: 48,
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 5,
     },
     gradient: {
         flex: 1,

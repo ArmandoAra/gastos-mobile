@@ -1,67 +1,114 @@
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isSameMonth, isSameYear, isSameDay } from "date-fns"; // Agregamos isSameDay
 import { es } from "date-fns/locale";
 import { useState, useMemo, useCallback } from "react";
-import { View, TouchableOpacity, ScrollView, Text } from "react-native";
+import { View, TouchableOpacity, ScrollView, Text, TextInput, StyleSheet } from "react-native";
 import { styles } from "../../theme/styles";
-import { MOCK_TRANSACTIONS } from "../home/HomeScreen";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { LinearGradient } from "expo-linear-gradient"; // Para los botones activos
+
+// Componentes
 import AddTransactionsButton from "../../components/buttons/AddTransactionsButton";
 import InfoPopUp from "../../components/messages/InfoPopUp";
-import useDataStore from "../../stores/useDataStore";
-import { formatCurrency } from "../../utils/helpers";
-import { MaterialIcons } from "@expo/vector-icons";
-import React from "react";
-import { IconCategory } from "./components/IconCategory";
-import { Transaction, TransactionType } from "../../interfaces/data.interface";
-import { updateTransaction } from '../../../../Gastos/frontend/app/actions/db/Gastos_API';
-import { TransactionItemMobile } from "./components/TransactionItem";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ModernDateSelector from "../../components/buttons/ModernDateSelector";
+import { TransactionItemMobile } from "./components/TransactionItem";
 
+// Stores & Interfaces
+import useDataStore from "../../stores/useDataStore";
+import { Transaction, TransactionType } from "../../interfaces/data.interface";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { formatCurrency } from "../../utils/helpers";
+import FilterFloatingButton from "./components/FilterFloatingButton";
+import TransactionsHeader from "../../components/headers/TransactionsHeader";
+import useDateStore from "../../stores/useDateStore";
+
+// Tipo para el modo de vista
+type ViewMode = 'day' | 'month' | 'year';
 
 export function TransactionsScreen() {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const { deleteTransaction, updateTransaction, deleteSomeAmountInAccount, updateAccountBalance } = useDataStore();
+    // const [localSelectedDate, setlocalSelectedDate] = useState(new Date());
+    const { localSelectedDay, setLocalSelectedDay } = useDateStore();
+    const [viewMode, setViewMode] = useState<ViewMode>('month'); // Default: Mensual
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const { transactions } = useDataStore();
 
+    // Store
+    const {
+        transactions,
+        deleteTransaction,
+        updateTransaction,
+        deleteSomeAmountInAccount,
+        updateAccountBalance
+    } = useDataStore();
+
+    // --- 1. LÓGICA DE FILTRADO (Por fecha y modo) ---
     const filteredTransactions = useMemo(() => {
-        let filtered = transactions;
+        let result = transactions;
 
+        // A. Filtro por FECHA según el MODO (Day/Month/Year)
+        result = result.filter(t => {
+            const tDate = parseISO(t.date);
+            switch (viewMode) {
+                case 'day':
+                    return isSameDay(tDate, localSelectedDay);
+                case 'month':
+                    return isSameMonth(tDate, localSelectedDay) && isSameYear(tDate, localSelectedDay);
+                case 'year':
+                    return isSameYear(tDate, localSelectedDay);
+                default:
+                    return true;
+            }
+        });
+
+        // B. Filtro por TIPO (Ingreso/Gasto)
         if (filter !== 'all') {
-            filtered = filtered.filter(t => t.type === filter);
+            result = result.filter(t => t.type === filter);
         }
 
-        if (searchQuery) {
-            filtered = filtered.filter(t =>
-                t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.category_name.toLowerCase().includes(searchQuery.toLowerCase())
+        // C. Filtro por BÚSQUEDA
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(t =>
+                (t.description || '').toLowerCase().includes(query) ||
+                (t.category_name || '').toLowerCase().includes(query)
             );
         }
 
-        return filtered.sort((a, b) =>
+        // Ordenar: Más recientes primero
+        return result.sort((a, b) =>
             new Date(b.date).getTime() - new Date(a.date).getTime()
         );
-    }, [filter, searchQuery, transactions]);
+    }, [filter, searchQuery, transactions, localSelectedDay, viewMode]);
 
-    const groupedByDate = useMemo(() => {
+    // --- 2. AGRUPACIÓN DINÁMICA ---
+    const groupedData = useMemo(() => {
         const groups: Record<string, typeof filteredTransactions> = {};
-        filteredTransactions.forEach(transaction => {
-            const dateKey = format(parseISO(transaction.date), 'yyyy-MM-dd');
-            if (!groups[dateKey]) {
-                groups[dateKey] = [];
-            }
-            groups[dateKey].push(transaction);
-        });
-        return groups;
-    }, [filteredTransactions, transactions]);
 
-    // Manejadores de acciones
+        filteredTransactions.forEach(transaction => {
+            let groupKey = '';
+            const date = parseISO(transaction.date);
+
+            // La clave de agrupación cambia según el modo
+            if (viewMode === 'year') {
+                // En modo Año, agrupamos por MES (ej: "2023-10")
+                groupKey = format(date, 'yyyy-MM');
+            } else {
+                // En modo Mes o Día, agrupamos por DÍA (ej: "2023-10-25")
+                groupKey = format(date, 'yyyy-MM-dd');
+            }
+
+            if (!groups[groupKey]) {
+                groups[groupKey] = [];
+            }
+            groups[groupKey].push(transaction);
+        });
+
+        return groups;
+    }, [filteredTransactions, viewMode]);
+
+    // --- MANEJADORES ---
     const handleDelete = useCallback(async (
-        id: string,
-        account_id?: string,
-        amount?: number,
-        transactionType?: TransactionType
+        id: string, account_id?: string, amount?: number, transactionType?: TransactionType
     ) => {
         try {
             deleteTransaction(id);
@@ -74,93 +121,216 @@ export function TransactionsScreen() {
     }, [deleteTransaction, deleteSomeAmountInAccount]);
 
     const handleSave = useCallback(async (
-        updatedTransaction: Transaction,
-        fromAccount: string | null = null,
-        toAccount: string | null = null,
-    ): Promise<Transaction | null | undefined> => {
+        updatedTransaction: Transaction, fromAccount: string | null = null, toAccount: string | null = null,
+    ) => {
         if (!updatedTransaction) return;
         try {
             updateTransaction(updatedTransaction);
             if (fromAccount !== toAccount) {
-                if (fromAccount) updateAccountBalance(fromAccount, updatedTransaction.amount, updatedTransaction.type as TransactionType);
-                if (toAccount) updateAccountBalance(toAccount, updatedTransaction.amount, updatedTransaction.type as TransactionType);
+                if (fromAccount) deleteSomeAmountInAccount(fromAccount, Math.abs(updatedTransaction.amount), updatedTransaction.type);
+                if (toAccount) updateAccountBalance(toAccount, Math.abs(updatedTransaction.amount), updatedTransaction.type);
             }
-
+            return updatedTransaction;
         } catch (error) {
             console.error('Error updating transaction:', error);
+            return null;
         }
-    }, [updateTransaction, updateAccountBalance]);
+    }, [updateTransaction, updateAccountBalance, deleteSomeAmountInAccount]);
 
+    // Helper para formatear el título del grupo
+    const getGroupTitle = (dateKey: string) => {
+        const date = parseISO(dateKey); // dateKey es 'yyyy-MM' o 'yyyy-MM-dd'
+        if (viewMode === 'year') {
+            // Si agrupamos por mes, mostrar nombre del mes
+            return format(date, 'MMMM', { locale: es });
+        }
+        // Si agrupamos por día, mostrar fecha completa
+        return format(date, 'EEEE, d MMMM', { locale: es });
+    };
 
     return (
         <View style={styles.container}>
-            {/* message popup */}
             <InfoPopUp />
-            <ModernDateSelector
-                selectedDate={currentDate}
-                onDateChange={setCurrentDate}
+            <TransactionsHeader
+                viewMode={viewMode}
             />
-            {/* Filtros */}
-            <View style={styles.filterContainer}>
-                <TouchableOpacity
-                    style={[styles.filterBtn, filter === 'all' && styles.filterBtnActive]}
-                    onPress={() => setFilter('all')}
-                >
-                    <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-                        All
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.filterBtn, filter === 'income' && styles.filterBtnActive]}
-                    onPress={() => setFilter('income')}
-                >
-                    <Text style={[styles.filterText, filter === 'income' && styles.filterTextActive]}>
-                        Incomes
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.filterBtn, filter === 'expense' && styles.filterBtnActive]}
-                    onPress={() => setFilter('expense')}
-                >
-                    <Text style={[styles.filterText, filter === 'expense' && styles.filterTextActive]}>
-                        Expenses
-                    </Text>
-                </TouchableOpacity>
+            <View style={{ paddingHorizontal: 16, marginBottom: 8, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <FilterFloatingButton
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    filter={filter}
+                    setFilter={setFilter}
+                />
+                <View style={{ flexDirection: 'column', alignItems: 'center', gap: 1, width: 100, paddingHorizontal: 4 }}>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: '#BBE0EF' }}>{viewMode}</Text>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: '#F9DFDF' }}>{filter}</Text>
+
+
+                </View>
+                {/* --- BARRA DE BÚSQUEDA --- */}
+                <View style={localStyles.searchContainer}>
+                    <Ionicons name="search" size={20} color="#94a3b8" style={{ marginRight: 8 }} />
+                    <TextInput
+                        style={localStyles.searchInput}
+                        placeholder={`Search in this ${viewMode}...`}
+                        placeholderTextColor="#64748b"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        autoCorrect={false}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <Ionicons name="close-circle" size={20} color="#94a3b8" />
+                        </TouchableOpacity>
+                    )}
+
+                </View>
             </View>
 
-            {/* Lista de Transacciones */}
+
+            {/* Espaciador superior */}
+            <View style={{ height: 1 }} />
+
+            {/* --- LISTA --- */}
             <GestureHandlerRootView style={{ flex: 1 }}>
-            <ScrollView style={styles.transactionsList}>
-                    {Object.entries(groupedByDate).map(([date, trans]) => (
-                    <View key={date}>
-                        <View style={styles.dateHeader}>
-                            <Text style={styles.dateHeaderText}>
-                                {format(parseISO(date), 'EEEE, d MMMM', { locale: es })}
+                <ScrollView
+                    style={styles.transactionsList}
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                >
+                    {/* Estado Vacío */}
+                    {Object.keys(groupedData).length === 0 && (
+                        <View style={localStyles.emptyState}>
+                            <MaterialIcons name="receipt-long" size={48} color="#334155" />
+                            <Text style={localStyles.emptyText}>
+                                No transactions found for this {viewMode}
                             </Text>
-                            <Text style={styles.dateHeaderTotal}>
-                                    ${trans.reduce((sum, t) =>
-                                    t.type === 'expense' ? sum - t.amount : sum + t.amount, 0
-                                    )}
-                                </Text>
+                        </View>
+                    )}
+
+                    {Object.entries(groupedData).map(([key, trans]) => {
+                        // Calcular total del grupo
+                        const groupTotal = trans.reduce((sum, t) =>
+                            t.type === 'expense' ? sum - t.amount : sum + t.amount, 0
+                        );
+
+                        return (
+                            <View key={key}>
+                                <View style={styles.dateHeader}>
+                                    {/* Título dinámico (Día o Mes) */}
+                                    <Text style={styles.dateHeaderText}>
+                                        {getGroupTitle(key)}
+                                    </Text>
+
+                                    <Text style={[
+                                        styles.dateHeaderTotal,
+                                        { color: groupTotal >= 0 ? '#10b981' : '#ef4444' }
+                                    ]}>
+                                        {formatCurrency(groupTotal)}
+                                    </Text>
+                                </View>
+                                {trans.map(transaction => (
+                                    <TransactionItemMobile
+                                        key={transaction.id}
+                                        transaction={transaction}
+                                        onDelete={handleDelete}
+                                        onSave={handleSave}
+                                    />
+                                ))}
                             </View>
-                            {trans.map(transaction => (
-                                <TransactionItemMobile
-                                    key={transaction.id}
-                                    transaction={transaction}
-                                    onDelete={handleDelete}
-                                    onSave={handleSave}
-                                />
-                        ))}
-                    </View>
-                ))}
-            </ScrollView>
+                        );
+                    })}
+                </ScrollView>
             </GestureHandlerRootView>
 
-            {/* Botón flotante */}
             <AddTransactionsButton />
-
         </View>
     );
-};
+}
 
+// Estilos Locales
+const localStyles = StyleSheet.create({
+    // Selector de Modo (Day/Month/Year)
+    modeSelectorContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 8,
+        marginBottom: 12,
+        paddingHorizontal: 16,
+    },
+    modeBtnWrapper: {
+        flex: 1,
+        height: 36,
+        borderRadius: 18,
+        overflow: 'hidden',
+    },
+    modeBtnActive: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modeBtnInactive: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1e293b',
+        borderWidth: 1,
+        borderColor: '#334155',
+        borderRadius: 18,
+    },
+    modeLabel:
+    {
+        fontWeight: 'bold',
+        width: '100%',
+        textAlign: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 14,
+        textTransform: 'capitalize',
+        fontSize: 12
+    },
+    modeTextActive: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 13,
+    },
+    modeTextInactive: {
+        color: '#94a3b8',
+        fontWeight: '600',
+        fontSize: 13,
+    },
 
+    // Búsqueda
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'flex-end',
+        backgroundColor: '#F5F2F2',
+        width: '60%',
+        height: "100%",
+        marginHorizontal: 4,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#061E29',
+    },
+    searchInput: {
+        flex: 1,
+        color: '#061E29',
+        fontSize: 12,
+        padding: 0,
+    },
+
+    // Estado Vacío
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 50,
+        opacity: 0.7
+    },
+    emptyText: {
+        color: '#94a3b8',
+        marginTop: 10,
+        fontSize: 16
+    }
+});

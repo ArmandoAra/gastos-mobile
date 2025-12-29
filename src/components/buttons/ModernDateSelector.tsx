@@ -26,10 +26,10 @@ const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const COLORS = {
   glassBg: 'rgba(30, 41, 59, 0.85)', 
-  modalBg: '#0f172a',
+  modalBg: '#DDF4E7',
   border: 'rgba(255, 255, 255, 0.1)',
-  text: '#ffffff',
-  textMuted: '#94a3b8',
+  text: '#061E29',
+  textMuted: '#f97316',
   activeGradient: ['#f97316', '#dc2626'] as const, // Naranja a Rojo
   todayHighlight: 'rgba(249, 115, 22, 0.2)',
 };
@@ -133,7 +133,7 @@ export default function ModernCalendarSelector({
 
           <View style={styles.pillContent}>
             <Ionicons name="calendar-clear-outline" size={18} color={COLORS.textMuted} />
-            <Text style={styles.pillText}>{formatButtonDate()}</Text>
+            {/* <Text style={styles.pillText}>{formatButtonDate()}</Text> */}
             <MaterialIcons name="keyboard-arrow-down" size={20} color={COLORS.activeGradient[0]} />
           </View>
         </TouchableOpacity>
@@ -160,7 +160,7 @@ export default function ModernCalendarSelector({
             </TouchableOpacity>
 
             <Animated.View 
-                entering={ZoomIn.springify().damping(15)}
+            entering={ZoomIn.duration(100)}
                 exiting={ZoomOut.duration(200)}
                 style={styles.calendarCard}
             >
@@ -254,9 +254,8 @@ export default function ModernCalendarSelector({
 const styles = StyleSheet.create({
   // --- Botón Flotante ---
   floatingContainer: {
-    position: 'absolute',
-    top: -30, // Ajustar según StatusBar
-    right: 20,
+    position: 'relative',
+    width: 'auto',
     zIndex: 100,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -270,10 +269,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   pillContent: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     gap: 8,
   },
   pillText: {
@@ -292,12 +291,12 @@ const styles = StyleSheet.create({
   calendarCard: {
     width: width * 0.9,
     maxWidth: 360,
+    height: 500,
     backgroundColor: COLORS.modalBg,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: COLORS.activeGradient[0],
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.15,
     shadowRadius: 25,

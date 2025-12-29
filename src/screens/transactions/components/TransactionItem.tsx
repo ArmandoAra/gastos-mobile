@@ -4,9 +4,9 @@ import Animated, {
     useSharedValue, 
     useAnimatedStyle, 
     withSpring, 
-    withTiming, 
-    runOnJS 
+    withTiming,
 } from 'react-native-reanimated';
+import { runOnJS } from "react-native-worklets"
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';

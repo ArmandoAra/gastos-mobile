@@ -177,8 +177,8 @@ const InputOptionsNoShadow = ({ title, iconName, gradientColors, onPress, index 
 const styles = StyleSheet.create({
     optionsContainer: {
         position: 'absolute',
-        bottom: 90,
-        right: 24,
+        bottom: 110,
+        right: 90,
         zIndex: 1300,
         alignItems: 'flex-end',
     },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     },
     fabContainer: {
         position: 'absolute',
-        bottom: 24,
+        bottom: 110,
         right: 24,
         zIndex: 301,
     },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
         width: FAB_SIZE,
         height: FAB_SIZE,
         borderRadius: FAB_SIZE / 2,
-        backgroundColor: '#6200EE',
+        backgroundColor: '#0f172a',
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
     },
     fabOpen: {
         backgroundColor: '#3700B3',
+        transform: [{ rotate: '45deg' }],
         ...Platform.select({
             android: { elevation: 8 }
         }),
