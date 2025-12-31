@@ -10,8 +10,8 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeColors, MainTabParamList } from '../../types/navigation';
-// Asumo que estos son componentes funcionales (ej: SVGs)
 import { AnaliticsIcon, SettingsIcon, SumarizeIcon } from '../../constants/icons';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 const { width } = Dimensions.get('window');
 
@@ -41,20 +41,17 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
       <View style={[
         styles.tabBar,
         {
-          backgroundColor: "#A8F1FF",
+          backgroundColor: colors.background,
           borderWidth: 1,
-          borderColor: "#211832",
+          borderColor: colors.border,
           marginBottom: Platform.OS === 'ios' ? insets.bottom : 20,
-          shadowColor: '#000',
+          shadowColor: colors.shadow,
         }
       ]}>
         {state.routes.map((route, index) => {
           const routeName = route.name as keyof MainTabParamList;
           const { options } = descriptors[route.key];
-          
           const isFocused = state.index === index;
-
-          // 1. Obtenemos la REFERENCIA al componente (Nótese la mayúscula inicial por convención)
           const IconComponent = getIconComponent(routeName);
 
           const onPress = () => {
@@ -100,21 +97,17 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
               <View style={[
                 styles.iconContainer,
                 isFocused && { 
-                  backgroundColor: "#C2E2FA",
-                  borderColor: "#211832",
+                  backgroundColor: colors.accent,
+                  borderColor: colors.border,
                   borderWidth: 1,
                       elevation: 5 
                     }
               ]}>
                 <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-                  {/* 2. Renderizamos el componente directamente si existe */}
                   {IconComponent && (
                     <IconComponent 
-                        // Pasamos el color y tamaño como props (tus iconos deben soportar esto)
                         color={isFocused ? "#11224E" : "#043915"}
                         size={32}
-                        // Si tus iconos usan 'fill' o 'stroke' en lugar de color, ajústalo aquí
-                        // fill={isFocused ? colors.primary : colors.textSecondary}
                     />
                   )}
                 </Animated.View>

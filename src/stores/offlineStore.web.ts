@@ -1,14 +1,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
 import type { PendingSync } from '../types/schemas';
 
-const storage = createMMKV();
-
-const mmkvStorage = {
-    setItem: (name: string, value: string) => storage.set(name, value),
-    getItem: (name: string) => storage.getString(name) ?? null,
-    removeItem: (name: string) => storage.remove(name),
+const localStorageForWeb = {
+    setItem: (name: string, value: string) => localStorage.setItem(name, value),
+    getItem: (name: string) => localStorage.getItem(name) ?? null,
+    removeItem: (name: string) => localStorage.removeItem(name),
 };
 
 interface OfflineState {
@@ -36,7 +33,7 @@ export const useOfflineStore = create<OfflineState>()(
         }),
         {
             name: 'offline-storage',
-            storage: createJSONStorage(() => mmkvStorage),
+            storage: createJSONStorage(() => localStorageForWeb),
         }
     )
 );

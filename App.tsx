@@ -13,10 +13,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // --- Imports Locales (Ajusta las rutas según tu proyecto) ---
 import './src/i18n';
-import { HomeScreen } from './src/screens/home/HomeScreen';
 import { TransactionsScreen } from './src/screens/transactions/TransactionsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
-import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { PinScreen } from './src/screens/auth/PinScreen';
 import { SetupScreen } from './src/screens/auth/SetupScreen';
 
@@ -53,7 +51,7 @@ const MainTabs = () => {
   // Fallback si textSecondary no existe en tu tema original
   const safeColors: ThemeColors = {
     ...currentColors,
-    textSecondary: currentColors.textSecondary || '#94a3b8'
+    textSecondary: currentColors.textSecondary
   };
 
   return (
@@ -85,7 +83,7 @@ const MainTabs = () => {
         component={TransactionsScreen}
         options={{
           title: 'Transactions',
-          headerTitle: '📊 Transacciones'
+          headerTitle: 'Transacciones'
         }}
       />
       <Tab.Screen
@@ -93,7 +91,7 @@ const MainTabs = () => {
         component={AnalyticsScreen}
         options={{
           title: 'Analytics',
-          headerTitle: '📈 Analytics'
+          headerTitle: 'Analytics'
         }}
       />
       <Tab.Screen
@@ -101,7 +99,7 @@ const MainTabs = () => {
         component={SettingsScreen}
         options={{
           title: 'Settings',
-          headerTitle: '⚙️ Configuración'
+          headerTitle: 'Configuración'
         }}
       />
     </Tab.Navigator>

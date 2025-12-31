@@ -68,8 +68,9 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
       styles.container, 
       { 
         paddingTop: insets.top + 10,
-        backgroundColor: "#A8F1FF", // O un color transparente si prefieres
+        backgroundColor: colors.background,
         borderBottomColor: colors.border,
+        shadowColor: colors.shadow,
         elevation: 5,
       }
     ]}>
@@ -80,16 +81,12 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
                 <View
                   style={styles.avatarRing}
                 >
-                   {/* Placeholder o Imagen Real */}
                    <Image 
                       source={currentIconPage} 
                       style={styles.avatarImage} 
                    />
                 </View>
           
-        
-
-          {/* --- CENTRO/IZQ: Títulos --- */}
           <View style={[styles.textContainer, (showBack || showAvatar) ? { marginLeft: 12 } : {}]}>
             {subtitle || (showAvatar && !title) ? (
                <Text style={[styles.greeting, { color: colors.textSecondary }]}>
@@ -113,8 +110,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    // Sombra suave para separar del contenido
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 10,

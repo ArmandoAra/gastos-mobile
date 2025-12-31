@@ -111,17 +111,14 @@ interface DateTextParams {
     day?: number | null;
 }
 
-export const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-];
+import {MONTHS} from '../constants/date';
 
 export function makeTextFromDate({ month = null, year = null, day = null }: DateTextParams) {
     switch (true) {
         case month !== null && year !== null && day !== null:
-            return `${MONTH_NAMES[month]} ${day}, ${year}`;
+            return `${MONTHS[month]} ${day}, ${year}`;
         case month !== null && year !== null:
-            return `${MONTH_NAMES[month]} ${year}`;
+            return `${MONTHS[month]} ${year}`;
         case year !== null:
             return `${year}`;
         default:
@@ -206,8 +203,6 @@ export function calculateDaysInMonth(month: number, year: number): number {
     return new Date(year, month, 0).getDate();
 }
 
-
-
 export function makeUrlDate(year: number, month?: number | null, day?: number | null): string {
 
     const now = new Date();
@@ -242,6 +237,7 @@ export function makeUrlDate(year: number, month?: number | null, day?: number | 
 
     return `${finalYear}-${String(finalMonth).padStart(2, '0')}-${String(finalDay).padStart(2, '0')}`;
 }
+
 export interface ParsedDate {
     year: number;
     month: number;
@@ -415,7 +411,6 @@ export function calculateExpensesByCategory(transactions: Transaction[]): Expens
         totalAmount,
     }));
 }
-
 
 // Verificar con la data que se esta trabajando a nivel de fechas
 export function dataByYearMonthOrDay(year: number, month?: number | null, day?: number | null) {

@@ -7,6 +7,9 @@ import { format, isSameDay, set } from 'date-fns';
 import { es } from 'date-fns/locale'; // Opcional: si quieres español
 import ModernDateSelector from '../buttons/ModernDateSelector';
 import useDateStore from '../../stores/useDateStore';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { ThemeColors } from '../../types/navigation';
+import {darkTheme, lightTheme} from '../../theme/colors';
 
 // Tipos
 type ViewMode = 'day' | 'month' | 'year';
@@ -16,9 +19,6 @@ interface TransactionsHeaderProps {
 }
 
 const COLORS = {
-  text: '#061E29',
-  textMuted: '#94a3b8',
-  cardBg: '#DDF4E7', // Slate 800
   accentGradient: ['#f97316', '#dc2626'] as [string, string], // Naranja a Rojo (Tu marca)
   blueGradient: ['#3b82f6', '#2563eb'] as [string, string], // Azul para contraste
 };
@@ -26,6 +26,8 @@ const COLORS = {
 export default function TransactionsHeader({ 
   viewMode 
 }: TransactionsHeaderProps) {
+  const { theme } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const {localSelectedDay,setLocalSelectedDay} = useDateStore();
 
   // --- Lógica de Formato de Texto ---
@@ -60,7 +62,11 @@ export default function TransactionsHeader({
       style={styles.container}
     >
       {/* Tarjeta de Fecha Principal */}
-      <View style={styles.dateCard}>
+      <View style={[styles.dateCard,{ 
+        backgroundColor: colors.background, 
+        shadowColor: colors.shadow ,
+        borderColor: colors.border
+        }]}>
         {/* Fondo con brillo sutil */}
         <View style={styles.glowEffect} />
         
@@ -79,8 +85,8 @@ export default function TransactionsHeader({
 
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
-                    <Text style={styles.overviewLabel}>{subTitle}</Text>
-                <Text style={styles.dateDisplay}>{dateText}</Text>
+                    <Text style={[styles.overviewLabel, {color: colors.text}]}>{subTitle}</Text>
+                <Text style={[styles.dateDisplay, {color: colors.text}]}>{dateText}</Text>
                 </View>
                 
                 <ModernDateSelector
@@ -106,18 +112,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '800', // Extra bold
-    color: COLORS.text,
-    letterSpacing: 0.5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginTop: 2,
-    fontWeight: '500',
-  },
+  // title: {
+  //   fontSize: 28,
+  //   fontWeight: '800', // Extra bold
+  //   color: COLORS.text,
+  //   letterSpacing: 0.5,
+  // },
+  // subtitle: {
+  //   fontSize: 14,
+  //   color: COLORS.textMuted,
+  //   marginTop: 2,
+  //   fontWeight: '500',
+  // },
   iconContainer: {
     width: 48,
     height: 48,
@@ -138,12 +144,9 @@ const styles = StyleSheet.create({
   dateCard: {
     borderRadius: 20,
     padding: 16,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
@@ -179,7 +182,6 @@ const styles = StyleSheet.create({
   },
   overviewLabel: {
     fontSize: 12,
-    color: COLORS.textMuted,
     textTransform: 'uppercase',
     fontWeight: '700',
     letterSpacing: 1,
@@ -188,7 +190,6 @@ const styles = StyleSheet.create({
   dateDisplay: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.text,
     textTransform: 'capitalize',
   },
 });

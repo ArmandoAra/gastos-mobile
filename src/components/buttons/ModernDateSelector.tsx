@@ -17,12 +17,13 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { MONTHS, WEEKDAYS } from '../../constants/date';
+
 
 const { width } = Dimensions.get('window');
 
 // --- Constantes ---
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
 
 const COLORS = {
   glassBg: 'rgba(30, 41, 59, 0.85)', 

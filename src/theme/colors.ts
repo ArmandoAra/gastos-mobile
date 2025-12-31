@@ -1,7 +1,7 @@
 export const lightTheme = {
     primary: '#6200EE',
     accent: '#03DAC6',
-    background: '#FFFFFF',
+    background: '#A8F1FF',
     surface: '#FFFFFF',
     text: '#000000',
     textSecondary: '#757575',
@@ -11,6 +11,7 @@ export const lightTheme = {
     expense: '#EF5350',
     income: '#66BB6A',
     border: '#E0E0E0',
+    shadow: "#000"
 };
 
 export const darkTheme = {
@@ -26,4 +27,5 @@ export const darkTheme = {
     expense: '#EF5350',
     income: '#66BB6A',
     border: '#2C2C2C',
+    shadow: '#FFF'
 };

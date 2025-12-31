@@ -21,12 +21,17 @@ import { formatCurrency } from "../../utils/helpers";
 import FilterFloatingButton from "./components/FilterFloatingButton";
 import TransactionsHeader from "../../components/headers/TransactionsHeader";
 import useDateStore from "../../stores/useDateStore";
+import { useSettingsStore } from "../../stores/settingsStore";
+import { ThemeColors } from "../../types/navigation";
+import {darkTheme, lightTheme} from '../../theme/colors';
 
 // Tipo para el modo de vista
 type ViewMode = 'day' | 'month' | 'year';
 
 export function TransactionsScreen() {
-    // const [localSelectedDate, setlocalSelectedDate] = useState(new Date());
+    const { theme } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+
     const { localSelectedDay, setLocalSelectedDay } = useDateStore();
     const [viewMode, setViewMode] = useState<ViewMode>('month'); // Default: Mensual
     const [filter, setFilter] = useState('all');
@@ -162,25 +167,23 @@ export function TransactionsScreen() {
                     setFilter={setFilter}
                 />
                 <View style={{ flexDirection: 'column', alignItems: 'center', gap: 1, width: 100, paddingHorizontal: 4 }}>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: '#BBE0EF' }}>{viewMode}</Text>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: '#F9DFDF' }}>{filter}</Text>
-
-
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.background }}>{viewMode}</Text>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.background }}>{filter}</Text>
                 </View>
                 {/* --- BARRA DE BÚSQUEDA --- */}
-                <View style={localStyles.searchContainer}>
-                    <Ionicons name="search" size={20} color="#94a3b8" style={{ marginRight: 8 }} />
+                <View style={[localStyles.searchContainer, { backgroundColor: colors.surface }]}>
+                    <Ionicons name="search" size={20} color={colors.background} style={{ marginRight: 8 }} />
                     <TextInput
-                        style={localStyles.searchInput}
+                        style={[localStyles.searchInput, {color: colors.text}]}
                         placeholder={`Search in this ${viewMode}...`}
-                        placeholderTextColor="#64748b"
+                        placeholderTextColor={colors.textSecondary}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         autoCorrect={false}
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color="#94a3b8" />
+                            <Ionicons name="close-circle" size={20} color={colors.background} />
                         </TouchableOpacity>
                     )}
 
@@ -200,7 +203,7 @@ export function TransactionsScreen() {
                     {/* Estado Vacío */}
                     {Object.keys(groupedData).length === 0 && (
                         <View style={localStyles.emptyState}>
-                            <MaterialIcons name="receipt-long" size={48} color="#334155" />
+                            <MaterialIcons name="receipt-long" size={48} color={colors.background} />
                             <Text style={localStyles.emptyText}>
                                 No transactions found for this {viewMode}
                             </Text>
@@ -223,7 +226,7 @@ export function TransactionsScreen() {
 
                                     <Text style={[
                                         styles.dateHeaderTotal,
-                                        { color: groupTotal >= 0 ? '#10b981' : '#ef4444' }
+                                        { color: groupTotal >= 0 ? colors.income : colors.expense }
                                     ]}>
                                         {formatCurrency(groupTotal)}
                                     </Text>
@@ -305,7 +308,6 @@ const localStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: 'flex-end',
-        backgroundColor: '#F5F2F2',
         width: '60%',
         height: "100%",
         marginHorizontal: 4,
@@ -316,7 +318,6 @@ const localStyles = StyleSheet.create({
     },
     searchInput: {
         flex: 1,
-        color: '#061E29',
         fontSize: 12,
         padding: 0,
     },
