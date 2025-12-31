@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "gastos-mobile",
-    "slug": "gastos-mobile",
+    "name": "Spendiary",
+    "slug": "spendiary",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -41,6 +41,11 @@
     },
     "plugins": [
       "expo-localization"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "247a7e7b-c2d6-4b8f-baa1-5c60a4a7c14f"
+      }
+    }
   }
 }

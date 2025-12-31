@@ -28,7 +28,7 @@ interface AuthState {
     isBiometricEnabled: boolean;
 
     // Acciones
-    setupAccount: (name: string, pin: string, enableBiometrics: boolean) => Promise<void>;
+    setupAccount: (name: string, pin: string, enableBiometrics: boolean) => Promise<UserProfile>;
     loginWithPin: (pin: string) => Promise<boolean>;
     loginWithBiometrics: () => Promise<boolean>;
     updateUser: (newData: Partial<UserProfile>) => void;
@@ -45,17 +45,23 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isBiometricEnabled: false,
 
-          setupAccount: async (name, pin, enableBiometrics) => {
-              // 1. Hasheamos el PIN para seguridad
+            setupAccount: async (name, pin, enableBiometrics) => {
               const hashed = await hashPin(pin);
+                const newUser: UserProfile = {
+                    id: uuidv4(),
+                    name,
+                    currency: 'USD'
+                };
 
+                // IMPORTANTE: Asegúrate de que el set se haga antes de cualquier redirección
               set({
-                  user: { id: uuidv4(), name, currency: 'USD' },
+                  user: newUser,
                   pinHash: hashed,
                   isBiometricEnabled: enableBiometrics,
                   isSetupComplete: true,
-                  isAuthenticated: true, // Auto-login al crear
+                  isAuthenticated: true, 
               });
+                return Promise.resolve(newUser); 
           },
 
           loginWithPin: async (inputPin) => {
@@ -97,15 +103,15 @@ export const useAuthStore = create<AuthState>()(
 
           logout: () => set({ isAuthenticated: false }),
       }),
-      {
+        {
         name: 'local-auth-storage',
-        storage: createJSONStorage(() => mmkvStorage),
-        // IMPORTANTE: No persistir 'isAuthenticated' para que siempre pida PIN al reiniciar app
+            storage: createJSONStorage(() => mmkvStorage),
         partialize: (state) => ({
             user: state.user,
             pinHash: state.pinHash,
             isSetupComplete: state.isSetupComplete,
             isBiometricEnabled: state.isBiometricEnabled,
+            // isAuthenticated NO se guarda, esto es correcto.
         }),
       }
   )

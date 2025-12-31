@@ -17,6 +17,8 @@ import Animated, {
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
 import AddTransactionForm from '../forms/AddTransactionForm';
+import useDataStore from '../../stores/useDataStore';
+import { set } from 'date-fns';
 
 const FAB_SIZE = 56;
 
@@ -29,6 +31,7 @@ const SPRING_CONFIG = {
 
 export default function AddTransactionsButton() {
     const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
+    const { allAccounts, setSelectedAccount, selectedAccount, } = useDataStore();
 
     // Shared Value para la rotación del icono
     const rotation = useSharedValue(0);
@@ -37,6 +40,28 @@ export default function AddTransactionsButton() {
     useEffect(() => {
         rotation.value = withTiming(isAddOptionsOpen ? 45 : 0, { duration: 200 });
     }, [isAddOptionsOpen]);
+
+    useEffect(() => {
+        // 1. Si no hay cuentas en absoluto, asegurarnos de que no haya nada seleccionado
+        if (allAccounts.length === 0) {
+            if (selectedAccount !== null && selectedAccount !== '') {
+                setSelectedAccount(''); // O null, dependiendo de tu tipo
+            }
+            return;
+        }
+
+        // 2. Buscamos si la cuenta seleccionada actual existe en la lista
+        const currentAccountExists = allAccounts.some(acc => acc.id === selectedAccount);
+
+        // 3. Si NO existe (porque se borró o es antigua) o no hay ninguna seleccionada
+        if (!currentAccountExists || !selectedAccount) {
+            console.log("La cuenta seleccionada no es válida. Asignando la primera disponible.");
+            // Seleccionamos la primera cuenta disponible por defecto
+            setSelectedAccount(allAccounts[0].id);
+        }
+
+        // Eliminamos 'setSelectedAccount' de las dependencias para evitar bucles si la función no es estable
+    }, [allAccounts, selectedAccount]);
 
 
     const handleToggleOptions = () => {

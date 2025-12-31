@@ -39,12 +39,6 @@ export default function CategoryAndAmountInput({
     // Lógica de animación para el botón de categoría (Scale effect)
     const scale = useSharedValue(1);
 
-    // const animatedIconStyle = useAnimatedStyle(() => {
-    //     return {
-    //         transform: [{ scale: scale.value }],
-    //     };
-    // });
-
     const handlePressIn = () => {
         scale.value = withSpring(0.95);
     };
@@ -164,10 +158,10 @@ const styles = StyleSheet.create({
 
     // Estilos Comunes
     label: {
-        fontSize: 11,
+        fontSize: 8,
         fontWeight: '700',
         color: '#888', // text.secondary
-        marginBottom: 8,
+        marginBottom: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
         alignSelf: 'flex-start',

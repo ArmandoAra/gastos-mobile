@@ -153,12 +153,12 @@ export default function AccountSelector({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 16,
+        marginBottom: 8,
     },
     label: {
-        fontSize: 12,
+        fontSize: 8,
         color: '#666',
-        marginBottom: 8,
+        marginBottom: 4,
         fontWeight: '600',
         marginLeft: 4,
         textTransform: 'uppercase',

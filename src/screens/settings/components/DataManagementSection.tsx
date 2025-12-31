@@ -5,11 +5,10 @@ import {
     TouchableOpacity,
     StyleSheet,
     Alert,
-    Platform
+    ScrollView
 } from 'react-native';
 import Animated, {
     FadeIn,
-    Layout,
     useSharedValue,
     useAnimatedStyle,
     withRepeat,
@@ -20,26 +19,39 @@ import Animated, {
     LinearTransition
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Directory, File, Paths } from 'expo-file-system';
+
+// Imports de Archivos
+import { File, Paths } from 'expo-file-system/next';
+import * as FileSystem from 'expo-file-system'; // Necesario para leer URIs externas
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker'; // <--- NUEVO
+
+import useDataStore from '../../../stores/useDataStore';
+import { useAuthStore } from '../../../stores/authStore';
 
 export default function DataManagementSection() {
-    // 1. Estado
+    // Estados para controlar carga de botones independientemente
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
-    // 2. Valores de Animación (Icono de Nube)
+    const { user, updateUser } = useAuthStore();
+    const {
+        getAllTransactionsByUserId,
+        getAllAccountsByUserId,
+        setAllAccounts,
+        setTransactions
+    } = useDataStore();
+
+    // --- ANIMACIONES ---
     const cloudY = useSharedValue(0);
+    const uploadArrowY = useSharedValue(0);
 
-    // 3. Efecto para la animación de rebote cuando descarga
+    // Animación Descarga
     useEffect(() => {
         if (isDownloading) {
             cloudY.value = withRepeat(
-                withSequence(
-                    withTiming(-5, { duration: 500, easing: Easing.inOut(Easing.ease) }),
-                    withTiming(0, { duration: 500, easing: Easing.inOut(Easing.ease) })
-                ),
-                -1, // Infinito
-                true // Reverse
+                withSequence(withTiming(-5, { duration: 500 }), withTiming(0, { duration: 500 })),
+                -1, true
             );
         } else {
             cancelAnimation(cloudY);
@@ -47,45 +59,134 @@ export default function DataManagementSection() {
         }
     }, [isDownloading]);
 
-    const cloudAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: cloudY.value }]
-    }));
+    // Animación Subida (Importar)
+    useEffect(() => {
+        if (isUploading) {
+            uploadArrowY.value = withRepeat(
+                withSequence(withTiming(-5, { duration: 500 }), withTiming(0, { duration: 500 })),
+                -1, true
+            );
+        } else {
+            cancelAnimation(uploadArrowY);
+            uploadArrowY.value = withTiming(0);
+        }
+    }, [isUploading]);
 
-    // 4. Lógica de Descarga (File System + Sharing)
+    const cloudStyle = useAnimatedStyle(() => ({ transform: [{ translateY: cloudY.value }] }));
+    const uploadStyle = useAnimatedStyle(() => ({ transform: [{ translateY: uploadArrowY.value }] }));
+
+    // ==========================================
+    // 1. EXPORTAR DATOS (Tu código anterior)
+    // ==========================================
     const handleDownloadData = async () => {
         setIsDownloading(true);
-
         try {
-            // Simular retardo de red/procesamiento
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!user?.id) return;
 
-            // Datos de ejemplo (Igual que en tu código web)
+            const allAccounts = getAllAccountsByUserId(user.id);
+            const allTransactions = getAllTransactionsByUserId(user.id);
+
             const data = {
-                user: {
-                    name: "Armando Arano",
-                    email: "armandoaranopla@gmail.com",
-                    created: new Date().toISOString()
-                },
-                accounts: [
-                    { name: "Main Checking", type: "Checking", balance: 5420.50 },
-                    { name: "Savings", type: "Savings", balance: 15000.00 }
-                ],
-                transactions: [
-                    { date: "2024-01-15", description: "Grocery", amount: -85.50 },
-                    { date: "2024-01-14", description: "Salary", amount: 3000.00 }
-                ],
+                user,
+                accounts: allAccounts,
+                transactions: allTransactions,
                 exportDate: new Date().toISOString()
             };
-            const fileName = `expense-tracker-data-${new Date().toISOString()}.json`;
-            const file = new File(Paths.document, fileName );
-            file.create()
-            Alert.alert("Success", "Data exported successfully!");
 
+            const jsonData = JSON.stringify(data, null, 2);
+            const fileName = `expense-backup-${new Date().getTime()}.json`;
+            const file = new File(Paths.document, fileName);
+            file.create();
+            file.write(jsonData);
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(file.uri, {
+                    mimeType: 'application/json',
+                    dialogTitle: 'Guardar Backup',
+                    UTI: 'public.json'
+                });
+                Alert.alert("Éxito", "Backup exportado correctamente.");
+            }
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "Failed to export data");
+            Alert.alert("Error", "Falló la exportación.");
         } finally {
             setIsDownloading(false);
+        }
+    };
+
+    // ==========================================
+    // 2. IMPORTAR DATOS (NUEVO)
+    // ==========================================
+    const handleImportData = async () => {
+        try {
+            // 1. Abrir selector de archivos
+            const result = await DocumentPicker.getDocumentAsync({
+                type: ['application/json', 'public.json'],
+                copyToCacheDirectory: true // Importante: copia el archivo a una ruta accesible (cache)
+            });
+
+            if (result.canceled) return;
+
+            setIsUploading(true);
+
+            // Obtenemos la URI del archivo seleccionado (que está en la caché de la app)
+            const fileUri = result.assets[0].uri;
+            console.log("Selected file URI:", fileUri);
+
+            // 
+
+            // 2. USO DE LA NUEVA API: Instanciar el objeto File
+            // Pasamos la URI directamente. Al tener 'file://', la API sabe localizarlo.
+            const file = new File(fileUri);
+
+            // Leer el contenido como texto usando el método .text()
+            const jsonContent = await file.text();
+
+            console.log("Contenido leído con éxito");
+
+            // 3. Parsear JSON
+            const parsedData = JSON.parse(jsonContent);
+            console.log("Datos parseados:", parsedData);
+
+            // 4. Validar estructura básica
+            if (!parsedData.accounts || !parsedData.transactions || !parsedData.user) {
+                throw new Error("Formato de archivo inválido");
+            }
+
+            // 5. Confirmar acción
+            Alert.alert(
+                "Restaurar Datos",
+                `Se importarán ${parsedData.accounts.length} cuentas y ${parsedData.transactions.length} transacciones. Esto sobrescribirá los datos actuales. ¿Continuar?`,
+                [
+                    { text: "Cancelar", style: "cancel", onPress: () => setIsUploading(false) },
+                    {
+                        text: "Restaurar",
+                        style: "destructive",
+                        onPress: async () => {
+                            try {
+                                // 6. ACTUALIZAR STORES
+                                if (parsedData.user) updateUser(parsedData.user);
+                                if (Array.isArray(parsedData.accounts)) setAllAccounts(parsedData.accounts);
+                                if (Array.isArray(parsedData.transactions)) setTransactions(parsedData.transactions);
+
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                Alert.alert("Éxito", "Los datos han sido restaurados correctamente.");
+                            } catch (e) {
+                                Alert.alert("Error", "Hubo un problema procesando los datos.");
+                            } finally {
+                                setIsUploading(false);
+                            }
+                        }
+                    }
+                ]
+            );
+
+        } catch (error) {
+            console.error("Error importando:", error);
+            Alert.alert("Error", "No se pudo leer el archivo o el formato es incorrecto.");
+            setIsUploading(false);
         }
     };
 
@@ -93,163 +194,146 @@ export default function DataManagementSection() {
         <Animated.View
             entering={FadeIn.duration(500)}
             layout={LinearTransition.springify()}
-            style={styles.card}
+            style={styles.container}
         >
-            {/* Header de Sección */}
             <View style={styles.headerRow}>
                 <MaterialIcons name="storage" size={24} color="#667eea" style={{ marginRight: 8 }} />
                 <Text style={styles.headerTitle}>Data Management</Text>
             </View>
 
             <Text style={styles.descriptionText}>
-                Export all your data including accounts, transactions, and settings. Your data will be downloaded as a JSON file.
+                Manage your application data locally. Export to keep a backup or import to restore your history.
             </Text>
 
-            {/* Tarjeta de Acción (Botón Gigante) */}
+            {/* BOTÓN DE DESCARGAR (EXPORT) */}
             <TouchableOpacity
                 onPress={handleDownloadData}
-                disabled={isDownloading}
+                disabled={isDownloading || isUploading}
                 activeOpacity={0.9}
+                style={{ marginBottom: 16 }}
             >
                 <Animated.View style={[
-                    styles.downloadCard,
-                    isDownloading && styles.downloadCardDisabled
+                    styles.actionCard,
+                    styles.exportCard,
+                    isDownloading && styles.cardDisabled
                 ]}>
-                    {/* Icono Circular */}
-                    <View style={styles.iconCircle}>
-                        <Animated.View style={cloudAnimatedStyle}>
+                    <View style={[styles.iconCircle, { backgroundColor: 'rgba(102, 126, 234, 0.1)' }]}>
+                        <Animated.View style={cloudStyle}>
                             <MaterialIcons name="cloud-download" size={32} color="#667eea" />
                         </Animated.View>
                     </View>
 
-                    {/* Textos */}
                     <View style={styles.textContainer}>
                         <Text style={styles.actionTitle}>
-                            {isDownloading ? 'Preparing your data...' : 'Download All Data'}
+                            {isDownloading ? 'Exporting...' : 'Export Backup'}
                         </Text>
-                        <Text style={styles.actionSubtitle}>
-                            Export your complete data in JSON format
-                        </Text>
+                        <Text style={styles.actionSubtitle}>Save JSON file</Text>
                     </View>
 
-                    {/* Botón Pequeño */}
-                    <View style={[
-                        styles.smallButton,
-                        isDownloading ? styles.smallButtonDisabled : styles.smallButtonActive
-                    ]}>
-                        <MaterialIcons name="download" size={18} color="#FFF" style={{ marginRight: 4 }} />
-                        <Text style={styles.smallButtonText}>
-                            {isDownloading ? 'Downloading...' : 'Download'}
-                        </Text>
-                    </View>
+                    <MaterialIcons name="chevron-right" size={24} color="#AAA" />
                 </Animated.View>
             </TouchableOpacity>
+
+            {/* BOTÓN DE SUBIR (IMPORT) */}
+            <TouchableOpacity
+                onPress={handleImportData}
+                disabled={isDownloading || isUploading}
+                activeOpacity={0.9}
+            >
+                <Animated.View style={[
+                    styles.actionCard,
+                    styles.importCard,
+                    isUploading && styles.cardDisabled
+                ]}>
+                    <View style={[styles.iconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                        <Animated.View style={uploadStyle}>
+                            <MaterialIcons name="cloud-upload" size={32} color="#10b981" />
+                        </Animated.View>
+                    </View>
+
+                    <View style={styles.textContainer}>
+                        <Text style={styles.actionTitle}>
+                            {isUploading ? 'Restoring...' : 'Restore Backup'}
+                        </Text>
+                        <Text style={styles.actionSubtitle}>Import JSON file</Text>
+                    </View>
+
+                    <MaterialIcons name="chevron-right" size={24} color="#AAA" />
+                </Animated.View>
+            </TouchableOpacity>
+
         </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
+    container: {
         backgroundColor: '#FFF',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 20,
         marginBottom: 20,
-        borderWidth: 1,
-        borderColor: '#f0f0f0',
-        // Sombras
+        // Sutil elevación
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowRadius: 10,
+        elevation: 2,
     },
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 8,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#333',
+        color: '#1e293b',
     },
     descriptionText: {
         fontSize: 14,
-        color: '#666',
-        marginBottom: 24,
+        color: '#64748b',
+        marginBottom: 20,
         lineHeight: 20,
     },
-    // Zona de descarga
-    downloadCard: {
-        backgroundColor: '#F8F9FA', // background.default
-        borderRadius: 8,
-        borderWidth: 2,
-        borderColor: '#667eea',
-        borderStyle: 'dashed', // Borde discontinuo
-        padding: 16,
-        flexDirection: 'column', // En móvil, columna suele ser mejor si hay poco espacio, o row si hay suficiente
+    // Tarjetas de Acción
+    actionCard: {
+        flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
     },
-    downloadCardDisabled: {
-        borderColor: '#BDBDBD',
-        backgroundColor: '#FAFAFA',
+    exportCard: {
+        backgroundColor: '#F8FAFC',
+        borderColor: '#E2E8F0',
+    },
+    importCard: {
+        backgroundColor: '#F0FDF4', // Verde muy claro
+        borderColor: '#BBF7D0',
+    },
+    cardDisabled: {
+        opacity: 0.6,
+        backgroundColor: '#F1F5F9',
     },
     iconCircle: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: 'rgba(102, 126, 234, 0.1)', // primary.light + opacity
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: 16,
     },
     textContainer: {
-        alignItems: 'center',
-        paddingHorizontal: 10,
+        flex: 1,
     },
     actionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
-        textAlign: 'center',
+        color: '#334155',
+        marginBottom: 2,
     },
     actionSubtitle: {
-        fontSize: 12,
-        color: '#888',
-        textAlign: 'center',
-    },
-    // Botón interno
-    smallButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-    },
-    smallButtonActive: {
-        backgroundColor: '#667eea',
-    },
-    smallButtonDisabled: {
-        backgroundColor: '#BDBDBD',
-    },
-    smallButtonText: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    // Info Box
-    infoBox: {
-        marginTop: 24,
-        padding: 16,
-        backgroundColor: 'rgba(33, 150, 243, 0.08)', // info light opacity
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(33, 150, 243, 0.3)',
-    },
-    infoText: {
-        fontSize: 12,
-        color: '#0c5460', // info dark
-        lineHeight: 18,
+        fontSize: 13,
+        color: '#94a3b8',
     },
 });

@@ -179,7 +179,7 @@ export const TransactionItemMobile = React.memo(({
             {/* 1. Modal de Advertencia (Delete) */}
             {isWarningOpen && (
                 <WarningMessage
-                    message="Are you sure you want to delete this transaction?"
+                    message="Are you sure you want to delete this transaction?" //TODO - i18n
                     onClose={handleCancelDelete}
                     onSubmit={performDelete}
                 />

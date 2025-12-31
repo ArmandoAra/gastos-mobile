@@ -21,7 +21,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { ActivityIndicator } from 'react-native-paper';
 import { useAuthStore } from '../../../stores/authStore';
 import useDataStore from '../../../stores/useDataStore';
-import { useAccountsStore } from '../../../stores/accountsStore';
 
 
 interface DangerZoneSectionProps {
@@ -29,9 +28,8 @@ interface DangerZoneSectionProps {
 }
 
 export default function DangerZoneSection({ userId }: DangerZoneSectionProps) {
-    const { clearTransactions } = useDataStore();
+    const { clearTransactions, deleteAllAccounts } = useDataStore();
     const { logout, deleteUser } = useAuthStore();
-    const { deleteAllAccounts } = useAccountsStore();
     // Estados
     const [deleteDataModal, setDeleteDataModal] = useState(false);
     const [deleteAccountModal, setDeleteAccountModal] = useState(false);

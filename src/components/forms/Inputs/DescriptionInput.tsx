@@ -11,13 +11,13 @@ interface DescriptionInputProps {
     description: string;
     setDescription: (desc: string) => void;
 }
+const MAX_LENGTH = 120;
 
 export default function DescriptionInput({ 
     description,
     setDescription
 }: DescriptionInputProps) {
-    
-    const MAX_LENGTH = 120;
+
 
     return (
         <Animated.View 
@@ -57,12 +57,11 @@ export default function DescriptionInput({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 16,
     },
     label: {
-        fontSize: 12,
+        fontSize: 8,
         color: '#666', // text.secondary
-        marginBottom: 8,
+        marginBottom: 4,
         fontWeight: '600',
         marginLeft: 4,
         textTransform: 'uppercase',

@@ -1,4 +1,4 @@
-import { format, parseISO, isSameMonth, isSameYear, isSameDay } from "date-fns"; // Agregamos isSameDay
+import { format, parseISO, isSameMonth, isSameYear, isSameDay, set } from "date-fns"; // Agregamos isSameDay
 import { es } from "date-fns/locale";
 import { useState, useMemo, useCallback } from "react";
 import { View, TouchableOpacity, ScrollView, Text, TextInput, StyleSheet } from "react-native";
@@ -43,7 +43,7 @@ export function TransactionsScreen() {
         deleteTransaction,
         updateTransaction,
         deleteSomeAmountInAccount,
-        updateAccountBalance
+        updateAccountBalance,
     } = useDataStore();
 
     // --- 1. LÓGICA DE FILTRADO (Por fecha y modo) ---
@@ -144,7 +144,7 @@ export function TransactionsScreen() {
 
     // Helper para formatear el título del grupo
     const getGroupTitle = (dateKey: string) => {
-        const date = parseISO(dateKey); // dateKey es 'yyyy-MM' o 'yyyy-MM-dd'
+        const date = parseISO(dateKey); 
         if (viewMode === 'year') {
             // Si agrupamos por mes, mostrar nombre del mes
             return format(date, 'MMMM', { locale: es });
@@ -171,7 +171,7 @@ export function TransactionsScreen() {
                     <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.background }}>{filter}</Text>
                 </View>
                 {/* --- BARRA DE BÚSQUEDA --- */}
-                <View style={[localStyles.searchContainer, { backgroundColor: colors.surface }]}>
+                <View style={[localStyles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <Ionicons name="search" size={20} color={colors.background} style={{ marginRight: 8 }} />
                     <TextInput
                         style={[localStyles.searchInput, {color: colors.text}]}
@@ -205,7 +205,7 @@ export function TransactionsScreen() {
                         <View style={localStyles.emptyState}>
                             <MaterialIcons name="receipt-long" size={48} color={colors.background} />
                             <Text style={localStyles.emptyText}>
-                                No transactions found for this {viewMode}
+                                No transactions found for this {viewMode} //TODO - i18n
                             </Text>
                         </View>
                     )}
@@ -219,7 +219,6 @@ export function TransactionsScreen() {
                         return (
                             <View key={key}>
                                 <View style={styles.dateHeader}>
-                                    {/* Título dinámico (Día o Mes) */}
                                     <Text style={styles.dateHeaderText}>
                                         {getGroupTitle(key)}
                                     </Text>
@@ -271,15 +270,15 @@ const localStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    modeBtnInactive: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#1e293b',
-        borderWidth: 1,
-        borderColor: '#334155',
-        borderRadius: 18,
-    },
+    // modeBtnInactive: {
+    //     flex: 1,
+    //     alignItems: 'center',
+    //     justifyContent: 'center',
+    //     backgroundColor: '#1e293b',
+    //     borderWidth: 1,
+    //     borderColor: '#334155',
+    //     borderRadius: 18,
+    // },
     modeLabel:
     {
         fontWeight: 'bold',
@@ -296,11 +295,11 @@ const localStyles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 13,
     },
-    modeTextInactive: {
-        color: '#94a3b8',
-        fontWeight: '600',
-        fontSize: 13,
-    },
+    // modeTextInactive: {
+    //     color: '#94a3b8',
+    //     fontWeight: '600',
+    //     fontSize: 13,
+    // },
 
     // Búsqueda
     searchContainer: {
@@ -314,7 +313,6 @@ const localStyles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#061E29',
     },
     searchInput: {
         flex: 1,

@@ -4,22 +4,45 @@ import { useAuthStore } from '../../stores/authStore';
 
 export const PinScreen = () => {
     const [pin, setPin] = useState('');
-    const { loginWithPin, loginWithBiometrics, isBiometricEnabled, user } = useAuthStore();
+    const [isProcessing, setIsProcessing] = useState(false); // Estado local para bloquear duplicados
+
+    // Usar selectores específicos para evitar re-renders innecesarios
+    const loginWithPin = useAuthStore(state => state.loginWithPin);
+    const loginWithBiometrics = useAuthStore(state => state.loginWithBiometrics);
+    const isBiometricEnabled = useAuthStore(state => state.isBiometricEnabled);
+    const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+    const user = useAuthStore(state => state.user);
 
     useEffect(() => {
-        // Si tiene biometría activada, pedirla automáticamente al abrir
-        if (isBiometricEnabled) {
-            loginWithBiometrics();
+        // Solo disparar si no estamos ya autenticados y no estamos procesando
+        if (isBiometricEnabled && !isAuthenticated && !isProcessing) {
+            handleBiometricLogin();
         }
     }, []);
 
+    const handleBiometricLogin = async () => {
+        setIsProcessing(true);
+        try {
+            await loginWithBiometrics();
+        } finally {
+            // No lo ponemos en false inmediatamente para evitar disparos en cadena
+            setTimeout(() => setIsProcessing(false), 2000);
+        }
+    };
+
     const handleLogin = async () => {
+        if (pin.length < 4 || isProcessing) return;
+
+        setIsProcessing(true);
         const success = await loginWithPin(pin);
+
         if (!success) {
             Alert.alert('Error', 'PIN Incorrecto');
             setPin('');
+            setIsProcessing(false);
         }
-  };
+        // Si tiene éxito, el RootNavigator nos sacará de aquí automáticamente
+    };
 
     return (
       <View style={styles.container}>

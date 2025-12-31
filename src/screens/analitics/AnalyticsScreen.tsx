@@ -38,22 +38,6 @@ import DailyExpenseViewMobile from './components/DailyExpenseView';
 
 const { width } = Dimensions.get('window');
 
-// ============================================
-// MOCK DATA
-// ============================================
-const MOCK_TRANSACTIONS = [
-  { id: '1', description: 'Supermercado', amount: 450.00, type: 'expense', category_name: 'Alimentación', date: '2024-12-20T10:30:00', account_id: '1' },
-  { id: '2', description: 'Salario', amount: 8500.00, type: 'income', category_name: 'Salario', date: '2024-12-15T09:00:00', account_id: '1' },
-  { id: '3', description: 'Netflix', amount: 55.90, type: 'expense', category_name: 'Entretenimiento', date: '2024-12-18T14:20:00', account_id: '1' },
-  { id: '4', description: 'Gasolina', amount: 320.00, type: 'expense', category_name: 'Transporte', date: '2024-12-19T08:15:00', account_id: '1' },
-  { id: '5', description: 'Freelance', amount: 2500.00, type: 'income', category_name: 'Extra', date: '2024-12-17T16:00:00', account_id: '2' },
-  { id: '6', description: 'Restaurante', amount: 180.00, type: 'expense', category_name: 'Alimentación', date: '2024-12-21T19:30:00', account_id: '3' },
-  { id: '7', description: 'Farmacia', amount: 95.00, type: 'expense', category_name: 'Salud', date: '2024-12-16T11:00:00', account_id: '1' },
-  { id: '8', description: 'Gimnasio', amount: 150.00, type: 'expense', category_name: 'Salud', date: '2024-12-01T07:00:00', account_id: '1' },
-  { id: '9', description: 'Café', amount: 45.00, type: 'expense', category_name: 'Alimentación', date: '2024-12-22T08:30:00', account_id: '3' },
-  { id: '10', description: 'Uber', amount: 35.50, type: 'expense', category_name: 'Transporte', date: '2024-12-22T18:00:00', account_id: '1' },
-  { id: '11', description: 'Compras', amount: 890.00, type: 'expense', category_name: 'Compras', date: '2024-12-14T15:30:00', account_id: '1' },
-];
 
 // Colores para el gráfico de torta
 const CATEGORY_COLORS = ['#EF5350', '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#26C6DA'];

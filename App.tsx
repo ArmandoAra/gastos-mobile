@@ -22,6 +22,10 @@ import { useAuthStore } from './src/stores/authStore';
 import { useSettingsStore } from './src/stores/settingsStore';
 import { lightTheme, darkTheme } from './src/theme/colors';
 
+// Polyfill para Buffer en React Native
+import { Buffer } from 'buffer';
+global.Buffer = global.Buffer || Buffer;
+
 // Importamos nuestros tipos y componentes tipados
 import {
   RootStackParamList,
@@ -39,24 +43,37 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
+const RenderModernHeader = (props: any, currentColors: ThemeColors) => {
+  const { options, route } = props;
+  const isHome = route.name === 'Transactions';
+
+  return (
+    <ModernHeader
+      title={options.title}
+      subtitle={isHome ? undefined : 'View Details'}
+      showAvatar={isHome}
+      showNotification={isHome}
+      showBack={false}
+      colors={currentColors}
+    />
+  );
+};
+
 // ============================================
 // MAIN TAB NAVIGATOR
 // ============================================
 const MainTabs = () => {
   const { theme } = useSettingsStore();
-
-  // Aserción de tipo o fallback seguro
   const currentColors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
-  // Fallback si textSecondary no existe en tu tema original
-  const safeColors: ThemeColors = {
-    ...currentColors,
-    textSecondary: currentColors.textSecondary
-  };
+  const renderTabBar = React.useCallback(
+    (props: any) => <CustomTabBar {...props} colors={currentColors} />,
+    [currentColors]
+  );
 
   return (
     <Tab.Navigator
-      tabBar={(props) => <CustomTabBar {...props} colors={currentColors} />}
+      tabBar={renderTabBar}
       screenOptions={{
         // Aquí decimos: "Usa mi header custom"
         header: ({ options, route }) => {
@@ -130,17 +147,16 @@ const AppStack = () => {
 // ROOT NAVIGATOR
 // ============================================
 const RootNavigator = () => {
-  const { isSetupComplete, isAuthenticated } = useAuthStore();
+  const isSetupComplete = useAuthStore(state => state.isSetupComplete);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Simular carga de persistencia
     const timer = setTimeout(() => setIsReady(true), 500);
     return () => clearTimeout(timer);
   }, []);
 
   if (!isReady) {
-    // Retornar null o un componente de Splash Screen real
     return <View style={styles.loadingContainer} />;
   }
 
@@ -161,31 +177,32 @@ const RootNavigator = () => {
 // MAIN APP COMPONENT
 // ============================================
 const App = () => {
-  const { theme } = useSettingsStore();
-  const isDark = theme === 'dark';
-  const customColors = isDark ? darkTheme : lightTheme;
+  const themeMode = useSettingsStore(state => state.theme);
 
-  // Fusión de temas (Paper + Custom) con tipado seguro
-  const paperTheme: MD3Theme = {
-    ...(isDark ? MD3DarkTheme : MD3LightTheme),
-    colors: {
-      ...(isDark ? MD3DarkTheme.colors : MD3LightTheme.colors),
-      primary: customColors.primary,
-      secondary: customColors.accent,
-      background: customColors.background,
-      surface: customColors.surface,
-      error: customColors.error,
-      // elevation es necesario en MD3, lo dejamos por defecto
-    },
-  };
+  const paperTheme = React.useMemo(() => {
+    const isDark = themeMode === 'dark';
+    const customColors = isDark ? darkTheme : lightTheme;
+    const baseTheme = isDark ? MD3DarkTheme : MD3LightTheme;
+
+    return {
+      ...baseTheme,
+      colors: {
+        ...baseTheme.colors,
+        primary: customColors.primary,
+        secondary: customColors.accent,
+        background: customColors.background,
+        surface: customColors.surface,
+        error: customColors.error,
+      },
+    };
+  }, [themeMode]);
 
   return (
     <SafeAreaProvider>
       <PaperProvider theme={paperTheme}>
         <NavigationContainer>
           <StatusBar
-            barStyle={isDark ? 'light-content' : 'dark-content'}
-            backgroundColor={customColors.primary}
+            barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'}
           />
           <RootNavigator />
         </NavigationContainer>

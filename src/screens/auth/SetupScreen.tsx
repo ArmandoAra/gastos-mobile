@@ -1,18 +1,38 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Switch, Alert, StyleSheet } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
-
+import useDataStore from '../../stores/useDataStore';
+// De momento el la pantalla que sale al iniciar la app por primera vez
 export const SetupScreen = () => {
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
   const [biometric, setBiometric] = useState(false);
-  const { setupAccount } = useAuthStore();
+  const { setupAccount, user } = useAuthStore();
+  const { createAccount } = useDataStore();
 
   const handleSetup = async () => {
     if (name.length < 2) return Alert.alert('Error', 'Ingresa un nombre válido');
     if (pin.length < 4) return Alert.alert('Error', 'El PIN debe tener al menos 4 dígitos');
 
-    await setupAccount(name, pin, biometric);
+    try {
+      // 1. Create the User in Auth Store
+      // We await the result which is now the UserProfile object
+      const newUser = await setupAccount(name, pin, biometric);
+
+      // 2. Create the Default "Credit" Account in Data Store
+      // We use the ID from the newly created user
+      await createAccount({
+        name: 'Credit Card', // Or 'General', 'Cash', etc.
+        type: 'Credit Card', // Adjust based on your Account Types
+        balance: 0,
+        userId: newUser.id,  // IMPORTANT: Link account to the new user
+      });
+
+
+    } catch (error) {
+      console.error("Setup failed", error);
+      Alert.alert('Error', 'Could not set up account. Please try again.');
+    }
   };
 
   return (

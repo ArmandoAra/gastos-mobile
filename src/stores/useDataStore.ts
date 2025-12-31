@@ -4,6 +4,7 @@ import { createMMKV } from 'react-native-mmkv' // 1. Importar MMKV
 import { Account, Transaction, TransactionType } from '../interfaces/data.interface'
 import { createAccount } from '../../../Gastos/frontend/app/actions/db/Accounts_API';
 import * as uuid from 'uuid';
+import { se } from 'date-fns/locale';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -36,7 +37,6 @@ const zustandStorage: StateStorage = {
 type PersistedState = {
     selectedAccount: string
     allAccounts: Account[]
-    // Nota: Agregué transactions aquí porque en tu partialize lo estás guardando
     transactions: Transaction[] 
 }
 
@@ -53,6 +53,7 @@ type Actions = {
     // === Account Management ===
     setSelectedAccount: (accountId: string) => void
     setAllAccounts: (accounts: Account[]) => void
+    getAllAccountsByUserId: (userId: string) => Account[]
     addAccount: (account: Account) => void
     createAccount: (accountData: Partial<Account>) => Promise<void>
     updateAccount: (accountId: string, data: Partial<Account>) => void
@@ -60,12 +61,14 @@ type Actions = {
     deleteSomeAmountInAccount: (accountId: string, amount: number, transactionType: TransactionType) => void
     deleteAccountStore: (accountId: string) => void
     getAccountById: (accountId: string) => Account | undefined
+    deleteAllAccounts: () => void
 
     // === Transaction Management ===
     setTransactions: (transactions: Transaction[]) => void
     addTransactionStore: (transaction: Transaction) => void
     updateTransaction: (updatedTransaction: Partial<Transaction>) => void
     deleteTransaction: (transactionId: string) => void
+    getAllTransactionsByUserId: (userId: string) => Transaction[]
     getTransactionsByAccount: (accountId: string) => Transaction[]
     clearTransactions: () => void
 
@@ -136,6 +139,10 @@ const useDataStore = create<State & Actions>()(
                     set({ selectedAccount: accountId, error: null }, false, 'setSelectedAccount')
                 },
 
+                getAllAccountsByUserId: (userId: string): Account[] => {
+                    return get().allAccounts.filter(account => account.userId === userId);
+                },
+
                 setAllAccounts: (accounts: Account[]) => {
                     set({ allAccounts: accounts, error: null }, false, 'setAllAccounts')
                 },
@@ -187,6 +194,8 @@ const useDataStore = create<State & Actions>()(
                     )
                 },
 
+                getAccountById: (accountId: string) => get().allAccounts.find(acc => acc.id === accountId),
+
                 deleteSomeAmountInAccount: (accountId: string, amount: number, transactionType: TransactionType) => {
                     const amountToDelete = transactionType === TransactionType.INCOME ? amount : -amount;
                     set(
@@ -220,7 +229,13 @@ const useDataStore = create<State & Actions>()(
                     )
                 },
 
-                getAccountById: (accountId: string) => get().allAccounts.find(acc => acc.id === accountId),
+                deleteAllAccounts: () => {
+                    set({
+                        allAccounts: [],
+                        selectedAccount: '',
+                    }, false, 'deleteAllAccounts')
+                },
+
 
                 // === TRANSACTION MANAGEMENT ===
 
@@ -261,6 +276,10 @@ const useDataStore = create<State & Actions>()(
                         false,
                         'deleteTransaction'
                     )
+                },
+
+                getAllTransactionsByUserId: (userId: string): Transaction[] => {
+                    return get().transactions.filter(transaction => transaction.user_id === userId);
                 },
 
                 getTransactionsByAccount: (accountId: string) => {

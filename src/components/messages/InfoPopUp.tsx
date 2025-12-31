@@ -89,11 +89,9 @@ export default function InfoPopUp() {
 
     return (
         <View
-            // Animación de entrada (Slide Down + Fade In)
-            // Animación de salida (Slide Up + Fade Out)
             style={[
                 styles.container,
-                { top: insets.top + 10 } // Ajuste seguro para el notch
+                // { top: insets.top + 10 } // Ajuste seguro para el notch
             ]}
         >
             <LinearGradient
@@ -145,9 +143,10 @@ export default function InfoPopUp() {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
+        top: -80,
         left: 20,
         right: 20,
-        alignItems: 'center', // Centrar horizontalmente si el ancho no es 100%
+        alignItems: 'center', 
         zIndex: 9999,
     },
     gradientCard: {

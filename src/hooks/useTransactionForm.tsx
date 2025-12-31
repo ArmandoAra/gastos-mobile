@@ -15,6 +15,7 @@ import { Transaction, TransactionType } from "../types/schemas";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "../stores/authStore";
+import { se } from "date-fns/locale";
 
 
 // ============================================
@@ -65,17 +66,6 @@ export function useTransactionForm() {
         setSelectedIcon(ICON_OPTIONS[iconsKey][0]);
     }, [iconsKey]);
 
-    // Calcular días del mes (memoizado)
-    // const daysInMonth = useMemo(
-    //     () => calculateDaysInMonth(selectedYear, selectedMonth),
-    //     [selectedYear, selectedMonth]
-    // );
-
-    // const days = useMemo(
-    //     () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
-    //     [daysInMonth]
-    // );
-
     // Reset form cuando se cierra el dialog
     useEffect(() => {
         if (inputNameActive === InputNameActive.NONE) {
@@ -121,27 +111,48 @@ export function useTransactionForm() {
     // Preparar datos de la transacción
     const prepareTransactionData: () => Transaction = useCallback(() => {
         const now = new Date();
-        const date = localSelectedDay || new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        const isIncome = inputNameActive === InputNameActive.INCOME;
-        const parsedAmount = parseFloat(amount);
-      
+    // 1. Clonamos la fecha seleccionada
+    const transactionDate = new Date(localSelectedDay || now);
+
+    // 2. Si el usuario eligió un día pero queremos mantener la hora actual:
+    // Solo ajustamos la hora si localSelectedDay existe (para no sobreescribir si ya es 'now')
+    if (localSelectedDay) {
+        transactionDate.setHours(now.getHours());
+        transactionDate.setMinutes(now.getMinutes());
+        transactionDate.setSeconds(now.getSeconds());
+        transactionDate.setMilliseconds(now.getMilliseconds());
+    }
+
+    const isIncome = inputNameActive === InputNameActive.INCOME;
+    const parsedAmount = parseFloat(amount);
+
+    // Usamos una constante para ISO string y evitar milisegundos de diferencia entre campos
+    const currentTimeISO = now.toISOString();
+
     return {
-            id: uuidv4(),
-            account_id: selectedAccount,
-            user_id: user?.id || "current-user-id", // Reemplazar con el ID del usuario actual
-            description: description.trim() || `${selectedIcon.label} - ${isIncome ? 'Income' : 'Expense'}`,
-            amount: parsedAmount,   
-            type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
-            category_name: selectedIcon.label,
-            date: date.toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
-    }, [localSelectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount]);
+        id: uuidv4(),
+        account_id: selectedAccount,
+        user_id: user?.id || "current-user-id",
+        description: description.trim() || `${selectedIcon.label} - ${isIncome ? 'Income' : 'Expense'}`,
+        amount: parsedAmount,
+        type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
+        category_name: selectedIcon.label,
+        // 'date' es el momento del gasto (Día elegido + Hora actual)
+        date: transactionDate.toISOString(),
+        // 'created_at' es el registro técnico de cuándo se insertó en la DB
+        created_at: currentTimeISO,
+        updated_at: currentTimeISO,
+    };
+}, [localSelectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount, user?.id]);
 
     // Manejar guardado
     const handleSave = useCallback(async () => {
+        if (!selectedAccount || selectedAccount.trim() === "") {
+            showMessage(MessageType.INFO, "Please select an account.");
+            return;
+        }
+        console.log("Selected Account:", selectedAccount);
         try {
             const transactionData = prepareTransactionData();
                 addTransactionStore(transactionData);

@@ -22,13 +22,11 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Stores & Utils
-import { calculateDaysInMonth } from '../../utils/helpers';
-import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
+import { ICON_OPTIONS, IconKey, IconOption, transactions_icons } from '../../constants/icons';
 
 // Hooks
 import { useTransactionForm } from '../../hooks/useTransactionForm';
 import useMessage from '../../stores/useMessage';
-import useDateStore from '../../stores/useDateStore';
 
 // Interfaces
 import { Transaction } from '../../interfaces/data.interface';
@@ -40,10 +38,10 @@ import DescriptionInput from './Inputs/DescriptionInput';
 import AccountSelector from './Inputs/AccoutSelector';
 import IconsSelector from './Inputs/IconsSelector';
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
-import { set } from 'date-fns';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
+import { IconsOptions } from '../../../../Gastos/frontend/app/dashboard/constants/icons';
 
-const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface EditTransactionFormProps {
     open: boolean;
@@ -66,8 +64,6 @@ export default function EditTransactionFormMobile({
 }: EditTransactionFormProps) {
     const insets = useSafeAreaInsets();
 
-
-    // Hooks
     const {
         localSelectedDay,
         amount,
@@ -78,46 +74,37 @@ export default function EditTransactionFormMobile({
         setAmount,
         setDescription,
         setLocalSelectedDay,
-        setSelectedAccount // Asegúrate de tener esto en tu hook o useState local
+        setSelectedAccount,
+        setSelectedIcon: setStoreIcon, // Asumo que tu hook tiene esto
     } = useTransactionForm();
 
     const { showMessage } = useMessage();
 
     // Estados Locales
-    const [newAccount, setNewAccount] = useState<string>(selectedAccount);
-    const [oldDate, setOldDate] = useState<Date>(new Date(transaction?.date || new Date()));
+    const [newAccount, setNewAccount] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
+    const [selectedIcon, setSelectedIcon] = useState<IconOption | null>(null);
 
-    // Inicializar Icono
-    const getInitialIcon = (): IconOption | null => {
-        if (!transaction) return null;
-        const matchingIcon = iconOptions.find((icon) => icon.label === transaction.category_name);
-        if (matchingIcon) return matchingIcon;
-        const defaultList = ICON_OPTIONS[transaction.type === "income" ? IconKey.income : IconKey.spend];
-        return defaultList?.[0] || null;
-    };
-
-    const [selectedIcon, setSelectedIcon] = useState<IconOption | null>(getInitialIcon());
-
-
-    const date = new Date(transaction?.date || new Date()).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-    const title = transaction?.type === 'expense' ? 'Edit Expense' : 'Edit Income';
-    const titleColor = transaction?.type === 'expense' ? '#EF5350' : '#667eea';
-
-    // Sincronizar estado local de cuenta con el hook si es necesario
-    // O usar newAccount directamente en el submit
+    // Efecto para cargar los datos de la transacción al abrir
     useEffect(() => {
-        if (transaction) {
-            setSelectedAccount(transaction.account_id);
-            setNewAccount(transaction.account_id);
-            setOldDate(new Date(transaction.date));
+        if (transaction && open) {
+        // Sincronizar Stores
             setAmount(Math.abs(transaction.amount).toString());
             setDescription(transaction.description || '');
-        }
-    }, [transaction]);
+            setSelectedAccount(transaction.account_id);
+            setLocalSelectedDay(new Date(transaction.date));
+            setNewAccount(transaction.account_id);
 
-    // Handlers
+            // Buscar e inicializar el icono correcto
+            const icon = ICON_OPTIONS[
+                transaction.type === "income" ? IconKey.income : IconKey.spend
+            ].find(icon => icon.label === transaction.category_name);
+
+            setSelectedIcon(icon as IconOption);
+        }
+    }, [transaction, open]);
+
     const handleIconPress = () => setIsIconSelectorOpen(true);
 
     const handleSelectIcon = (icon: IconOption) => {
@@ -137,22 +124,33 @@ export default function EditTransactionFormMobile({
         setIsLoading(true);
 
         try {
+            // Mantener la hora original si el día no ha cambiado
+            const finalDate = new Date(localSelectedDay);
+            const originalDate = new Date(transaction.date);
+
+            // Si el día es el mismo, preservamos la hora exacta original
+            if (finalDate.toDateString() === originalDate.toDateString()) {
+                finalDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+            }
+
             const updatedTransaction: Transaction = {
                 ...transaction,
                 amount: transaction.type === 'expense'
                     ? -Math.abs(parseFloat(amount))
                     : Math.abs(parseFloat(amount)),
-                description,
-                date: oldDate.toISOString(),
+                description: description.trim(),
+                date: finalDate.toISOString(),
                 category_name: selectedIcon.label,
                 account_id: newAccount,
+                updated_at: new Date().toISOString()
             };
 
-            await onSave(updatedTransaction, transaction.account_id || null, newAccount || null);
+            await onSave(updatedTransaction, transaction.account_id, newAccount);
             showMessage(MessageType.UPDATED, "Transaction updated successfully.");
             onClose(false);
 
         } catch (error) {
+            console.error(error);
             showMessage(MessageType.ERROR, "Error updating transaction.");
         } finally {
             setIsLoading(false);
@@ -162,8 +160,10 @@ export default function EditTransactionFormMobile({
     if (!transaction) return null;
 
     const isExpense = transaction.type === 'expense';
-    const typeLabel = isExpense ? 'Expense' : 'Income';
     const headerColor = isExpense ? '#EF5350' : '#667eea';
+    const formattedDate = localSelectedDay.toLocaleDateString('en-US', {
+        month: '2-digit', day: '2-digit', year: 'numeric'
+    });
 
     return (
         <Modal
@@ -173,8 +173,7 @@ export default function EditTransactionFormMobile({
             onRequestClose={() => onClose(false)}
             statusBarTranslucent
         >
-            {/* Backdrop con Blur */}
-            {open && (
+            <View style={StyleSheet.absoluteFill}>
                 <Animated.View
                     entering={FadeIn.duration(200)}
                     exiting={FadeOut.duration(200)}
@@ -188,13 +187,11 @@ export default function EditTransactionFormMobile({
                         />
                     </BlurView>
                 </Animated.View>
-            )}
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-                style={styles.container}
-            >
-                {open && (
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                    style={styles.container}
+                >
                     <Animated.View 
                         entering={SlideInUp.duration(200)}
                         exiting={SlideOutUp.duration(200)}
@@ -203,33 +200,22 @@ export default function EditTransactionFormMobile({
                             { paddingTop: insets.top + 10 }
                         ]}
                     >
-                        {/* Header */}
                         <View style={styles.header}>
                             <TransactionHeaderTitle
-                                title={title}
-                                date={
-                                    oldDate.getTime() !== new Date(transaction.date).getTime()
-                                        ? oldDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-                                        : date
-                                }
-                                titleColor={
-                                    oldDate.getTime() !== new Date(transaction.date).getTime()
-                                        ? '#3B9797'
-                                        : titleColor
-                                }
+                                title={isExpense ? 'Edit Expense' : 'Edit Income'}
+                                date={formattedDate}
+                                titleColor={headerColor}
                             />
                             <TouchableOpacity onPress={() => onClose(false)} style={styles.closeButton}>
                                 <MaterialIcons name="close" size={20} color="#555" />
                             </TouchableOpacity>
                         </View>
 
-                        {/* Content Scrollable */}
                         <ScrollView
                             contentContainerStyle={styles.scrollContent}
                             keyboardShouldPersistTaps="handled"
                             showsVerticalScrollIndicator={false}
                         >
-                            {/* 1. Category & Amount */}
                             <CategoryAndAmountInput
                                 selectedIcon={selectedIcon}
                                 amount={amount}
@@ -238,13 +224,11 @@ export default function EditTransactionFormMobile({
                                 setAmount={setAmount}
                             />
 
-                            {/* 2. Description */}
                             <DescriptionInput
                                 description={description}
                                 setDescription={setDescription}
                             />
 
-                            {/* 3. Row: Account & Date */}
                             <View style={styles.rowSelectors}>
                                 <View style={{ flex: 7 }}>
                                     <AccountSelector
@@ -257,13 +241,12 @@ export default function EditTransactionFormMobile({
                                 <View style={{ width: 10 }} />
                                 <View style={{ flex: 1 }}>
                                     <ModernCalendarSelector
-                                        selectedDate={oldDate}
-                                        onDateChange={setOldDate}
+                                        selectedDate={localSelectedDay}
+                                        onDateChange={setLocalSelectedDay}
                                     />
                                 </View>
                             </View>
 
-                            {/* 4. Action Buttons */}
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity
                                     onPress={() => onClose(false)}
@@ -283,10 +266,8 @@ export default function EditTransactionFormMobile({
                                     </Text>
                                 </TouchableOpacity>
                             </View>
-
                         </ScrollView>
 
-                        {/* Icon Selector */}
                         {isIconSelectorOpen && (
                             <IconsSelector
                                 popoverOpen={isIconSelectorOpen}
@@ -296,13 +277,11 @@ export default function EditTransactionFormMobile({
                                 ] as unknown as IconOption[]}
                                 handleSelectIcon={handleSelectIcon}
                                 selectedIcon={selectedIcon}
-                                // Si IconsSelector necesita anchorEl, puedes pasar null o manejarlo diferente en móvil
                             />
                         )}
-
                     </Animated.View>
-                )}
-            </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+            </View>
         </Modal>
     );
 }
@@ -310,7 +289,7 @@ export default function EditTransactionFormMobile({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'flex-start', // Pegado arriba
+        justifyContent: 'flex-start',
     },
     topSheet: {
         width: '100%',
@@ -334,10 +313,6 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
         marginBottom: 10,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '700',
     },
     closeButton: {
         padding: 6,
@@ -373,7 +348,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     saveButton: {
-        flex: 2, // Botón de guardar más grande para énfasis
+        flex: 2,
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',

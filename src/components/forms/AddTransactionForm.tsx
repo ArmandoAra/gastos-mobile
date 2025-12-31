@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 10,
         paddingBottom: 20,
-        maxHeight: '85%', // Evita que ocupe toda la pantalla
+        maxHeight: '65%', 
     },
     header: {
         flexDirection: 'row',
