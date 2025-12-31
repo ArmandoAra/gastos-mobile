@@ -1,8 +1,9 @@
 export const lightTheme = {
-    primary: '#6200EE',
+    primary: '#4FB7B3',
     accent: '#03DAC6',
-    background: '#A8F1FF',
+    background: '#B1F1FF70',
     surface: '#FFFFFF',
+    surfaceSecondary: '#F1FADA',
     text: '#000000',
     textSecondary: '#757575',
     error: '#B00020',
@@ -10,15 +11,16 @@ export const lightTheme = {
     warning: '#FF9800',
     expense: '#EF5350',
     income: '#66BB6A',
-    border: '#E0E0E0',
+    border: '#2C2C2C',
     shadow: "#000"
 };
 
 export const darkTheme = {
-    primary: '#BB86FC',
-    accent: '#03DAC6',
-    background: '#121212',
-    surface: '#1E1E1E',
+    primary: '#123524',
+    accent: '#1F7D53',
+    background: '#22222270',
+    surface: '#2E2E2E',
+    surfaceSecondary: '#070F2B',
     text: '#FFFFFF',
     textSecondary: '#B0B0B0',
     error: '#CF6679',
@@ -26,6 +28,6 @@ export const darkTheme = {
     warning: '#FFB74D',
     expense: '#EF5350',
     income: '#66BB6A',
-    border: '#2C2C2C',
+    border: '#E0E0E0',
     shadow: '#FFF'
 };

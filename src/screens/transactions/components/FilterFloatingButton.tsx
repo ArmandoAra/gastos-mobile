@@ -11,6 +11,7 @@ import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanima
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { ThemeColors } from '../../../types/navigation';
 
 // Tipos definidos en tu app
 type ViewMode = 'day' | 'month' | 'year';
@@ -20,6 +21,7 @@ interface FilterFloatingButtonProps {
     setViewMode: (mode: ViewMode) => void;
     filter: string; // 'all' | 'income' | 'expense'
     setFilter: (filter: string) => void;
+    colors: ThemeColors;
 }
 
 const COLORS = {
@@ -35,7 +37,8 @@ export default function FilterFloatingButton({
     viewMode, 
     setViewMode, 
     filter, 
-    setFilter 
+    setFilter,
+    colors,
 }: FilterFloatingButtonProps) {
     
     const [isOpen, setIsOpen] = useState(false);
@@ -50,14 +53,13 @@ export default function FilterFloatingButton({
                 <TouchableOpacity 
                     activeOpacity={0.8}
                     onPress={() => setIsOpen(true)}
-                    style={styles.fabButton}
+                    style={[styles.fabButton, {
+                        backgroundColor: isOpen ? colors.surface : colors.text,
+                        borderColor: isOpen ? colors.text : colors.surface,
+                        borderWidth: 0.4
+                    }]}
                 >
-                    <LinearGradient
-                        colors={['#334155', '#1e293b']}
-                        style={styles.fabGradient}
-                    >
-                        <Ionicons name="filter" size={24} color="white" />
-                    </LinearGradient>
+                    <Ionicons name="filter" size={24} color={colors.accent} />
                 </TouchableOpacity>
             </Animated.View>
 
@@ -84,19 +86,19 @@ export default function FilterFloatingButton({
 
                     {/* Contenido */}
                     <Animated.View 
-                        entering={ZoomIn.duration(300)}
+                        entering={ZoomIn.duration(200)}
                         exiting={ZoomOut.duration(200)}
-                        style={styles.modalContent}
+                        style={[styles.modalContent, { borderColor: colors.border, backgroundColor: colors.surface }]}
                     >
                         <View style={styles.header}>
-                            <Text style={styles.headerTitle}>Filters & View</Text>
+                            <Text style={[styles.headerTitle, { color: colors.text }]}>Filters & View</Text>
                             <TouchableOpacity onPress={() => setIsOpen(false)}>
-                                <Ionicons name="close-circle" size={24} color={COLORS.textMuted} />
+                                <Ionicons name="close-circle" size={32} color={colors.error} />
                             </TouchableOpacity>
                         </View>
 
                         {/* SECCIÓN 1: VIEW MODE */}
-                        <Text style={styles.sectionLabel}>Time Period</Text>
+                        <Text style={[styles.sectionLabel, { color: colors.text }]}>Time Period</Text>
                         <View style={styles.selectorContainer}>
                             {(['day', 'month', 'year'] as ViewMode[]).map((mode) => {
                                 const isActive = viewMode === mode;
@@ -108,16 +110,16 @@ export default function FilterFloatingButton({
                                     >
                                         {isActive ? (
                                             <LinearGradient
-                                                colors={COLORS.activeGradient}
-                                                style={styles.optionActive}
+                                                colors={[colors.accent, colors.primary]}
+                                                style={[styles.optionActive, { borderColor: colors.border }]}
                                             >
-                                                <Text style={styles.textActive}>
+                                                <Text style={[styles.textActive, { color: colors.text }]}>
                                                     {mode.charAt(0).toUpperCase() + mode.slice(1)}
                                                 </Text>
                                             </LinearGradient>
                                         ) : (
                                             <View style={styles.optionInactive}>
-                                                <Text style={styles.textInactive}>
+                                                    <Text style={[styles.textInactive, { color: colors.textSecondary }]}>
                                                     {mode.charAt(0).toUpperCase() + mode.slice(1)}
                                                 </Text>
                                             </View>
@@ -128,7 +130,7 @@ export default function FilterFloatingButton({
                         </View>
 
                         {/* SECCIÓN 2: TIPO DE TRANSACCIÓN */}
-                        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Transaction Type</Text>
+                        <Text style={[styles.sectionLabel, { marginTop: 20 }, { color: colors.text }]}>Transaction Type</Text>
                         <View style={styles.selectorContainer}>
                             {['all', 'income', 'expense'].map((f) => {
                                 const isActive = filter === f;
@@ -140,16 +142,16 @@ export default function FilterFloatingButton({
                                     >
                                         {isActive ? (
                                             <LinearGradient
-                                                colors={COLORS.activeGradient}
-                                                style={styles.optionActive}
+                                                colors={[colors.accent, colors.primary]}
+                                                style={[styles.optionActive, { borderColor: colors.border }]}
                                             >
-                                                <Text style={styles.textActive}>
+                                                <Text style={[styles.textActive, { color: colors.text }]}>
                                                     {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
                                                 </Text>
                                             </LinearGradient>
                                         ) : (
                                             <View style={styles.optionInactive}>
-                                                <Text style={styles.textInactive}>
+                                                    <Text style={[styles.textInactive, { color: colors.textSecondary }]}>
                                                      {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
                                                 </Text>
                                             </View>
@@ -173,6 +175,8 @@ const styles = StyleSheet.create({
     fabButton: {
         width: 50,
         height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
         borderRadius: 25,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
@@ -199,11 +203,9 @@ const styles = StyleSheet.create({
     modalContent: {
         width: '100%',
         maxWidth: 360,
-        backgroundColor: COLORS.modalBg,
         borderRadius: 24,
         padding: 24,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        borderWidth: 0.4,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.5,
@@ -241,8 +243,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     optionActive: {
+        borderWidth: 0.4,
         flex: 1,
-        borderRadius: 12,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -261,15 +264,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     textInactive: {
-        color: COLORS.textMuted,
         fontWeight: '600',
         fontSize: 13,
     },
-
     // Footer
     applyButton: {
         marginTop: 24,
-        backgroundColor: 'rgba(255,255,255,0.1)',
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',

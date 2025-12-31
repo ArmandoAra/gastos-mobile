@@ -13,9 +13,10 @@ import { format } from 'date-fns';
 import { formatCurrency } from '../../../utils/helpers';
 import WarningMessage from './WarningMessage';
 import EditTransactionForm from '../../../components/forms/EditTransactionForm';
-import { TransactionType } from '../../../interfaces/data.interface';
+import { Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { CategoryLabel } from '../../../api/interfaces';
+import { ThemeColors } from '../../../types/navigation';
 
 // Tus imports...
 
@@ -23,11 +24,19 @@ import { CategoryLabel } from '../../../api/interfaces';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
+interface TransactionItemProps {
+    transaction: Transaction;
+    onSave: (updatedTransaction: Transaction) => Promise<Transaction | null | undefined>;
+    onDelete: (id: string, accountId: string, amount: number, type: TransactionType) => void;
+    colors: ThemeColors;
+}
+
 export const TransactionItemMobile = React.memo(({
     transaction,
     onSave,
     onDelete,
-}: any) => {
+    colors,
+}: TransactionItemProps) => {
     // 1. Estados
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isWarningOpen, setIsWarningOpen] = useState(false);
@@ -112,7 +121,7 @@ export const TransactionItemMobile = React.memo(({
         const isSwipeLeft = translateX.value < 0;
         const isSwipeRight = translateX.value > 0;
         return {
-            backgroundColor: (isSwipeLeft || isSwipeRight) ? '#ef4444' : 'transparent',
+            backgroundColor: (isSwipeLeft || isSwipeRight) ? colors.error : 'transparent',
             justifyContent: isSwipeLeft ? 'flex-end' : 'flex-start', 
         };
     });
@@ -123,16 +132,16 @@ export const TransactionItemMobile = React.memo(({
             {/* FONDO (Iconos de borrar) */}
             <Animated.View style={[StyleSheet.absoluteFill, styles.backgroundContainer, rBackgroundStyle]}>
                 <View style={[styles.deleteIconContainer, { left: 20 }]}>
-                    <MaterialIcons name="delete" size={24} color="#FFF" />
+                    <MaterialIcons name="delete" size={24} color={colors.text} />
                 </View>
                 <View style={[styles.deleteIconContainer, { right: 20 }]}>
-                    <MaterialIcons name="delete" size={24} color="#FFF" />
+                    <MaterialIcons name="delete" size={24} color={colors.text} />
                 </View>
             </Animated.View>
 
             {/* CONTENIDO (Swipeable) */}
             <GestureDetector gesture={panGesture}>
-                <Animated.View style={[styles.itemContainer, rStyle]}>
+                <Animated.View style={[styles.itemContainer, rStyle, { borderColor: colors.border, backgroundColor: colors.surface }]}>
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => setIsEditOpen(true)}
@@ -141,25 +150,25 @@ export const TransactionItemMobile = React.memo(({
                         {/* Avatar */}
                         <View style={[styles.avatar, { backgroundColor: color }]}>
                             {IconComponent ? (
-                                <IconComponent size={24} color="#FFF" />
+                                <IconComponent size={24} color={colors.text} />
                             ) : (
-                                <MaterialIcons name="shopping-bag" size={24} color="#FFF" />
+                                    <MaterialIcons name="shopping-bag" size={24} color={colors.text} />
                             )}
                         </View>
 
                         {/* Textos */}
                         <View style={styles.textContainer}>
                             <View style={styles.titleRow}>
-                                <Text style={styles.description} numberOfLines={1}>
+                                <Text style={[styles.description, { color: colors.text }]} numberOfLines={1}>
                                     {transaction.description || 'No Description'}
                                 </Text>
-                                <View style={[styles.chip, { backgroundColor: color + '20' }]}>
-                                    <Text style={[styles.chipText, { color: color }]}>
+                                <View style={[styles.chip, { backgroundColor: color + '33' }]}>
+                                    <Text style={[styles.chipText, { color: colors.textSecondary }]}>
                                         {transaction.category_name}
                                     </Text>
                                 </View>
                             </View>
-                            <Text style={styles.dateText}>
+                            <Text style={[styles.dateText, { color: colors.textSecondary }]}>
                                 {format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm')}
                             </Text>
                         </View>
@@ -217,10 +226,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     itemContainer: {
-        backgroundColor: 'rgba(230,250,250, 0.92)',
         borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(55, 55, 55, 0.65)',
+        borderWidth: 0.4,
         height: '100%', // Ocupar toda la altura del wrapper animado
     },
     touchableContent: {
@@ -248,8 +255,7 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
-        fontWeight: '500',
-        color: 'rgba(55, 55, 55, 1)',
+        fontWeight: '400',
         maxWidth: 150,
     },
     chip: {
@@ -259,17 +265,16 @@ const styles = StyleSheet.create({
     },
     chipText: {
         fontSize: 10,
-        fontWeight: '700',
+        fontWeight: '500',
     },
     dateText: {
         fontSize: 12,
-        color: 'rgba(55, 55, 55, 0.75)',
     },
     amountContainer: {
         alignItems: 'flex-end',
     },
     amountText: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '500',
     },
 });

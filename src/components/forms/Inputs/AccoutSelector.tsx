@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import { ThemeColors } from '../../../types/navigation';
+import { is } from 'date-fns/locale';
 
 // Definición de tipos basada en tu código original
 export interface Account {
@@ -23,13 +25,15 @@ interface AccountSelectorProps {
     accountSelected: string;
     setAccountSelected: (account: string) => void;
     accounts: Account[];
+    colors: ThemeColors;
 }
 
 export default function AccountSelector({
     label,
     accountSelected,
     setAccountSelected,
-    accounts
+    accounts,
+    colors
 }: AccountSelectorProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -47,25 +51,25 @@ export default function AccountSelector({
     return (
         <View style={styles.container}>
             {/* Label Superior */}
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
 
             {/* Trigger (El botón que parece un Input) */}
             <TouchableOpacity 
                 activeOpacity={0.7}
                 onPress={() => setIsOpen(true)}
-                style={styles.inputTrigger}
+                style={[styles.inputTrigger, { backgroundColor: colors.surface, borderColor: colors.border }]}
             >
-                <View style={styles.textContainer}>
-                    <Text style={styles.inputText} numberOfLines={1}>
+                <View style={[styles.textContainer, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.inputText, { color: colors.accent }]} numberOfLines={1}>
                         {selectedAccountObj ? selectedAccountObj.name : "Select Account"}
                     </Text>
                     {selectedAccountObj && (
-                        <Text style={styles.inputTypeText}>
+                        <Text style={[styles.inputTypeText, { color: colors.accent }]}>
                             {selectedAccountObj.type}
                         </Text>
                     )}
                 </View>
-                <MaterialIcons name="arrow-drop-down" size={24} color="#757575" />
+                <MaterialIcons name="arrow-drop-down" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
 
             {/* Modal de Selección */}
@@ -96,48 +100,45 @@ export default function AccountSelector({
 
                         entering={ZoomIn.duration(250)}
                         exiting={ZoomOut.duration(200)}
-                        style={styles.modalContent}
+                        style={[styles.modalContent, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
                     >
                         {/* Header del Modal */}
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{label}</Text>
-                            <TouchableOpacity 
-                                onPress={() => setIsOpen(false)}
-                                style={styles.closeButton}
-                            >
-                                <MaterialIcons name="close" size={24} color="#757575" />
-                            </TouchableOpacity>
+                        <View style={[styles.modalHeader, { backgroundColor: colors.surface }]}>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{label}</Text>
                         </View>
 
                         {/* Lista de Opciones */}
                         <FlatList
                             data={accounts}
                             keyExtractor={(item) => item.id}
-                            contentContainerStyle={{ paddingVertical: 8 }}
+                            style={{ backgroundColor: colors.surfaceSecondary }}
+                            contentContainerStyle={{ paddingVertical: 8, backgroundColor: colors.surfaceSecondary }}
                             renderItem={({ item }) => {
                                 const isSelected = accountSelected === item.id;
                                 return (
                                     <TouchableOpacity 
                                         style={[
                                             styles.optionItem,
-                                            isSelected && styles.optionSelected
+                                            { backgroundColor: colors.surfaceSecondary },
+                                            isSelected && { backgroundColor: colors.surface }
                                         ]}
                                         onPress={() => handleSelect(item.id)}
                                     >
                                         <View>
                                             <Text style={[
                                                 styles.optionText,
-                                                isSelected && styles.optionTextSelected
+                                                { color: isSelected ? colors.accent : colors.textSecondary },
+                                                isSelected && [styles.optionTextSelected, { color: colors.accent }]
                                             ]}>
                                                 {item.name}
                                             </Text>
-                                            <Text style={styles.optionSubText}>
+                                            <Text style={[styles.optionSubText, { color: isSelected ? colors.accent : colors.textSecondary }]}>
                                                 {item.type}
                                             </Text>
                                         </View>
                                         
                                         {isSelected && (
-                                            <MaterialIcons name="check-circle" size={20} color="#6200EE" />
+                                            <MaterialIcons name="check-circle" size={20} color={colors.accent} />
                                         )}
                                     </TouchableOpacity>
                                 );
@@ -153,11 +154,9 @@ export default function AccountSelector({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 8,
     },
     label: {
         fontSize: 8,
-        color: '#666',
         marginBottom: 4,
         fontWeight: '600',
         marginLeft: 4,
@@ -169,24 +168,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#F5F5F7', // Gris muy claro (Estilo iOS inputs)
         borderRadius: 12,
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        height: 64,
         borderWidth: 1,
-        borderColor: 'transparent', 
     },
     textContainer: {
         flex: 1,
     },
     inputText: {
         fontSize: 16,
-        color: '#333',
         fontWeight: '500',
     },
     inputTypeText: {
         fontSize: 12,
-        color: '#888',
         marginTop: 2,
     },
     
@@ -205,23 +200,19 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         
         // CERO SOMBRAS / ELEVACIÓN
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderWidth: 0.5,
         overflow: 'hidden',
     },
     modalHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-        backgroundColor: '#FFFFFF',
     },
     modalTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#333',
     },
     closeButton: {
         padding: 4,
@@ -235,18 +226,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 16,
         paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#FAFAFA',
-    },
-    optionSelected: {
-        backgroundColor: '#F3E5F5', // Color Lila muy suave de fondo
     },
     optionText: {
         fontSize: 16,
         color: '#444',
     },
     optionTextSelected: {
-        color: '#6200EE',
         fontWeight: '700',
     },
     optionSubText: {

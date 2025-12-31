@@ -35,10 +35,16 @@ import AccountSelector from "./Inputs/AccoutSelector";
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { formatDate } from '../../utils/formatters';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { ThemeColors } from '../../types/navigation';
+import { styles } from './stylesForm';
 
 const { width } = Dimensions.get('window');
 
 export default function AddTransactionForm() {
+    const { theme } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
 
     const {
@@ -94,6 +100,8 @@ export default function AddTransactionForm() {
                 </Animated.View>
             )}
 
+
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.container}
@@ -105,23 +113,21 @@ export default function AddTransactionForm() {
                         exiting={SlideOutUp.duration(200)}
                         style={[
                             styles.topSheet,
-                            { paddingTop: insets.top + 10 } // Respetar el notch/isla
+                            { backgroundColor: colors.surfaceSecondary },
+                            { paddingTop: insets.top + 10 } 
                         ]}
                     >
                         {/* Header */}
-                        <View style={styles.header}>
+                        <View style={[styles.header, { borderBottomColor: colors.border }]}>
                             <TransactionHeaderTitle
                                 title={title}
                                 date={date}
                                 titleColor={titleColor}
                             />
-                            <TouchableOpacity
-                                onPress={handleClose}
-                                disabled={isSubmitting}
-                                style={styles.closeButton}
-                            >
-                                <MaterialIcons name="close" size={20} color="#555" />
-                            </TouchableOpacity>
+                            <ModernCalendarSelector
+                                selectedDate={localSelectedDay}
+                                onDateChange={setLocalSelectedDay}
+                            />
                         </View>
 
                         {/* ScrollView para asegurar que todo sea accesible si la pantalla es chica */}
@@ -137,29 +143,26 @@ export default function AddTransactionForm() {
                                 setAmount={setAmount}
                                 amountInputRef={amountInputRef}
                                 handleIconClick={handleIconClick}
+                                colors={colors}
+
                             />
 
                             {/* 2. Descripción */}
                             <DescriptionInput
                                 description={description}
                                 setDescription={setDescription}
+                                colors={colors}
                             />
 
                             {/* 3. Fila de Selectores (Cuenta y Fecha) en horizontal para ahorrar espacio */}
                             <View style={styles.rowSelectors}>
                                 <View style={{ flex: 7 }}>
                                     <AccountSelector
-                                        label="Account"
+                                        label="Accounts"
                                         accountSelected={selectedAccount}
                                         setAccountSelected={setSelectedAccount}
                                         accounts={allAccounts}
-                                    />
-                                </View>
-                                <View style={{ width: 10 }} />
-                                <View style={{ flex: 1 }}>
-                                    <ModernCalendarSelector
-                                        selectedDate={localSelectedDay}
-                                        onDateChange={setLocalSelectedDay}
+                                        colors={colors}
                                     />
                                 </View>
                             </View>
@@ -188,6 +191,7 @@ export default function AddTransactionForm() {
                                 iconOptions={ICON_OPTIONS[
                                     inputNameActive === InputNameActive.INCOME ? IconKey.income : IconKey.spend
                                 ] as unknown as IconOption[]}
+                                colors={colors}
                             />
                         )}
 
@@ -197,59 +201,3 @@ export default function AddTransactionForm() {
         </Modal>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'flex-start', // Alinea todo arriba
-    },
-    topSheet: {
-        width: '100%',
-        backgroundColor: '#FFFFFF',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-        paddingBottom: 20,
-        maxHeight: '65%', 
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-        marginBottom: 10,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '700',
-    },
-    closeButton: {
-        padding: 6,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-        gap: 16,
-        paddingBottom: 20, // Espacio extra al final del scroll
-    },
-    rowSelectors: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        zIndex: 10, // Para asegurar que los dropdowns se vean por encima si es necesario
-    },
-    footer: {
-        width: '100%',
-        display: 'flex',
-        marginTop: 10,
-        alignItems: 'center',
-    }
-});

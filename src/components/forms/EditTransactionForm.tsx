@@ -40,8 +40,13 @@ import IconsSelector from './Inputs/IconsSelector';
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
 import { IconsOptions } from '../../../../Gastos/frontend/app/dashboard/constants/icons';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { ThemeColors } from '../../types/navigation';
+import { styles } from './stylesForm';
+import IconsSelectorPopover from './Inputs/IconsSelector';
+import { InputNameActive } from '../../interfaces/settings.interface';
 
-const { width } = Dimensions.get('window');
 
 interface EditTransactionFormProps {
     open: boolean;
@@ -62,6 +67,8 @@ export default function EditTransactionFormMobile({
     onClose,
     onSave,
 }: EditTransactionFormProps) {
+    const { theme } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
 
     const {
@@ -195,10 +202,13 @@ export default function EditTransactionFormMobile({
                     <Animated.View 
                         entering={SlideInUp.duration(200)}
                         exiting={SlideOutUp.duration(200)}
+
                         style={[
                             styles.topSheet,
+                            { backgroundColor: colors.surfaceSecondary },
                             { paddingTop: insets.top + 10 }
                         ]}
+
                     >
                         <View style={styles.header}>
                             <TransactionHeaderTitle
@@ -206,9 +216,10 @@ export default function EditTransactionFormMobile({
                                 date={formattedDate}
                                 titleColor={headerColor}
                             />
-                            <TouchableOpacity onPress={() => onClose(false)} style={styles.closeButton}>
-                                <MaterialIcons name="close" size={20} color="#555" />
-                            </TouchableOpacity>
+                            <ModernCalendarSelector
+                                selectedDate={localSelectedDay}
+                                onDateChange={setLocalSelectedDay}
+                            />
                         </View>
 
                         <ScrollView
@@ -222,11 +233,13 @@ export default function EditTransactionFormMobile({
                                 amountInputRef={amountInputRef}
                                 handleIconClick={handleIconPress}
                                 setAmount={setAmount}
+                                colors={colors}
                             />
 
                             <DescriptionInput
                                 description={description}
                                 setDescription={setDescription}
+                                colors={colors}
                             />
 
                             <View style={styles.rowSelectors}>
@@ -236,26 +249,12 @@ export default function EditTransactionFormMobile({
                                         accountSelected={newAccount}
                                         setAccountSelected={setNewAccount}
                                         accounts={allAccounts}
-                                    />
-                                </View>
-                                <View style={{ width: 10 }} />
-                                <View style={{ flex: 1 }}>
-                                    <ModernCalendarSelector
-                                        selectedDate={localSelectedDay}
-                                        onDateChange={setLocalSelectedDay}
+                                        colors={colors}
                                     />
                                 </View>
                             </View>
 
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity
-                                    onPress={() => onClose(false)}
-                                    style={styles.cancelButton}
-                                    disabled={isLoading}
-                                >
-                                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                                </TouchableOpacity>
-
                                 <TouchableOpacity
                                     onPress={handleUpdate} 
                                     style={[styles.saveButton, { backgroundColor: headerColor }]}
@@ -269,7 +268,7 @@ export default function EditTransactionFormMobile({
                         </ScrollView>
 
                         {isIconSelectorOpen && (
-                            <IconsSelector
+                            <IconsSelectorPopover
                                 popoverOpen={isIconSelectorOpen}
                                 handleClosePopover={() => setIsIconSelectorOpen(false)}
                                 iconOptions={ICON_OPTIONS[
@@ -277,6 +276,7 @@ export default function EditTransactionFormMobile({
                                 ] as unknown as IconOption[]}
                                 handleSelectIcon={handleSelectIcon}
                                 selectedIcon={selectedIcon}
+                                colors={colors}
                             />
                         )}
                     </Animated.View>
@@ -286,76 +286,3 @@ export default function EditTransactionFormMobile({
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'flex-start',
-    },
-    topSheet: {
-        width: '100%',
-        backgroundColor: '#FFFFFF',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-        paddingBottom: 20,
-        maxHeight: '85%',
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-        marginBottom: 10,
-    },
-    closeButton: {
-        padding: 6,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-        gap: 16,
-        paddingBottom: 20,
-    },
-    rowSelectors: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        zIndex: 10,
-    },
-    actionButtons: {
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 10,
-    },
-    cancelButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        backgroundColor: '#f5f5f5',
-        alignItems: 'center',
-    },
-    cancelButtonText: {
-        color: '#666',
-        fontWeight: '600',
-        fontSize: 16,
-    },
-    saveButton: {
-        flex: 2,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    saveButtonText: {
-        color: '#FFF',
-        fontWeight: '600',
-        fontSize: 16,
-    },
-});

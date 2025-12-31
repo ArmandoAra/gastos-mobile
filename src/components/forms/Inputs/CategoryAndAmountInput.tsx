@@ -18,6 +18,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon } from '@expo/vector-icons/build/createIconSet';
 import { IconOption } from '../../../constants/icons';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../../theme/colors';
+import { ThemeColors } from '../../../types/navigation';
 
 // Definimos la interfaz adaptada para RN
 interface CategoryAndAmountInputProps {
@@ -26,6 +29,7 @@ interface CategoryAndAmountInputProps {
     setAmount: (value: string) => void;
     amountInputRef?: RefObject<TextInput | null>;
     handleIconClick: (event: any) => void; // <-- Debe recibir esto
+    colors: ThemeColors;
 }
 
 export default function CategoryAndAmountInput({
@@ -33,7 +37,8 @@ export default function CategoryAndAmountInput({
     amount,
     setAmount,
     amountInputRef,
-    handleIconClick
+    handleIconClick,
+    colors,
 }: CategoryAndAmountInputProps) {
 
     // Lógica de animación para el botón de categoría (Scale effect)
@@ -71,7 +76,7 @@ export default function CategoryAndAmountInput({
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                         >
-                          {selectedIcon && React.createElement(selectedIcon.icon, { size: 28, color: '#FFF' })}
+                            {selectedIcon && React.createElement(selectedIcon.icon, { size: 28, color: colors.text })}
                         </LinearGradient>
                     </Animated.View>
                 </TouchableOpacity>
@@ -85,7 +90,7 @@ export default function CategoryAndAmountInput({
                 <Animated.View
                     layout={FadeInRight}
                     entering={FadeInRight}
-                    style={styles.inputWrapper}>
+                    style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <TextInput
                         ref={amountInputRef}
                         value={amount}
@@ -97,9 +102,9 @@ export default function CategoryAndAmountInput({
                             }
                         }}
                         placeholder="0.00"
-                        placeholderTextColor="#9E9E9E"
+                        placeholderTextColor={colors.textSecondary}
                         keyboardType="decimal-pad" // Teclado numérico con punto
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text, backgroundColor: colors.surface }]}
                         returnKeyType="done"
                     />
                 </Animated.View>
@@ -152,7 +157,6 @@ const styles = StyleSheet.create({
     input: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#333',
         height: '100%', // Ocupa todo el wrapper
     },
 

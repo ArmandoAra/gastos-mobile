@@ -6,16 +6,19 @@ import {
     StyleSheet 
 } from 'react-native';
 import Animated, { FadeIn, FadeInLeft } from 'react-native-reanimated';
+import { ThemeColors } from '../../../types/navigation';
 
 interface DescriptionInputProps {
     description: string;
     setDescription: (desc: string) => void;
+    colors: ThemeColors;
 }
 const MAX_LENGTH = 120;
 
 export default function DescriptionInput({ 
     description,
-    setDescription
+    setDescription,
+    colors
 }: DescriptionInputProps) {
 
 
@@ -28,25 +31,24 @@ export default function DescriptionInput({
             style={styles.container}
         >
             {/* Label Superior */}
-            <Text style={styles.label}>DESCRIPTION</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>DESCRIPTION</Text>
 
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <TextInput
                     value={description}
                     onChangeText={setDescription}
                     placeholder="Add a description..."
-                    placeholderTextColor="#9E9E9E"
+                    placeholderTextColor={colors.textSecondary}
                     multiline={true}
                     numberOfLines={3}
                     maxLength={MAX_LENGTH}
-                    style={styles.input}
-                    // Propiedades importantes para multiline en Android
+                    style={[styles.input, { color: colors.text }]}
                     textAlignVertical="top"
                     scrollEnabled={false} // Evita scroll interno si cabe en la altura
                 />
                 
                 {/* Contador de caracteres discreto */}
-                <Text style={styles.counter}>
+                <Text style={[styles.counter, { color: colors.textSecondary }]}>
                     {description.length}/{MAX_LENGTH}
                 </Text>
             </View>
@@ -60,7 +62,6 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 8,
-        color: '#666', // text.secondary
         marginBottom: 4,
         fontWeight: '600',
         marginLeft: 4,
@@ -69,7 +70,6 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {
         width: '100%',
-        backgroundColor: '#F5F5F7', // Gris muy claro (Estilo iOS)
         borderRadius: 16,
         padding: 16,
         // CERO SOMBRAS
@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
     },
     input: {
         fontSize: 16,
-        color: '#333',
         fontWeight: '500',
         minHeight: 80, // Altura mínima para simular rows={3}
         paddingTop: 0, // Reset padding nativo para alinear con el borde superior
@@ -88,7 +87,6 @@ const styles = StyleSheet.create({
         bottom: 8,
         right: 12,
         fontSize: 10,
-        color: '#AAA',
         fontWeight: '500',
     }
 });

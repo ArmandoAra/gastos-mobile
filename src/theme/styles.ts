@@ -6,8 +6,8 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
+    paddingTop: 40,
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   header: {
     backgroundColor: '#6200EE',
@@ -209,19 +209,17 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#F5F5F5',
+    paddingBottom: 8,
+    paddingTop: 16,
   },
   dateHeaderText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#000',
     textTransform: 'capitalize',
   },
   dateHeaderTotal: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#6200EE',
   },
   fab: {
     position: 'absolute',

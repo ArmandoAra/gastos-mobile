@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         // Borde rojo sutil (border: 2px solid rgba(215, 35, 35, 0.9))
-        borderWidth: 2,
+        borderWidth: 0.5,
         borderColor: 'rgba(215, 35, 35, 0.6)', 
     },
     cardGradient: {

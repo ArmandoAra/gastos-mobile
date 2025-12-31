@@ -18,6 +18,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { MONTHS, WEEKDAYS } from '../../constants/date';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { ThemeColors } from '../../types/navigation';
 
 
 const { width } = Dimensions.get('window');
@@ -25,15 +28,7 @@ const { width } = Dimensions.get('window');
 // --- Constantes ---
 
 
-const COLORS = {
-  glassBg: 'rgba(30, 41, 59, 0.85)', 
-  modalBg: '#DDF4E7',
-  border: 'rgba(255, 255, 255, 0.1)',
-  text: '#061E29',
-  textMuted: '#f97316',
-  activeGradient: ['#f97316', '#dc2626'] as const, // Naranja a Rojo
-  todayHighlight: 'rgba(249, 115, 22, 0.2)',
-};
+
 
 interface ModernCalendarSelectorProps {
   selectedDate: Date;
@@ -44,6 +39,8 @@ export default function ModernCalendarSelector({
   selectedDate, 
   onDateChange 
 }: ModernCalendarSelectorProps) {
+  const { theme } = useSettingsStore();
+  const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
   
   const [isOpen, setIsOpen] = useState(false);
   
@@ -92,14 +89,6 @@ export default function ModernCalendarSelector({
     return days;
   };
 
-  // Formato para el botón flotante (ej: "Oct 24, 2024")
-  const formatButtonDate = () => {
-    return selectedDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-  };
 
   const isSelected = (day: number) => {
     return selectedDate.getDate() === day &&
@@ -129,13 +118,13 @@ export default function ModernCalendarSelector({
           {Platform.OS === 'ios' ? (
              <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-             <View style={[StyleSheet.absoluteFill, { backgroundColor: COLORS.glassBg }]} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: isOpen ? colors.surface : colors.text }]} />
           )}
 
           <View style={styles.pillContent}>
-            <Ionicons name="calendar-clear-outline" size={18} color={COLORS.textMuted} />
+            <Ionicons name="calendar-clear-outline" size={18} color={colors.accent} />
             {/* <Text style={styles.pillText}>{formatButtonDate()}</Text> */}
-            <MaterialIcons name="keyboard-arrow-down" size={20} color={COLORS.activeGradient[0]} />
+            <MaterialIcons name="keyboard-arrow-down" size={20} color={colors.accent} />
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -163,32 +152,32 @@ export default function ModernCalendarSelector({
             <Animated.View 
             entering={ZoomIn.duration(100)}
                 exiting={ZoomOut.duration(200)}
-                style={styles.calendarCard}
+            style={[styles.calendarCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
             >
                 {/* Header: Navegación de Mes */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.arrowBtn}>
-                        <MaterialIcons name="chevron-left" size={28} color={COLORS.text} />
+                <MaterialIcons name="chevron-left" size={28} color={colors.text} />
                     </TouchableOpacity>
                     
                     <View style={{ alignItems: 'center' }}>
-                        <Text style={styles.monthTitle}>
+                <Text style={[styles.monthTitle, { color: colors.text }]}>
                             {MONTHS[viewDate.getMonth()]}
                         </Text>
-                        <Text style={styles.yearSubtitle}>
+                <Text style={[styles.yearSubtitle, { color: colors.textSecondary }]}>
                             {viewDate.getFullYear()}
                         </Text>
                     </View>
                     
                     <TouchableOpacity onPress={() => changeMonth(1)} style={styles.arrowBtn}>
-                        <MaterialIcons name="chevron-right" size={28} color={COLORS.text} />
+                <MaterialIcons name="chevron-right" size={28} color={colors.text} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Días de la semana */}
                 <View style={styles.weekRow}>
                     {WEEKDAYS.map((day, index) => (
-                        <Text key={index} style={styles.weekdayText}>{day}</Text>
+                      <Text key={index} style={[styles.weekdayText, { color: colors.text }]}>{day}</Text>
                     ))}
                 </View>
 
@@ -210,19 +199,20 @@ export default function ModernCalendarSelector({
                             >
                                 {selected ? (
                                     <LinearGradient
-                                        colors={COLORS.activeGradient}
+                                colors={[colors.accent, colors.primary]}
                                         style={styles.selectedDayBg}
                                     >
-                                        <Text style={styles.selectedDayText}>{day}</Text>
+                                <Text style={[styles.selectedDayText]}>{day}</Text>
                                     </LinearGradient>
                                 ) : (
                                     <View style={[
                                         styles.dayContent, 
-                                        today && styles.todayBorder
+                                  today && [styles.todayBorder, { borderColor: colors.accent }]
                                     ]}>
                                         <Text style={[
                                             styles.dayText,
-                                            today && { color: COLORS.activeGradient[0], fontWeight: 'bold' }
+                                    { color: colors.text },
+                                    today && { color: colors.accent, fontWeight: 'bold' }
                                         ]}>{day}</Text>
                                     </View>
                                 )}
@@ -230,9 +220,9 @@ export default function ModernCalendarSelector({
                         );
                     })}
                 </View>
-
-                {/* Footer: Jump to Today */}
-                <View style={styles.footer}>
+          </Animated.View>
+          {/* Footer: Jump to Today */}
+          <View style={[styles.footer, { borderColor: colors.border, backgroundColor: colors.surface }]}>
                     <TouchableOpacity 
                         onPress={() => {
                             const now = new Date();
@@ -241,11 +231,9 @@ export default function ModernCalendarSelector({
                         }}
                         style={styles.todayButton}
                     >
-                        <Text style={styles.todayButtonText}>Go to Today</Text>
+              <Text style={[styles.todayButtonText, { color: colors.text }]}>Go to Today</Text>
                     </TouchableOpacity>
-                </View>
-
-            </Animated.View>
+          </View>
         </View>
       </Modal>
     </>
@@ -255,19 +243,16 @@ export default function ModernCalendarSelector({
 const styles = StyleSheet.create({
   // --- Botón Flotante ---
   floatingContainer: {
-    position: 'relative',
+    position: 'absolute',
+    right: 0,
     width: 'auto',
     zIndex: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 5,
-    elevation: 8,
+
   },
   pillButton: {
     borderRadius: 30,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   pillContent: {
     flexDirection: 'column',
@@ -277,7 +262,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pillText: {
-    color: COLORS.text,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -292,12 +276,10 @@ const styles = StyleSheet.create({
   calendarCard: {
     width: width * 0.9,
     maxWidth: 360,
-    height: 500,
-    backgroundColor: COLORS.modalBg,
+    height: 400,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.15,
     shadowRadius: 25,
@@ -314,11 +296,9 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.text,
   },
   yearSubtitle: {
     fontSize: 14,
-    color: COLORS.textMuted,
     marginTop: 2,
   },
   arrowBtn: {
@@ -335,7 +315,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   weekdayText: {
-    color: COLORS.textMuted,
     fontSize: 13,
     fontWeight: '600',
     width: 40,
@@ -362,21 +341,17 @@ const styles = StyleSheet.create({
   },
   todayBorder: {
     borderWidth: 1,
-    borderColor: COLORS.activeGradient[0],
-    backgroundColor: COLORS.todayHighlight,
   },
   selectedDayBg: {
     width: 38,
     height: 38,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 12, // Un poco más cuadrado para el seleccionado
-    shadowColor: COLORS.activeGradient[0],
+    borderRadius: 12, 
     shadowOpacity: 0.5,
     shadowRadius: 8,
   },
   dayText: {
-    color: COLORS.text,
     fontSize: 15,
   },
   selectedDayText: {
@@ -387,19 +362,18 @@ const styles = StyleSheet.create({
 
   // --- Footer ---
   footer: {
+    height: 60,
+    justifyContent: 'center',
     marginTop: 15,
+    borderRadius: 24,
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 15,
+    borderWidth: 0.4,
   },
   todayButton: {
-    paddingVertical: 8,
     paddingHorizontal: 20,
   },
   todayButtonText: {
-    color: COLORS.activeGradient[1], // Rojo/Naranja
-    fontWeight: '700',
-    fontSize: 14,
+    fontWeight: '500',
+    fontSize: 16,
   },
 });

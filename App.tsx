@@ -50,7 +50,6 @@ const RenderModernHeader = (props: any, currentColors: ThemeColors) => {
   return (
     <ModernHeader
       title={options.title}
-      subtitle={isHome ? undefined : 'View Details'}
       showAvatar={isHome}
       showNotification={isHome}
       showBack={false}
@@ -79,18 +78,19 @@ const MainTabs = () => {
         header: ({ options, route }) => {
           // Lógica para decidir qué mostrar según la pantalla
           const isHome = route.name === 'Transactions'; // O 'Home' si tienes una dashboard
-
-          return (
-            <ModernHeader
-              // Si es la pantalla principal, mostramos Avatar y saludo. Si no, título normal.
-              title={options.title}
-              subtitle={isHome ? undefined : 'View Details'} // undefined deja que el saludo automático actúe
+          if (route.name === "Settings") {
+            // En Settings no mostramos header
+            return (
+              <ModernHeader
+                title={options.title}
               showAvatar={isHome}
               showNotification={isHome}
               showBack={false} // En tabs no suele haber back
               colors={currentColors}
             />
           );
+          }
+
         },
         tabBarStyle: { /* ... tu estilo transparente ... */ },
       }}

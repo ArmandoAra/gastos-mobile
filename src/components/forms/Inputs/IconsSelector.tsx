@@ -16,6 +16,7 @@ import Animated, {
   ZoomOut,
 } from "react-native-reanimated";
 import { IconOption } from "../../../constants/icons";
+import { ThemeColors } from "../../../types/navigation";
 
 interface IconsSelectorPopoverProps {
   popoverOpen: boolean;
@@ -24,6 +25,7 @@ interface IconsSelectorPopoverProps {
   iconOptions: IconOption[];
   selectedIcon: IconOption | null;
   handleSelectIcon: (icon: IconOption) => void;
+  colors: ThemeColors;
 }
 
 export default function IconsSelectorPopover({
@@ -32,6 +34,7 @@ export default function IconsSelectorPopover({
   iconOptions,
   selectedIcon,
   handleSelectIcon,
+  colors,
 }: IconsSelectorPopoverProps) {
 
   return (
@@ -58,11 +61,11 @@ export default function IconsSelectorPopover({
         <Animated.View
           entering={ZoomIn.duration(250)}
           exiting={ZoomOut.duration(200)}
-          style={styles.popoverContent}
+          style={[styles.popoverContent, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
         >
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>SELECT CATEGORY ICON</Text>
+          <View style={[styles.header, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>SELECT CATEGORY ICON</Text>
           </View>
 
           {/* Grid de Iconos */}
@@ -78,7 +81,7 @@ export default function IconsSelectorPopover({
               // Componente por si la lista está vacía (Debugging)
               ListEmptyComponent={
                 <View style={{ padding: 20, alignItems: 'center' }}>
-                    <Text style={{ color: '#888' }}>No icons found</Text>
+                  <Text style={{ color: colors.text }}>No icons found</Text>
                 </View>
               }
 
@@ -96,7 +99,7 @@ export default function IconsSelectorPopover({
                       activeOpacity={0.7} // Feedback táctil mejorado
                       style={[
                         styles.iconItem,
-                        isSelected && styles.iconItemSelected,
+                        isSelected && { ...styles.iconItemSelected, borderColor: colors.accent },
                       ]}
                     >
                       <LinearGradient
@@ -106,13 +109,14 @@ export default function IconsSelectorPopover({
                         end={{ x: 1, y: 1 }}
                       >
                         {/* Renderizado Seguro del Icono */}
-                        {IconComponent && <IconComponent size={24} color="#FFF" />}
+                        {IconComponent && <IconComponent size={24} color={colors.text} />}
                       </LinearGradient>
 
                       <Text
                         style={[
                           styles.iconLabel,
-                          isSelected && styles.iconLabelSelected,
+                          { color: colors.textSecondary },
+                          isSelected && { ...styles.iconLabelSelected, color: colors.accent },
                         ]}
                         numberOfLines={1}
                       >
@@ -138,13 +142,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   popoverContent: {
-    // width: width * 0.9,
-    // maxWidth: 400,
     maxHeight: "60%", // Altura máxima del modal
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderWidth: 0.5,
     overflow: "hidden",
   },
   header: {

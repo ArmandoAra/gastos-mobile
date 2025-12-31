@@ -154,25 +154,27 @@ export function TransactionsScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.surface }]}>
             <InfoPopUp />
             <TransactionsHeader
                 viewMode={viewMode}
             />
-            <View style={{ paddingHorizontal: 16, marginBottom: 8, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Filter and View Mode */}
+            <View style={[localStyles.filterContainer, { borderBottomColor: colors.border }]}>
                 <FilterFloatingButton
                     viewMode={viewMode}
                     setViewMode={setViewMode}
                     filter={filter}
                     setFilter={setFilter}
+                    colors={colors}
                 />
-                <View style={{ flexDirection: 'column', alignItems: 'center', gap: 1, width: 100, paddingHorizontal: 4 }}>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.background }}>{viewMode}</Text>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.background }}>{filter}</Text>
+                <View style={{ flexDirection: 'column', alignItems: 'center', gap: 1, width: 80, paddingHorizontal: 4 }}>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.accent, color: colors.text }}>{viewMode}</Text>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.accent, color: colors.text }}>{filter}</Text>
                 </View>
                 {/* --- BARRA DE BÚSQUEDA --- */}
                 <View style={[localStyles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="search" size={20} color={colors.background} style={{ marginRight: 8 }} />
+                    <Ionicons name="search" size={20} color={colors.text} style={{ marginRight: 8 }} />
                     <TextInput
                         style={[localStyles.searchInput, {color: colors.text}]}
                         placeholder={`Search in this ${viewMode}...`}
@@ -183,7 +185,7 @@ export function TransactionsScreen() {
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color={colors.background} />
+                            <Ionicons name="close-circle" size={20} color={colors.text} />
                         </TouchableOpacity>
                     )}
 
@@ -198,14 +200,14 @@ export function TransactionsScreen() {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <ScrollView
                     style={styles.transactionsList}
-                    contentContainerStyle={{ paddingBottom: 100 }}
+                    contentContainerStyle={{ paddingBottom: 200 }}
                 >
                     {/* Estado Vacío */}
                     {Object.keys(groupedData).length === 0 && (
                         <View style={localStyles.emptyState}>
                             <MaterialIcons name="receipt-long" size={48} color={colors.background} />
                             <Text style={localStyles.emptyText}>
-                                No transactions found for this {viewMode} //TODO - i18n
+                                No transactions found for this {viewMode}
                             </Text>
                         </View>
                     )}
@@ -219,7 +221,7 @@ export function TransactionsScreen() {
                         return (
                             <View key={key}>
                                 <View style={styles.dateHeader}>
-                                    <Text style={styles.dateHeaderText}>
+                                    <Text style={[styles.dateHeaderText, { color: colors.text }]}>
                                         {getGroupTitle(key)}
                                     </Text>
 
@@ -236,6 +238,7 @@ export function TransactionsScreen() {
                                         transaction={transaction}
                                         onDelete={handleDelete}
                                         onSave={handleSave}
+                                        colors={colors}
                                     />
                                 ))}
                             </View>
@@ -270,22 +273,22 @@ const localStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    // modeBtnInactive: {
-    //     flex: 1,
-    //     alignItems: 'center',
-    //     justifyContent: 'center',
-    //     backgroundColor: '#1e293b',
-    //     borderWidth: 1,
-    //     borderColor: '#334155',
-    //     borderRadius: 18,
-    // },
+    filterContainer: {
+        paddingHorizontal: 16,
+        borderBottomWidth: 0.5,
+        paddingVertical: 8,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    },
     modeLabel:
     {
-        fontWeight: 'bold',
+        fontWeight: '400',
         width: '100%',
         textAlign: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 2,
         borderRadius: 14,
         textTransform: 'capitalize',
         fontSize: 12

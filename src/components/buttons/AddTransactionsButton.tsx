@@ -1,6 +1,5 @@
-
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -12,79 +11,107 @@ import Animated, {
     FadeOutDown,
     ZoomIn,
     FadeIn,
-    FadeOut
+    FadeOut,
+    interpolateColor
 } from 'react-native-reanimated';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
 import AddTransactionForm from '../forms/AddTransactionForm';
 import useDataStore from '../../stores/useDataStore';
-import { set } from 'date-fns';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { ThemeColors } from '../../types/navigation';
 
-const FAB_SIZE = 56;
+const FAB_SIZE = 62;
 
 // Configuración de animación Spring optimizada
 const SPRING_CONFIG = {
-    damping: 100,
-    stiffness: 100,
-    mass: 0.8
+    damping: 15, // Un poco más bajo para más rebote
+    stiffness: 150,
+    mass: 1
 };
 
 export default function AddTransactionsButton() {
+    const { theme } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
-    const { allAccounts, setSelectedAccount, selectedAccount, } = useDataStore();
+    const { allAccounts, setSelectedAccount, selectedAccount } = useDataStore();
 
-    // Shared Value para la rotación del icono
-    const rotation = useSharedValue(0);
+    // Shared Value para la rotación (0 a 1)
+    const animationProgress = useSharedValue(0);
 
-    // Sincronizar rotación con estado
+    // Sincronizar animación con estado
     useEffect(() => {
-        rotation.value = withTiming(isAddOptionsOpen ? 45 : 0, { duration: 200 });
+        animationProgress.value = withTiming(isAddOptionsOpen ? 1 : 0, { duration: 250 });
     }, [isAddOptionsOpen]);
 
+    // Lógica de selección de cuenta por defecto
     useEffect(() => {
-        // 1. Si no hay cuentas en absoluto, asegurarnos de que no haya nada seleccionado
         if (allAccounts.length === 0) {
-            if (selectedAccount !== null && selectedAccount !== '') {
-                setSelectedAccount(''); // O null, dependiendo de tu tipo
-            }
+            if (selectedAccount !== null && selectedAccount !== '') setSelectedAccount('');
             return;
         }
-
-        // 2. Buscamos si la cuenta seleccionada actual existe en la lista
         const currentAccountExists = allAccounts.some(acc => acc.id === selectedAccount);
-
-        // 3. Si NO existe (porque se borró o es antigua) o no hay ninguna seleccionada
         if (!currentAccountExists || !selectedAccount) {
-            console.log("La cuenta seleccionada no es válida. Asignando la primera disponible.");
-            // Seleccionamos la primera cuenta disponible por defecto
             setSelectedAccount(allAccounts[0].id);
         }
-
-        // Eliminamos 'setSelectedAccount' de las dependencias para evitar bucles si la función no es estable
     }, [allAccounts, selectedAccount]);
-
 
     const handleToggleOptions = () => {
         setIsAddOptionsOpen(!isAddOptionsOpen);
     };
 
+    const handleClose = () => {
+        setIsAddOptionsOpen(false);
+    };
+
+    // Estilo animado para el FAB (Rotación y cambio de color de fondo)
+    const fabAnimatedStyle = useAnimatedStyle(() => {
+        const rotate = animationProgress.value * 45; // 0 a 45 grados
+        const backgroundColor = interpolateColor(
+            animationProgress.value,
+            [0, 1],
+            [colors.text, colors.surface] // De oscuro a claro (o según tu tema)
+        );
+
+        return {
+            transform: [{ rotate: `${rotate}deg` }],
+            backgroundColor: backgroundColor
+        };
+    });
+
+    // Estilo animado para el icono dentro del FAB
+    const iconAnimatedStyle = useAnimatedStyle(() => {
+        const color = interpolateColor(
+            animationProgress.value,
+            [0, 1],
+            [colors.accent, colors.text] // Cambia el color del ícono
+        );
+        return { color }; // Nota: Esto requiere que Animated.Text o Animated.Props soporten color, a veces es mejor cambiar el prop directamente o usar dos iconos superpuestos si esto falla.
+    });
+
     return (
         <>
-            {
-                (inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) &&
+            {/* Modal del Formulario (Gasto/Ingreso) */}
+            {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
                 <AddTransactionForm />
-            }
+            )}
 
-
-            {/* Opciones del Menú */}
+            {/* --- BACKDROP (FONDO OSCURO) --- */}
+            {/* [Image of React Native Z-Index Layers showing Backdrop between Content and FAB] */}
             {isAddOptionsOpen && (
                 <Animated.View
-                    layout={FadeIn}
-                    key="options-container"
-                    style={styles.optionsContainer}
+                    style={styles.backdrop}
                     entering={FadeIn.duration(200)}
-                    exiting={FadeOut.duration(150)}
+                    exiting={FadeOut.duration(200)}
                 >
+                    {/* Usamos Pressable para detectar el clic fuera y cerrar */}
+                    <Pressable style={styles.backdropPressable} onPress={handleClose} />
+                </Animated.View>
+            )}
+
+            {/* --- OPCIONES DEL MENÚ --- */}
+            {isAddOptionsOpen && (
+                <View style={styles.optionsContainer} pointerEvents="box-none">
                     <View style={styles.optionsWrapper}>
                         {/* Opción 1: Ingreso */}
                         <InputOptionsNoShadow
@@ -95,7 +122,7 @@ export default function AddTransactionsButton() {
                                 setInputNameActive(InputNameActive.INCOME);
                                 setIsAddOptionsOpen(false);
                             }}
-                            index={0}
+                            index={1} // Invertimos indices para que el de arriba salga ultimo o primero segun gusto
                         />
 
                         {/* Opción 2: Gasto */}
@@ -107,13 +134,13 @@ export default function AddTransactionsButton() {
                                 setInputNameActive(InputNameActive.SPEND);
                                 setIsAddOptionsOpen(false);
                             }}
-                            index={1}
+                            index={0}
                         />
                     </View>
-                </Animated.View>
+                </View>
             )}
 
-            {/* Botón Flotante (FAB) */}
+            {/* --- BOTÓN FLOTANTE (FAB) --- */}
             {!isDateSelectorOpen && (
                 <Animated.View
                     layout={ZoomIn}
@@ -123,14 +150,13 @@ export default function AddTransactionsButton() {
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={handleToggleOptions}
-                        style={[
-                            styles.fab,
-                            isAddOptionsOpen && styles.fabOpen
-                        ]}
                     >
-                        <Animated.View
-                            layout={FadeIn}>
-                            <MaterialIcons name="add" size={28} color="#FFF" />
+                        <Animated.View style={[styles.fab, fabAnimatedStyle]}>
+                            <MaterialIcons
+                                name="add"
+                                size={28}
+                                color={colors.accent}
+                            />
                         </Animated.View>
                     </TouchableOpacity>
                 </Animated.View>
@@ -140,7 +166,7 @@ export default function AddTransactionsButton() {
 }
 
 // ==========================================
-// Componente Hijo: InputOptions (CORREGIDO)
+// Componente Hijo: InputOptions
 // ==========================================
 
 interface InputOptionsProps {
@@ -152,83 +178,89 @@ interface InputOptionsProps {
 }
 
 const InputOptionsNoShadow = ({ title, iconName, gradientColors, onPress, index }: InputOptionsProps) => {
-    const opacity = useSharedValue(0);
 
-    useEffect(() => {
-        opacity.value = withSpring(1, SPRING_CONFIG);
-    }, []);
-
-    const animatedCardStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-    }));
-
+    // Animación de entrada: Slide hacia arriba + Fade In
     return (
         <Animated.View
             entering={FadeInDown
-                .delay(index * 60)
+                .delay(index * 50) // Pequeño delay escalonado
                 .springify()
-                .damping(SPRING_CONFIG.damping)
-                .stiffness(SPRING_CONFIG.stiffness)
-                .mass(SPRING_CONFIG.mass)
+                .damping(12)
+                .mass(0.8)
             }
-            exiting={FadeOutDown.duration(150)}
+            exiting={FadeOutDown.duration(150)} // Salida rápida hacia abajo
             style={styles.cardContainer}
         >
             <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={onPress}
+                style={styles.touchableOption}
             >
-                <Animated.View style={[styles.cardNoShadow, animatedCardStyle]}>
-                    <LinearGradient
-                        colors={gradientColors}
-                        style={styles.avatarNoShadow}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                    >
-                        <MaterialIcons name={iconName} size={20} color="#FFF" />
-                    </LinearGradient>
+                {/* Texto a la izquierda */}
+                <View style={styles.textWrapper}>
                     <Text style={styles.cardText}>{title}</Text>
-                </Animated.View>
+                </View>
+
+                {/* Icono a la derecha */}
+                <LinearGradient
+                    colors={gradientColors}
+                    style={styles.avatarNoShadow}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                >
+                    <MaterialIcons name={iconName} size={20} color="#FFF" />
+                </LinearGradient>
             </TouchableOpacity>
         </Animated.View>
     );
 };
 
-
 // ==========================================
-// Estilos CORREGIDOS
+// Estilos
 // ==========================================
 
 const styles = StyleSheet.create({
+    // El Backdrop cubre toda la pantalla
+    backdrop: {
+        ...StyleSheet.absoluteFillObject, // Ocupa todo el espacio (top: 0, left: 0, etc)
+        backgroundColor: 'rgba(0,0,0,0.35)', // Oscurece el fondo
+        zIndex: 1000, // Alto, pero menos que el FAB y las opciones
+        elevation: 1, // Para Android
+    },
+    backdropPressable: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+
+    // Contenedor de opciones
     optionsContainer: {
         position: 'absolute',
-        bottom: 110,
-        right: 90,
-        zIndex: 1300,
-        alignItems: 'flex-end',
+        bottom: 210, // Un poco arriba del FAB
+        right: 38,   // Alineado con el FAB
+        zIndex: 1300, // Por encima del backdrop
+        alignItems: 'flex-end', // Alinea el contenido a la derecha
     },
     optionsWrapper: {
-        gap: 12,
-        width: 200,
-        paddingBottom: 8,
+        gap: 16,
+        alignItems: 'flex-end',
     },
+
+    // Contenedor del FAB
     fabContainer: {
         position: 'absolute',
-        bottom: 110,
+        bottom: 120, // Más pegado al borde inferior (estándar Material Design)
         right: 24,
-        zIndex: 301,
+        zIndex: 1301, // El elemento más alto, siempre clicable
     },
     fab: {
         width: FAB_SIZE,
         height: FAB_SIZE,
         borderRadius: FAB_SIZE / 2,
-        backgroundColor: '#0f172a',
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
-            android: {
-                elevation: 6
-            },
+            android: { elevation: 6 },
             ios: {
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -237,38 +269,43 @@ const styles = StyleSheet.create({
             }
         }),
     },
-    fabOpen: {
-        backgroundColor: '#3700B3',
-        transform: [{ rotate: '45deg' }],
-        ...Platform.select({
-            android: { elevation: 8 }
-        }),
-    },
+
+    // Estilos de las opciones individuales
     cardContainer: {
-        // Espaciado entre tarjetas
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+    },
+    touchableOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 12, // Espacio entre texto e icono
+    },
+    textWrapper: {
+        backgroundColor: '#FFF',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        ...Platform.select({
+            android: { elevation: 2 },
+            ios: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2 }
+        })
     },
     cardText: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
         color: '#333',
     },
-    cardNoShadow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: '#E0E0E0', // Borde sutil en lugar de sombra
-    },
     avatarNoShadow: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        // Sin elevation ni shadow
+        ...Platform.select({
+            android: { elevation: 4 },
+            ios: { shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 2 } }
+        })
     }
 });

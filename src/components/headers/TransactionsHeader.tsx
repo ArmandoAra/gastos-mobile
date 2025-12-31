@@ -63,7 +63,7 @@ export default function TransactionsHeader({
     >
       {/* Tarjeta de Fecha Principal */}
       <View style={[styles.dateCard,{ 
-        backgroundColor: colors.background, 
+        backgroundColor: colors.surface, 
         shadowColor: colors.shadow ,
         borderColor: colors.border
         }]}>
@@ -72,14 +72,14 @@ export default function TransactionsHeader({
         
         <View style={styles.dateContent}>
             {/* Icono Dinámico según Modo */}
-            <LinearGradient
+          <LinearGradient
                 colors={COLORS.accentGradient}
                 style={styles.dateIcon}
             >
-                <Ionicons 
-                    name={viewMode === 'year' ? "calendar" : viewMode === 'month' ? "calendar-outline" : "today"} 
-                    size={20} 
-                    color="white" 
+            <Ionicons
+              name={viewMode === 'year' ? "calendar" : viewMode === 'month' ? "calendar-outline" : "today"}
+              size={20}
+              color="white"
                 />
             </LinearGradient>
 
@@ -112,18 +112,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  // title: {
-  //   fontSize: 28,
-  //   fontWeight: '800', // Extra bold
-  //   color: COLORS.text,
-  //   letterSpacing: 0.5,
-  // },
-  // subtitle: {
-  //   fontSize: 14,
-  //   color: COLORS.textMuted,
-  //   marginTop: 2,
-  //   fontWeight: '500',
-  // },
+
   iconContainer: {
     width: 48,
     height: 48,
@@ -160,7 +149,7 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 75,
     backgroundColor: COLORS.accentGradient[0], // Naranja
-    opacity: 0.05,
+    opacity: 0.65,
     transform: [{ scale: 1.5 }],
   },
   dateContent: {
@@ -174,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.accentGradient[1], // Rojo
+    // shadowColor: COLORS.accentGradient[1], // Rojo
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
