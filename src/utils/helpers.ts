@@ -18,7 +18,14 @@ export function calculateTransactionsStats(transactions: Transaction[]): { total
 }
 
 
-
+export const getInitials = (name: string) => {
+    return name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+};
 
 export function joinAndSortTransactions(transactions: Transaction[]): Transaction[] {
     return transactions.sort((a, b) => {

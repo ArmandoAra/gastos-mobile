@@ -68,7 +68,7 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
       styles.container, 
       { 
         paddingTop: insets.top + 10,
-        backgroundColor: colors.background,
+        backgroundColor: colors.surfaceSecondary,
         borderBottomColor: colors.border,
         shadowColor: colors.shadow,
         elevation: 5,
@@ -78,14 +78,7 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
         
         {/* --- IZQUIERDA: Back Button o Avatar --- */}
         <View style={styles.leftContainer}>
-                <View
-                  style={styles.avatarRing}
-                >
-                   <Image 
-                      source={currentIconPage} 
-                      style={styles.avatarImage} 
-                   />
-                </View>
+
           
           <View style={[styles.textContainer, (showBack || showAvatar) ? { marginLeft: 12 } : {}]}>
             {subtitle || (showAvatar && !title) ? (
@@ -95,7 +88,7 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
             ) : null}
             
             <Text style={[styles.title, { color: colors.text }]}>
-              {title || 'Dashboard'}
+              {title || 'Settings'}
             </Text>
           </View>
         </View>
@@ -111,9 +104,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderBottomWidth: 1,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 1,
+
+    elevation: 5,
     zIndex: 100,
   },
   contentRow: {
@@ -128,6 +121,8 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     justifyContent: 'center',
+    width: '100%',
+    alignItems: 'center',
   },
   greeting: {
     fontSize: 12,

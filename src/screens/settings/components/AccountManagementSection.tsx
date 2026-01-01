@@ -1,40 +1,33 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
     View, 
     Text, 
     TouchableOpacity, 
     StyleSheet, 
-    ScrollView, 
     Alert, 
-    TextInput as RNTextInput, 
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
 import Animated, { 
     FadeIn, 
     FadeOut, 
-    Layout, 
-    SlideInDown, 
-    SlideOutUp,
-    ZoomIn,
-    ZoomOut
+    Layout,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { TextInput, Chip, HelperText } from 'react-native-paper';
+import { TextInput } from 'react-native-paper';
 
 // Stores & Utils
-
-// Asumimos que tienes un componente similar para el input de nueva cuenta en mobile
-// Si no, puedes crear uno simple o incrustarlo. Aquí importo un placeholder.
 import useDataStore from '../../../stores/useDataStore';
 import { formatCurrency } from '../../../utils/helpers';
-import AccountInputMobile from './AccountInput';
-import { useAuthStore } from '../../../stores/authStore';
+import AccountInputMobile from './AccountInput'; // Asumimos que este componente maneja sus propios estilos o recibe theme
+import { ThemeColors } from '../../../types/navigation';
 
-export default function AccountManagementSection() {
-    // 1. Hooks & Store
-    const { user } = useAuthStore();
-    const { allAccounts, updateAccount, deleteAccountStore } = useDataStore(); // Asumiendo que deleteAccount está en el store
+interface AccountManagementProps {
+    colors: ThemeColors;
+}
+
+export default function AccountManagementSection({ colors }: AccountManagementProps) {
+    const { allAccounts, updateAccount, deleteAccountStore } = useDataStore();
     
     // 2. Estado Local
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,7 +36,7 @@ export default function AccountManagementSection() {
     const [isAdding, setIsAdding] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Ref para focus (opcional en RN, pero útil)
+    // Ref para focus
     const nameInputRef = useRef<any>(null);
 
     // 3. Handlers
@@ -58,18 +51,15 @@ export default function AccountManagementSection() {
 
     const handleSaveEdit = async (id?: string) => {
         try {
-            // Validación simple
             if (!tempName.trim()) {
                 setErrorMessage("Name cannot be empty");
                 setTimeout(() => setErrorMessage(null), 3000);
                 return;
             }
 
-            // Llamada al store/API
             if (!id) return;
             updateAccount(id, { name: tempName, type: tempType });
 
-            
             setEditingId(null);
             setErrorMessage(null);
 
@@ -87,8 +77,6 @@ export default function AccountManagementSection() {
     };
 
     const handleDeletePress = (id: string) => {
-        // En RN usamos Alert nativo para confirmaciones simples
-        // O puedes renderizar tu propio Modal WarningAccountDeleteMessage si prefieres
         Alert.alert(
             "Delete Account",
             "If you delete this account, all its associated transactions will be permanently removed. Do you want to proceed?",
@@ -103,25 +91,25 @@ export default function AccountManagementSection() {
         );
     };
 
-
     return (
-        <View
-            style={styles.card}
+        <Animated.View
+            entering={FadeIn.duration(300)}
+            style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
             {/* --- HEADER SECCIÓN --- */}
             <View style={styles.headerRow}>
                 <View style={styles.titleContainer}>
-                    <MaterialIcons name="account-balance-wallet" size={24} color="#667eea" style={{ marginRight: 8 }} />
-                    <Text style={styles.headerTitle}>Account Management</Text>
+                    {/* Icono del título usando el color de texto primario o secundario */}
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Accounts</Text>
                 </View>
 
                 <TouchableOpacity
                     onPress={() => setIsAdding(!isAdding)}
-                    style={styles.addButton}
+                    style={[styles.addButton, { backgroundColor: isAdding ? colors.error : colors.text }]}
                 >
-                    <MaterialIcons name={isAdding ? "remove" : "add"} size={18} color="#FFF" />
-                    <Text style={styles.addButtonText}>
-                        {isAdding ? "Cancel" : "Add Account"}
+                    <MaterialIcons name={isAdding ? "close" : "add"} size={18} color={colors.surface} />
+                    <Text style={[styles.addButtonText, { color: colors.surface }]}>
+                        {isAdding ? "Cancel" : "Add New"}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -129,12 +117,10 @@ export default function AccountManagementSection() {
             {/* --- FORMULARIO AÑADIR CUENTA (Collapsible) --- */}
             {isAdding && (
                 <KeyboardAvoidingView
-                   behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.addFormContainer}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={[styles.addFormContainer, { borderBottomColor: colors.border }]}
                 >
-                     {/* Aquí iría tu componente AccountInput adaptado a móvil */}
-                     {/* Pasamos setIsAdding para que pueda cerrarse al terminar */}
-                     <AccountInputMobile onClose={() => setIsAdding(false)} />
+                    <AccountInputMobile onClose={() => setIsAdding(false)} colors={colors} />
                 </KeyboardAvoidingView>
             )}
 
@@ -145,7 +131,7 @@ export default function AccountManagementSection() {
                     <Animated.Text 
                         entering={FadeIn} 
                         exiting={FadeOut}
-                        style={styles.errorText}
+                        style={[styles.errorText, { color: colors.error }]}
                     >
                         {errorMessage}
                     </Animated.Text>
@@ -154,10 +140,15 @@ export default function AccountManagementSection() {
                 {allAccounts.map((account) => (
                     <Animated.View 
                         key={account.id}
-                        layout={Layout.springify()}
                         entering={FadeIn}
                         exiting={FadeOut}
-                        style={styles.accountItem}
+                        style={[
+                            styles.accountItem,
+                            {
+                                backgroundColor: colors.surfaceSecondary || colors.background, // Fallback si no tienes surfaceSecondary
+                                borderColor: colors.border
+                            }
+                        ]}
                     >
                         {editingId === account.id ? (
                             // MODO EDICIÓN
@@ -169,33 +160,35 @@ export default function AccountManagementSection() {
                                         label="Name"
                                         value={tempName}
                                         onChangeText={setTempName}
-                                        style={styles.input}
+                                        style={[styles.input, { backgroundColor: colors.surfaceSecondary || colors.background }]}
+                                        textColor={colors.text}
                                         dense
-                                        outlineColor="#E0E0E0"
-                                        activeOutlineColor="#667eea"
+                                        outlineColor={colors.border}
+                                        activeOutlineColor={colors.accent}
                                     />
                                     <TextInput
                                         mode="outlined"
-                                        label="Type"
+                                        label="Type (e.g., Bank, Cash)"
                                         value={tempType}
                                         onChangeText={setTempType}
-                                        style={styles.input}
+                                        style={[styles.input, { backgroundColor: colors.surfaceSecondary || colors.background }]}
+                                        textColor={colors.text}
                                         dense
-                                        outlineColor="#E0E0E0"
-                                        activeOutlineColor="#667eea"
+                                        outlineColor={colors.border}
+                                        activeOutlineColor={colors.accent}
                                     />
                                 </View>
                                 
                                 <View style={styles.actionsRowEdit}>
                                     <TouchableOpacity 
                                         onPress={() => handleSaveEdit(account?.id)}
-                                        style={styles.iconButtonSuccess}
+                                        style={[styles.iconButton, { backgroundColor: colors.income }]}
                                     >
                                         <MaterialIcons name="check" size={20} color="#FFF" />
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                         onPress={handleCancelEdit}
-                                        style={styles.iconButtonCancel}
+                                        style={[styles.iconButton, { backgroundColor: colors.textSecondary }]}
                                     >
                                         <MaterialIcons name="close" size={20} color="#FFF" />
                                     </TouchableOpacity>
@@ -205,16 +198,16 @@ export default function AccountManagementSection() {
                             // MODO VISTA
                             <View style={styles.viewModeContainer}>
                                 <View style={styles.infoColumn}>
-                                    <Text style={styles.accountName}>{account.name}</Text>
+                                        <Text style={[styles.accountName, { color: colors.text }]}>{account.name}</Text>
                                     <View style={styles.metaRow}>
-                                        <View style={styles.chip}>
-                                            <Text style={styles.chipText}>{account.type}</Text>
+                                            <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
+                                                <Text style={[styles.chipText, { color: colors.textSecondary }]}>{account.type}</Text>
                                         </View>
                                         <Text style={[
                                             styles.balanceText, 
-                                            { color: account.balance >= 0 ? '#4caf50' : '#f44336' }
+                                                { color: account.balance >= 0 ? colors.income : colors.expense }
                                         ]}>
-                                            ${formatCurrency((account.balance))}
+                                                {formatCurrency((account.balance))}
                                         </Text>
                                     </View>
                                 </View>
@@ -222,19 +215,17 @@ export default function AccountManagementSection() {
                                 <View style={styles.actionsRowView}>
                                     <TouchableOpacity 
                                         onPress={() => handleEdit(account.id)}
-                                        style={styles.iconButtonEdit}
+                                            style={[styles.iconButtonOutline, { borderColor: colors.border, backgroundColor: colors.surface }]}
                                     >
-                                        <MaterialIcons name="edit" size={18} color="#666" />
+                                            <MaterialIcons name="edit" size={18} color={colors.textSecondary} />
                                     </TouchableOpacity>
-                                    
-                                    {allAccounts.length > 1 && (
-                                        <TouchableOpacity 
+
+                                        <TouchableOpacity
                                             onPress={() => handleDeletePress(account.id)}
-                                            style={styles.iconButtonDelete}
+                                            style={[styles.iconButtonOutline, { borderColor: colors.error + '50', backgroundColor: colors.surface }]}
                                         >
-                                            <MaterialIcons name="delete" size={18} color="#f44336" />
+                                            <MaterialIcons name="delete" size={18} color={colors.error} />
                                         </TouchableOpacity>
-                                    )}
                                 </View>
                             </View>
                         )}
@@ -244,30 +235,30 @@ export default function AccountManagementSection() {
                 {/* Empty State */}
                 {allAccounts.length === 0 && (
                     <View style={styles.emptyState}>
-                        <Text style={styles.emptyStateText}>
-                            No accounts yet. Create your first account!
+                        <MaterialIcons name="savings" size={40} color={colors.textSecondary} style={{ opacity: 0.5 }} />
+                        <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                            No accounts yet. Create your first one above!
                         </Text>
                     </View>
                 )}
             </View>
-        </View>
+        </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#FFF',
+        marginTop: 10,
         borderRadius: 12,
-        padding: 16,
+        padding: 20,
         marginBottom: 20,
-        // Sombras
+        // Sombras consistentes con UserProfile
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: '#f0f0f0',
+        elevation: 5,
+        borderWidth: 0.5,
     },
     headerRow: {
         flexDirection: 'row',
@@ -280,45 +271,38 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#333',
+        fontSize: 24, // Ajustado para jerarquía visual
+        fontWeight: '300',
     },
     addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#667eea',
         paddingVertical: 6,
         paddingHorizontal: 12,
-        borderRadius: 8,
+        borderRadius: 20,
         gap: 4,
     },
     addButtonText: {
-        color: '#FFF',
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '600',
     },
     addFormContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         marginBottom: 20,
-        overflow: 'hidden', // Importante para animaciones de altura
+        paddingBottom: 20,
+        borderBottomWidth: 1,
+        borderStyle: 'dashed',
     },
     listContainer: {
         gap: 12,
     },
     errorText: {
-        color: '#f44336',
         textAlign: 'center',
         marginBottom: 10,
         fontSize: 12,
     },
     accountItem: {
-        backgroundColor: '#F8F9FA', // background.default
-        borderRadius: 8,
+        borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#E0E0E0', // divider
         overflow: 'hidden',
     },
     // --- ESTILOS MODO VISTA ---
@@ -326,7 +310,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 12,
+        padding: 16,
     },
     infoColumn: {
         flex: 1,
@@ -335,7 +319,6 @@ const styles = StyleSheet.create({
     accountName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
     },
     metaRow: {
         flexDirection: 'row',
@@ -343,15 +326,14 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     chip: {
-        backgroundColor: 'rgba(102, 126, 234, 0.1)', // primary.light
         paddingVertical: 2,
         paddingHorizontal: 8,
-        borderRadius: 12,
+        borderRadius: 6,
     },
     chipText: {
-        fontSize: 12,
-        color: '#667eea', // primary.main
+        fontSize: 11,
         fontWeight: '500',
+        textTransform: 'uppercase',
     },
     balanceText: {
         fontSize: 14,
@@ -360,20 +342,14 @@ const styles = StyleSheet.create({
     actionsRowView: {
         flexDirection: 'row',
         gap: 8,
+        marginLeft: 10,
     },
-    iconButtonEdit: {
+    iconButtonOutline: {
         padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#FFF',
+        borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
-    },
-    iconButtonDelete: {
-        padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: '#ffcdd2',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     // --- ESTILOS MODO EDICIÓN ---
     editModeContainer: {
@@ -387,36 +363,34 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     input: {
-        backgroundColor: '#FFF',
-        height: 40,
         fontSize: 14,
+        height: 40,
     },
     actionsRowEdit: {
-        flexDirection: 'column', // En móvil se ve mejor vertical si hay poco espacio
+        flexDirection: 'column',
         gap: 8,
         justifyContent: 'center',
     },
-    iconButtonSuccess: {
+    iconButton: {
         padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#4caf50', // success
+        borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    iconButtonCancel: {
-        padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#9e9e9e', // grey
-        alignItems: 'center',
-        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 2,
     },
     // --- EMPTY STATE ---
     emptyState: {
         padding: 20,
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
     },
     emptyStateText: {
-        color: '#888',
         fontSize: 14,
+        textAlign: 'center',
     },
 });

@@ -5,8 +5,9 @@ import {
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    Platform
+    Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -23,13 +24,18 @@ import UserProfileSection from './components/UserProfileSection';
 import AccountManagementSection from './components/AccountManagementSection';
 import DataManagementSection from './components/DataManagementSection';
 import DangerZoneSection from './components/DangerZoneSection';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { ThemeColors } from '../../types/navigation';
+import AppearanceSection from './components/AppearanceSection';
+import LanguageSection from './components/LanguageSection';
+import SecuritySection from './components/SecuritySection';
 
 export const SettingsScreen = () => {
-    const navigation = useNavigation();
     const { t, i18n } = useTranslation();
 
-    // Hooks del store (combinando lógica de ambos ejemplos)
     const { theme, setTheme, isPinEnabled, togglePin, language, setLanguage } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+
     const { user, logout } = useAuthStore();
 
     const handleLanguageChange = (code: string) => {
@@ -46,90 +52,29 @@ export const SettingsScreen = () => {
             style={[styles.container, { backgroundColor: theme === 'dark' ? '#121212' : '#F4F6F8' }]}
             showsVerticalScrollIndicator={false}
         >
-            {/* 1. Header (Traducido del MUI) */}
-            <Animated.View entering={EnteringAnimation(100)} style={localStyles.headerContainer}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={localStyles.backButton}
-                >
-                    <Text style={[localStyles.backButtonText, { color: '#007AFF' }]}>
-                        &larr; Back to Dashboard
-                    </Text>
-                </TouchableOpacity>
 
-                <View>
-                    {/* Simulación de gradiente de texto del MUI */}
-                    <Text style={localStyles.headerTitle}>Settings</Text>
-                    <Text style={localStyles.headerSubtitle}>
-                        Manage your account preferences and app settings
-                    </Text>
-                </View>
-            </Animated.View>
+            <UserProfileSection colors={colors} />
 
-            <UserProfileSection />
-            <AccountManagementSection />
+            <AccountManagementSection colors={colors} />
 
             {/* 4. Appearance (Del estilo RN proporcionado) */}
-            <Animated.View entering={EnteringAnimation(400)} style={styles.section}>
-                <Text style={styles.sectionTitle}>Apariencia</Text>
-                <View style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>Tema</Text>
-                    <View style={styles.themeSelector}>
-                        <TouchableOpacity
-                            style={[styles.themeBtn, theme === 'light' && styles.themeBtnActive]}
-                            onPress={() => setTheme('light')}
-                        >
-                            <Text style={styles.themeBtnText}>☀️ Claro</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.themeBtn, theme === 'dark' && styles.themeBtnActive]}
-                            onPress={() => setTheme('dark')}
-                        >
-                            <Text style={styles.themeBtnText}>🌙 Oscuro</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Animated.View>
+            <AppearanceSection colors={colors} />
 
             {/* 5. Language (Del estilo RN proporcionado) */}
-            <Animated.View entering={EnteringAnimation(500)} style={styles.section}>
-                <Text style={styles.sectionTitle}>Idioma</Text>
-                {languages.map(lang => (
-                    <TouchableOpacity
-                        key={lang.code}
-                        style={styles.settingItem}
-                        onPress={() => handleLanguageChange(lang.code)}
-                    >
-                        <Text style={styles.settingLabel}>
-                            {lang.flag} {lang.name}
-                        </Text>
-                        {language === lang.code && (
-                            <Text style={styles.checkmark}>✓</Text>
-                        )}
-                    </TouchableOpacity>
-                ))}
-            </Animated.View>
+            <LanguageSection colors={colors} />
 
             {/* 6. Security (Del estilo RN proporcionado) */}
-            <Animated.View entering={EnteringAnimation(600)} style={styles.section}>
-                <Text style={styles.sectionTitle}>Seguridad</Text>
-                <View style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>PIN de Seguridad</Text>
-                    <TouchableOpacity
-                        style={[styles.toggle, isPinEnabled && styles.toggleActive]}
-                        onPress={togglePin}
-                    >
-                        <View style={[styles.toggleCircle, isPinEnabled && styles.toggleCircleActive]} />
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>🔐 Habilitar Biometría</Text>
-                </TouchableOpacity>
-            </Animated.View>
+            <SecuritySection
+                colors={colors}
+                isPinEnabled={isPinEnabled}
+                isBiometricEnabled={false}
+                onTogglePin={togglePin}
+                onToggleBiometrics={() => { }}
+            />
 
             {/* 7. Danger Zone (Traducido del MUI a estilos RN) */}
-            <DataManagementSection />
-            <DangerZoneSection userId={user?.id} />
+            <DataManagementSection colors={colors} />
+            <DangerZoneSection colors={colors} />
 
         </ScrollView>
     );
