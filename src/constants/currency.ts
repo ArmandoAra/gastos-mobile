@@ -17,3 +17,9 @@ export const currencyOptions = [
     { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
     { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
 ];
+
+
+export const getCurrencySymbol = (code?: string): string => {
+    const currency = currencyOptions.find(c => c.code === code);
+    return currency ? currency.symbol : '';
+}

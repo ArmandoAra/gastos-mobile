@@ -5,6 +5,7 @@ import { Account, Transaction, TransactionType } from '../interfaces/data.interf
 import { createAccount } from '../../../Gastos/frontend/app/actions/db/Accounts_API';
 import * as uuid from 'uuid';
 import { se } from 'date-fns/locale';
+import { transferTransactionsAccount } from '../../../Gastos/frontend/app/actions/db/Gastos_API';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -58,6 +59,8 @@ type Actions = {
     createAccount: (accountData: Partial<Account>) => Promise<void>
     updateAccount: (accountId: string, data: Partial<Account>) => void
     updateAccountBalance: (accountId: string, amount: number, transactionType?: TransactionType) => void
+    syncAccountsWithTransactions: () => void
+    transferAllAccountTransactions: (fromAccountId: string, toAccountId: string) => void
     deleteSomeAmountInAccount: (accountId: string, amount: number, transactionType: TransactionType) => void
     deleteAccountStore: (accountId: string) => void
     getAccountById: (accountId: string) => Account | undefined
@@ -194,6 +197,22 @@ const useDataStore = create<State & Actions>()(
                     )
                 },
 
+                transferAllAccountTransactions: (fromAccountId: string, toAccountId: string) => {
+                    // Esto esta cambiando el id de fromAccountId a toAccountId en todas las transacciones
+                    set(
+                        (state) => ({
+                            transactions: state.transactions.map(t =>
+                                t.account_id === fromAccountId
+                                    ? { ...t, account_id: toAccountId }
+                                    : t
+                            ),
+                            error: null,
+                        }),
+                        false,
+                        'transferAllAccountTransactions'
+                    )
+                },
+
                 getAccountById: (accountId: string) => get().allAccounts.find(acc => acc.id === accountId),
 
                 deleteSomeAmountInAccount: (accountId: string, amount: number, transactionType: TransactionType) => {
@@ -234,6 +253,19 @@ const useDataStore = create<State & Actions>()(
                         allAccounts: [],
                         selectedAccount: '',
                     }, false, 'deleteAllAccounts')
+                },
+
+                syncAccountsWithTransactions: () => {
+                    const accounts = get().allAccounts;
+                    const transactions = get().transactions;
+                    const updatedAccounts = accounts.map(account => {
+                        const relatedTransactions = transactions.filter(t => t.account_id === account.id);
+                        const newBalance = relatedTransactions.reduce((sum, t) => {
+                            return t.type === TransactionType.INCOME ? sum + t.amount : sum - t.amount;
+                        }, 0);
+                        return { ...account, balance: newBalance };
+                    });
+                    set({ allAccounts: updatedAccounts }, false, 'syncAccountsWithTransactions');
                 },
 
 

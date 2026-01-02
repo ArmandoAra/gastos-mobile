@@ -144,7 +144,6 @@ export default function AddTransactionForm() {
                                 amountInputRef={amountInputRef}
                                 handleIconClick={handleIconClick}
                                 colors={colors}
-
                             />
 
                             {/* 2. Descripción */}

@@ -31,21 +31,9 @@ import LanguageSection from './components/LanguageSection';
 import SecuritySection from './components/SecuritySection';
 
 export const SettingsScreen = () => {
-    const { t, i18n } = useTranslation();
 
-    const { theme, setTheme, isPinEnabled, togglePin, language, setLanguage } = useSettingsStore();
+    const { theme, isPinEnabled, togglePin } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-
-    const { user, logout } = useAuthStore();
-
-    const handleLanguageChange = (code: string) => {
-        setLanguage(code);
-        i18n.changeLanguage(code);
-    };
-
-    // Configuración de animación para simular el "staggerChildren" de Framer Motion
-    const EnteringAnimation = (delay: number) =>
-        FadeInDown.duration(500).delay(delay).springify();
 
     return (
         <ScrollView

@@ -71,18 +71,6 @@ export default function TransactionsHeader({
         <View style={styles.glowEffect} />
         
         <View style={styles.dateContent}>
-            {/* Icono Dinámico según Modo */}
-          <LinearGradient
-                colors={COLORS.accentGradient}
-                style={styles.dateIcon}
-            >
-            <Ionicons
-              name={viewMode === 'year' ? "calendar" : viewMode === 'month' ? "calendar-outline" : "today"}
-              size={20}
-              color="white"
-                />
-            </LinearGradient>
-
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
                     <Text style={[styles.overviewLabel, {color: colors.text}]}>{subTitle}</Text>

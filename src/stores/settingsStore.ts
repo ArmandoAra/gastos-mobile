@@ -8,6 +8,8 @@ import { InputNameActive } from '../interfaces/settings.interface';
 
 const storage = createMMKV();
 
+//TODO: Implementar el language change en toda la app
+
 const mmkvStorage = {
     setItem: (name: string, value: string) => storage.set(name, value),
     getItem: (name: string) => storage.getString(name) ?? null,

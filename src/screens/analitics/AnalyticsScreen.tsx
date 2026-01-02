@@ -83,7 +83,6 @@ export default function AnalyticsScreen() {
   const expenses = filteredTransactions.filter(t => t.type === 'expense');
   const income = filteredTransactions.filter(t => t.type === 'income');
 
-  // Preparar datos para Pie Chart (formato específico para Victory XL)
   const expensesPieData = useMemo(() => {
     const groups: Record<string, number> = {};
     expenses.forEach(t => {
@@ -108,7 +107,6 @@ export default function AnalyticsScreen() {
     for (let i = dayCount - 1; i >= 0; i--) {
       const date = new Date();
       if(selectedPeriod === 'year') {
-         // Lógica simplificada para año (últimos 6 meses)
          date.setMonth(date.getMonth() - i);
          const monthStr = format(date, 'MMM', { locale: es });
          // Suma dummy o real

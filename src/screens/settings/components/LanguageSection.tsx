@@ -16,25 +16,20 @@ import Animated, {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ThemeColors } from '../../../types/navigation';
+import i18n from '../../../i18n';
+import { languages } from '../../../constants/languages';
 
 interface LanguageSectionProps {
     colors: ThemeColors;
 }
 
-// Constantes de idiomas
-const LANGUAGES = [
-    { code: 'en', name: 'English', native: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
-    { code: 'pt', name: 'Portuguese', native: 'Português', flag: '🇧🇷' },
-] as const;
 
 export default function LanguageSection({ colors }: LanguageSectionProps) {
     const { language, setLanguage } = useSettingsStore();
 
     const handleLanguageChange = (code: string) => {
         setLanguage(code);
-        // Aquí puedes agregar lógica para cambiar el idioma de i18n si usas react-i18next
-        // i18n.changeLanguage(code);
+        i18n.changeLanguage(code);
     };
 
     return (
@@ -64,7 +59,7 @@ export default function LanguageSection({ colors }: LanguageSectionProps) {
 
             {/* LISTA DE IDIOMAS */}
             <View style={styles.listContainer}>
-                {LANGUAGES.map((lang, index) => {
+                {languages.map((lang, index) => {
                     const isSelected = language === lang.code;
                     
                     return (

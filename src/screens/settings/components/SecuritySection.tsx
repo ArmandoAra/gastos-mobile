@@ -8,11 +8,7 @@ import {
     Switch
 } from 'react-native';
 import Animated, { 
-    FadeIn, 
-    Layout, 
-    useAnimatedStyle, 
-    withTiming, 
-    interpolateColor 
+    FadeIn,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ThemeColors } from '../../../types/navigation';
@@ -24,6 +20,9 @@ interface SecuritySectionProps {
     onTogglePin: () => void;
     onToggleBiometrics: () => void;
 }
+
+// TODO: Hacer que funcione el cambio de PIN dentro de la app
+// TODO: Hacer que funcione la implementacion y la desactivacion de la biometria
 
 export default function SecuritySection({ 
     colors, 

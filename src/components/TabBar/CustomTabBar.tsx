@@ -10,7 +10,7 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeColors, MainTabParamList } from '../../types/navigation';
-import { AnaliticsIcon, SettingsIcon, SumarizeIcon } from '../../constants/icons';
+import { SettingsIcon, AnalyticsIcon, SummarizeIcon } from '../../constants/icons';
 import { useSettingsStore } from '../../stores/settingsStore';
 
 const { width } = Dimensions.get('window');
@@ -23,9 +23,9 @@ interface CustomTabBarProps extends BottomTabBarProps {
 const getIconComponent = (routeName: string) => {
   switch (routeName) {
     case 'Transactions':
-      return SumarizeIcon;
+      return SummarizeIcon;
     case 'Analytics':
-      return AnaliticsIcon;
+      return AnalyticsIcon;
     case 'Settings':
       return SettingsIcon;
     default:
@@ -138,10 +138,6 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     paddingHorizontal: 10,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 10,
   },
   tabItem: {
     justifyContent: 'center',

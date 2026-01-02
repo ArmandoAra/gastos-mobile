@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { 
     View, 
     Text, 
@@ -6,7 +6,8 @@ import {
     StyleSheet, 
     Alert, 
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Modal
 } from 'react-native';
 import Animated, { 
     FadeIn, 
@@ -21,29 +22,43 @@ import useDataStore from '../../../stores/useDataStore';
 import { formatCurrency } from '../../../utils/helpers';
 import AccountInputMobile from './AccountInput'; // Asumimos que este componente maneja sus propios estilos o recibe theme
 import { ThemeColors } from '../../../types/navigation';
+import { set } from 'date-fns';
+import { useAuthStore } from '../../../stores/authStore';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { getCurrencySymbol } from '../../../constants/currency';
+import WarningAccountDeleteMessage from './WarningAccountDeleteMessage';
 
 interface AccountManagementProps {
     colors: ThemeColors;
 }
 
+//TODO: Preguntar antes de borrar una cuenta si desea reasignar las transacciones a otra cuenta o eliminarlas (Ya esta hecho en la version web)
+
 export default function AccountManagementSection({ colors }: AccountManagementProps) {
-    const { allAccounts, updateAccount, deleteAccountStore } = useDataStore();
+    const { allAccounts, updateAccount, deleteAccountStore, syncAccountsWithTransactions } = useDataStore();
+    const { user } = useAuthStore();
     
     // 2. Estado Local
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState('');
     const [tempType, setTempType] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+    const [isSync, setIsSync] = useState(false);
+    const [warningOpen, setWarningOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Ref para focus
     const nameInputRef = useRef<any>(null);
 
+    const userCurrency = useMemo(() => getCurrencySymbol(user?.currency), [user?.currency]);
+
     // 3. Handlers
     const handleEdit = (id: string) => {
         const account = allAccounts.find(acc => acc.id === id);
         if (account) {
-            setEditingId(id);
+            setIsEditing(true);
+            setSelectedAccount(id);
             setTempName(account.name);
             setTempType(account.type);
         }
@@ -58,38 +73,37 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
             }
 
             if (!id) return;
+
             updateAccount(id, { name: tempName, type: tempType });
 
-            setEditingId(null);
+            setSelectedAccount(null);
             setErrorMessage(null);
 
         } catch (err) {
             setErrorMessage("Failed to update account");
             setTimeout(() => setErrorMessage(null), 3000);
         }
+        setIsEditing(false)
     };
 
     const handleCancelEdit = () => {
-        setEditingId(null);
+        setSelectedAccount(null);
         setTempName('');
         setTempType('');
         setErrorMessage(null);
+        setIsEditing(false);
     };
 
     const handleDeletePress = (id: string) => {
-        Alert.alert(
-            "Delete Account",
-            "If you delete this account, all its associated transactions will be permanently removed. Do you want to proceed?",
-            [
-                { text: "Cancel", style: "cancel" },
-                { 
-                    text: "Delete", 
-                    style: "destructive", 
-                    onPress: () =>  deleteAccountStore(id) 
-                }
-            ]
-        );
+        setSelectedAccount(id);
+        setWarningOpen(true);
     };
+
+    const handleSyncAccounts = () => {
+        setIsSync(true);
+        syncAccountsWithTransactions();
+        setIsSync(false);
+    }
 
     return (
         <Animated.View
@@ -102,6 +116,17 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                     {/* Icono del título usando el color de texto primario o secundario */}
                     <Text style={[styles.headerTitle, { color: colors.text }]}>Accounts</Text>
                 </View>
+                {!isAdding &&
+                    <TouchableOpacity
+                        onPress={handleSyncAccounts}
+                        style={[styles.addButton, { backgroundColor: isAdding ? colors.error : colors.text }]}
+                    >
+                        <MaterialIcons name={"refresh"} size={18} color={colors.surface} />
+                        <Text style={[styles.addButtonText, { color: colors.surface }]}>
+                            {isSync ? "Sync..." : "Sync Data"}
+                        </Text>
+                    </TouchableOpacity>
+                }
 
                 <TouchableOpacity
                     onPress={() => setIsAdding(!isAdding)}
@@ -123,6 +148,8 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                     <AccountInputMobile onClose={() => setIsAdding(false)} colors={colors} />
                 </KeyboardAvoidingView>
             )}
+
+
 
             {/* --- LISTA DE CUENTAS --- */}
             <View style={styles.listContainer}>
@@ -150,7 +177,7 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                             }
                         ]}
                     >
-                        {editingId === account.id ? (
+                        {(isEditing && selectedAccount === account.id) ? (
                             // MODO EDICIÓN
                             <View style={styles.editModeContainer}>
                                 <View style={styles.inputsColumn}>
@@ -184,13 +211,13 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                         onPress={() => handleSaveEdit(account?.id)}
                                         style={[styles.iconButton, { backgroundColor: colors.income }]}
                                     >
-                                        <MaterialIcons name="check" size={20} color="#FFF" />
+                                        <MaterialIcons name="check" size={20} color={colors.text} />
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                         onPress={handleCancelEdit}
                                         style={[styles.iconButton, { backgroundColor: colors.textSecondary }]}
                                     >
-                                        <MaterialIcons name="close" size={20} color="#FFF" />
+                                        <MaterialIcons name="close" size={20} color={colors.text} />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -207,7 +234,7 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                             styles.balanceText, 
                                                 { color: account.balance >= 0 ? colors.income : colors.expense }
                                         ]}>
-                                                {formatCurrency((account.balance))}
+                                                {userCurrency} {formatCurrency((account.balance))}
                                         </Text>
                                     </View>
                                 </View>
@@ -220,17 +247,44 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                             <MaterialIcons name="edit" size={18} color={colors.textSecondary} />
                                     </TouchableOpacity>
 
-                                        <TouchableOpacity
+                                        {allAccounts.length > 1 && <TouchableOpacity
                                             onPress={() => handleDeletePress(account.id)}
                                             style={[styles.iconButtonOutline, { borderColor: colors.error + '50', backgroundColor: colors.surface }]}
                                         >
                                             <MaterialIcons name="delete" size={18} color={colors.error} />
-                                        </TouchableOpacity>
+                                        </TouchableOpacity>}
                                 </View>
                             </View>
                         )}
                     </Animated.View>
                 ))}
+
+                <Modal
+                    visible={warningOpen}
+                    transparent={true}
+                    animationType="none" // Usamos Reanimated para el control total
+                    onRequestClose={() => setWarningOpen(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        {/* Backdrop para cerrar al tocar fuera si lo deseas */}
+                        <TouchableOpacity
+                            style={StyleSheet.absoluteFill}
+                            activeOpacity={1}
+                            onPress={() => setWarningOpen(false)}
+                        >
+                            <View style={styles.backdropBlur} />
+                        </TouchableOpacity>
+
+                        {/* El componente ahora sí aparecerá arriba de TODO */}
+                        <WarningAccountDeleteMessage
+                            accountToDelete={selectedAccount!}
+                            message="Are you sure you want to delete this account?"
+                            onClose={() => setWarningOpen(false)}
+                            colors={colors}
+                        />
+                    </View>
+                </Modal>
+
 
                 {/* Empty State */}
                 {allAccounts.length === 0 && (
@@ -242,6 +296,8 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                     </View>
                 )}
             </View>
+
+
         </Animated.View>
     );
 }
@@ -393,4 +449,14 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: 'center',
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)', // Fondo oscuro traslúcido
+        justifyContent: 'flex-start', // Empuja el contenido hacia arriba
+        alignItems: 'center',
+        paddingTop: Platform.OS === 'ios' ? 60 : 30, // Margen superior para el Notch
+    },
+    backdropBlur: {
+        flex: 1,
+    }
 });

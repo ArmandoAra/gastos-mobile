@@ -18,8 +18,8 @@ const createIcon = (name: keyof typeof MaterialIcons.glyphMap) => (props: IconPr
 );
 
 // Iconos para la barra inferior (usando emojis en App.tsx)
-export const SumarizeIcon = createIcon('summarize');
-export const AnaliticsIcon = createIcon('analytics');
+export const SummarizeIcon = createIcon('summarize');
+export const AnalyticsIcon = createIcon('analytics');
 export const SettingsIcon = createIcon('settings');
 
 // =====================================================================

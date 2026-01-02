@@ -37,6 +37,8 @@ const INITIAL_USER_STATE: LocalUser = {
     currency: 'USD'
 };
 
+// TODO: Implementar el cambio de currency en todos los montos de la app
+
 export default function UserProfileSection({ colors }: { colors: ThemeColors }) {
     // 1. Hooks y Estado
     const { user: sessionUser, updateUser } = useAuthStore(); // Asumiendo que updateUser existe en tu authStore

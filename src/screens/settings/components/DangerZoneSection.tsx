@@ -26,6 +26,7 @@ import { ThemeColors } from '../../../types/navigation';
 interface DangerZoneSectionProps {
     colors: ThemeColors;
 }
+// TODO: Arreglar el rerender que ocurre cuando se esta insertando el texto de confirmación 
 
 export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
     const { clearTransactions, deleteAllAccounts } = useDataStore();

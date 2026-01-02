@@ -51,20 +51,20 @@ export default function AccountSelector({
     return (
         <View style={styles.container}>
             {/* Label Superior */}
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+            <Text style={[styles.label, { color: colors.surface }]}>{label}</Text>
 
             {/* Trigger (El botón que parece un Input) */}
             <TouchableOpacity 
                 activeOpacity={0.7}
                 onPress={() => setIsOpen(true)}
-                style={[styles.inputTrigger, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[styles.inputTrigger, { backgroundColor: colors.background, borderColor: colors.border }]}
             >
-                <View style={[styles.textContainer, { backgroundColor: colors.surface }]}>
-                    <Text style={[styles.inputText, { color: colors.accent }]} numberOfLines={1}>
+                <View style={[styles.textContainer]}>
+                    <Text style={[styles.inputText, { color: colors.text }]} numberOfLines={1}>
                         {selectedAccountObj ? selectedAccountObj.name : "Select Account"}
                     </Text>
                     {selectedAccountObj && (
-                        <Text style={[styles.inputTypeText, { color: colors.accent }]}>
+                        <Text style={[styles.inputTypeText, { color: colors.textSecondary }]}>
                             {selectedAccountObj.type}
                         </Text>
                     )}

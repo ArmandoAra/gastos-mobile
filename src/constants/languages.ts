@@ -1,5 +1,5 @@
- export const languages = [
-        { code: 'es', name: 'Español', flag: '🇪🇸' },
-        { code: 'en', name: 'English', flag: '🇺🇸' },
-        { code: 'pt', name: 'Português', flag: '🇧🇷' }
-    ];
+export const languages = [
+    { code: 'en', name: 'English', native: 'English', flag: '🇺🇸' },
+    { code: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
+    { code: 'pt', name: 'Portuguese', native: 'Português', flag: '🇧🇷' },
+] as const;

@@ -42,3 +42,6 @@ yarn-error.*
 
 # firebase
 .idx
+
+# Otros
+.idea
