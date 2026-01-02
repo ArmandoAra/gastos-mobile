@@ -12,9 +12,7 @@ import {
 } from 'react-native';
 import Animated, { 
     FadeIn, 
-    Layout, 
     ZoomIn, 
-    FadeOut,
     ZoomOut
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -26,13 +24,11 @@ import { ThemeColors } from '../../../types/navigation';
 interface DangerZoneSectionProps {
     colors: ThemeColors;
 }
-// TODO: Arreglar el rerender que ocurre cuando se esta insertando el texto de confirmación 
 
 export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
-    const { clearTransactions, deleteAllAccounts } = useDataStore();
-    const { logout, deleteUser } = useAuthStore();
+    const { clearTransactions, deleteAllAccounts, createAccount } = useDataStore();
+    const { logout, deleteUser, user } = useAuthStore();
 
-    // Estados
     const [deleteDataModal, setDeleteDataModal] = useState(false);
     const [deleteAccountModal, setDeleteAccountModal] = useState(false);
     const [confirmText, setConfirmText] = useState('');
@@ -47,12 +43,13 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
     };
 
     const handleDeleteAllData = async () => {
-        if (confirmText !== 'DELETE ALL DATA') return;
+        if (confirmText !== (user?.name.toLocaleUpperCase())) return;
         setIsDeleting(true);
 
         await new Promise(resolve => setTimeout(resolve, 2000));
         clearTransactions();
         deleteAllAccounts();
+        createAccount({ userId: user?.id });
 
         setIsDeleting(false);
         closeModals();
@@ -60,11 +57,10 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
     };
 
     const handleDeleteAccount = async () => {
-        if (confirmText !== 'DELETE MY ACCOUNT') return;
+        if (confirmText !== user?.name.toLocaleUpperCase()) return;
         setIsDeleting(true);
         
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
             clearTransactions();
             deleteAllAccounts();
             deleteUser();
@@ -74,8 +70,94 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
         }
     };
 
-    // --- Componente de Modal de Confirmación Interno ---
-    const ConfirmationModal = ({ visible, title, description, matchText, onConfirm, iconName }: any) => (
+
+
+    return (
+        <Animated.View
+            entering={FadeIn.duration(500)}
+            style={[styles.container, { backgroundColor: colors.error + '08', borderColor: colors.error + '30' }]}
+        >
+            <View style={styles.header}>
+                <Text style={[styles.headerTitle, { color: colors.error }]}>Danger Zone</Text>
+            </View>
+
+            <View style={styles.optionsWrapper}>
+                {/* --- OPCIÓN: BORRAR DATOS --- */}
+                <View style={[styles.row, { borderBottomColor: colors.border }]}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={[styles.optionTitle, { color: colors.text }]}>Reset All Data</Text>
+                        <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Wipe transactions and accounts.</Text>
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => { setConfirmText(''); setDeleteDataModal(true); }}
+                        style={[styles.outlineBtn, { borderColor: colors.error }]}
+                    >
+                        <Text style={{ color: colors.error, fontWeight: '600', fontSize: 13 }}>Reset</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* --- OPCIÓN: BORRAR CUENTA --- */}
+                <View style={styles.row}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={[styles.optionTitle, { color: colors.error }]}>Delete Account</Text>
+                        <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Permanently remove everything.</Text>
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => { setConfirmText(''); setDeleteAccountModal(true); }}
+                        style={[styles.solidBtn, { backgroundColor: colors.error }]}
+                    >
+                        <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>Delete</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <ConfirmationModal
+                visible={deleteDataModal}
+                title="Wipe All Data?"
+                description="This action will delete every transaction and account. Your profile remains, but your history will be gone forever."
+                matchText={user?.name.toLocaleUpperCase() as string}
+                onConfirm={handleDeleteAllData}
+                iconName="delete-sweep"
+                isDeleting={isDeleting}
+                closeModals={closeModals}
+                colors={colors}
+                confirmText={confirmText}
+                setConfirmText={setConfirmText}
+            />
+
+            <ConfirmationModal
+                visible={deleteAccountModal}
+                title="Delete Forever?"
+                description="This will destroy your account and all data. There is no 'undo' button for this action."
+                matchText={user?.name.toLocaleUpperCase() as string}
+                onConfirm={handleDeleteAccount}
+                iconName="no-accounts"
+                isDeleting={isDeleting}
+                closeModals={closeModals}
+                colors={colors}
+                confirmText={confirmText}
+                setConfirmText={setConfirmText}
+            />
+        </Animated.View>
+    );
+}
+
+interface ConfirmationModalProps {
+    visible: boolean;
+    title: string;
+    description: string;
+    matchText: string;
+    onConfirm: () => void;
+    iconName: "no-accounts" | "delete-sweep" | "warning" | "error";
+    closeModals: () => void;
+    colors: ThemeColors;
+    confirmText: string;
+    setConfirmText: React.Dispatch<React.SetStateAction<string>>;
+    isDeleting: boolean;
+}
+
+// --- Componente de Modal de Confirmación Interno ---
+const ConfirmationModal = ({ visible, title, description, matchText, onConfirm, iconName, closeModals, colors, confirmText, setConfirmText, isDeleting }: ConfirmationModalProps) => (
         <Modal transparent visible={visible} animationType="none" onRequestClose={closeModals}>
             <KeyboardAvoidingView 
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -146,67 +228,6 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
         </Modal>
     );
 
-    return (
-        <Animated.View 
-            entering={FadeIn.duration(500)}
-            style={[styles.container, { backgroundColor: colors.error + '08', borderColor: colors.error + '30' }]}
-        >
-            <View style={styles.header}>
-                <MaterialIcons name="report-problem" size={22} color={colors.error} style={{ marginRight: 8 }} />
-                <Text style={[styles.headerTitle, { color: colors.error }]}>Danger Zone</Text>
-            </View>
-
-            <View style={styles.optionsWrapper}>
-                {/* --- OPCIÓN: BORRAR DATOS --- */}
-                <View style={[styles.row, { borderBottomColor: colors.border }]}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.optionTitle, { color: colors.text }]}>Reset All Data</Text>
-                        <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Wipe transactions and accounts.</Text>
-                    </View>
-                    <TouchableOpacity 
-                        onPress={() => { setConfirmText(''); setDeleteDataModal(true); }}
-                        style={[styles.outlineBtn, { borderColor: colors.error }]}
-                    >
-                        <Text style={{ color: colors.error, fontWeight: '600', fontSize: 13 }}>Reset</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* --- OPCIÓN: BORRAR CUENTA --- */}
-                <View style={styles.row}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.optionTitle, { color: colors.error }]}>Delete Account</Text>
-                        <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Permanently remove everything.</Text>
-                    </View>
-                    <TouchableOpacity 
-                        onPress={() => { setConfirmText(''); setDeleteAccountModal(true); }}
-                        style={[styles.solidBtn, { backgroundColor: colors.error }]}
-                    >
-                        <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>Delete</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            <ConfirmationModal 
-                visible={deleteDataModal}
-                title="Wipe All Data?"
-                description="This action will delete every transaction and account. Your profile remains, but your history will be gone forever."
-                matchText="DELETE ALL DATA"
-                onConfirm={handleDeleteAllData}
-                iconName="delete-sweep"
-            />
-
-            <ConfirmationModal 
-                visible={deleteAccountModal}
-                title="Delete Forever?"
-                description="This will destroy your account and all data. There is no 'undo' button for this action."
-                matchText="DELETE MY ACCOUNT"
-                onConfirm={handleDeleteAccount}
-                iconName="no-accounts"
-            />
-        </Animated.View>
-    );
-}
-
 const styles = StyleSheet.create({
     container: {
         borderRadius: 16,
@@ -220,8 +241,8 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     headerTitle: {
-        fontSize: 16,
-        fontWeight: '800',
+        fontSize: 24,
+        fontWeight: '400',
         textTransform: 'uppercase',
         letterSpacing: 1,
     },

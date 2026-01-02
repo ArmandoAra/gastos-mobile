@@ -31,7 +31,6 @@ import LanguageSection from './components/LanguageSection';
 import SecuritySection from './components/SecuritySection';
 
 export const SettingsScreen = () => {
-
     const { theme, isPinEnabled, togglePin } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 

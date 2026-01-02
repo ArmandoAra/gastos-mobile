@@ -59,10 +59,7 @@ export default function WarningAccountDeleteMessage({
 
     const onDeleteAnyWay = () => {
         if (allAccounts.length <= 1) return;
-        
-        // Simulación de lógica de borrado (ajustar a tus APIs de React Native)
         deleteAccountStore(accountToDelete);
-        setTransactions([]); // Trigger reload
         onClose();
     };
 

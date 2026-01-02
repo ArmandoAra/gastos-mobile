@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { View, TouchableOpacity, Text, TextInput, StyleSheet } from "react-native";
 import { styles } from "../../theme/styles";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list"; // <--- IMPORTANTE
+import { FlashList } from "@shopify/flash-list";
 
 // Componentes
 import AddTransactionsButton from "../../components/buttons/AddTransactionsButton";

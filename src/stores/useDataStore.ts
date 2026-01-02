@@ -120,8 +120,8 @@ const useDataStore = create<State & Actions>()(
                     // Lógica para crear una cuenta (simulación)
                     const newAccount: Account = {   
                         id: uuid.v4(), 
-                        name: accountData.name || 'New Account',
-                        type: accountData.type || 'Checking',
+                        name: accountData?.name || 'New Account',
+                        type: accountData?.type || 'Checking',
                         balance:  0,
                         createdAt: new Date(),
                         updatedAt: new Date(),
@@ -198,19 +198,42 @@ const useDataStore = create<State & Actions>()(
                 },
 
                 transferAllAccountTransactions: (fromAccountId: string, toAccountId: string) => {
-                    // Esto esta cambiando el id de fromAccountId a toAccountId en todas las transacciones
                     set(
-                        (state) => ({
-                            transactions: state.transactions.map(t =>
-                                t.account_id === fromAccountId
-                                    ? { ...t, account_id: toAccountId }
-                                    : t
-                            ),
-                            error: null,
-                        }),
+                        (state) => {
+                            // 1. Identificar las transacciones a mover
+                            const transactionsToMove = state.transactions.filter(
+                                t => t.account_id === fromAccountId
+                            );
+
+                            // 2. Calcular el impacto total en el saldo
+                            // Sumamos ingresos y restamos gastos
+                            const totalImpact = transactionsToMove.reduce((acc, t) => {
+                                return t.type === 'income' ? acc + t.amount : acc - t.amount;
+                            }, 0);
+
+                            return {
+                                // 3. Mover las transacciones
+                                transactions: state.transactions.map(t =>
+                                    t.account_id === fromAccountId
+                                        ? { ...t, account_id: toAccountId }
+                                        : t
+                                ),
+                                // 4. Actualizar los saldos de las cuentas en el store
+                                allAccounts: state.allAccounts.map(acc => {
+                                    if (acc.id === fromAccountId) {
+                                        return { ...acc, balance: 0 }; // La cuenta origen queda en 0
+                                    }
+                                    if (acc.id === toAccountId) {
+                                        return { ...acc, balance: acc.balance + totalImpact }; // La destino absorbe el saldo
+                                    }
+                                    return acc;
+                                }),
+                                error: null,
+                            };
+                        },
                         false,
                         'transferAllAccountTransactions'
-                    )
+                    );
                 },
 
                 getAccountById: (accountId: string) => get().allAccounts.find(acc => acc.id === accountId),
@@ -258,13 +281,34 @@ const useDataStore = create<State & Actions>()(
                 syncAccountsWithTransactions: () => {
                     const accounts = get().allAccounts;
                     const transactions = get().transactions;
-                    const updatedAccounts = accounts.map(account => {
-                        const relatedTransactions = transactions.filter(t => t.account_id === account.id);
-                        const newBalance = relatedTransactions.reduce((sum, t) => {
-                            return t.type === TransactionType.INCOME ? sum + t.amount : sum - t.amount;
-                        }, 0);
-                        return { ...account, balance: newBalance };
+                    console.log('Syncing accounts with transactions...');
+                    console.log('Accounts:', accounts);
+                    console.log('Transactions:', transactions[0]);
+
+                    // 1. Crear un objeto para acumular los saldos (ej: { 'acc1': 0, 'acc2': 0 })
+                    const balances: Record<string, number> = {};
+                    accounts.forEach(acc => {
+                        balances[acc.id] = 0;
                     });
+
+                    // 2. Recorrer las transacciones una sola vez
+                    transactions.forEach(t => {
+                        // Solo sumamos si la cuenta existe en nuestro mapa
+                        if (balances.hasOwnProperty(t.account_id)) {
+                            if (t.type === TransactionType.INCOME) {
+                                balances[t.account_id] += t.amount;
+                            } else {
+                                balances[t.account_id] -= t.amount;
+                            }
+                        }
+                    });
+
+                    // 3. Mapear las cuentas con sus nuevos saldos calculados
+                    const updatedAccounts = accounts.map(account => ({
+                        ...account,
+                        balance: balances[account.id] || 0
+                    }));
+
                     set({ allAccounts: updatedAccounts }, false, 'syncAccountsWithTransactions');
                 },
 

@@ -68,7 +68,6 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
         try {
             if (!tempName.trim()) {
                 setErrorMessage("Name cannot be empty");
-                setTimeout(() => setErrorMessage(null), 3000);
                 return;
             }
 
@@ -81,7 +80,6 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
 
         } catch (err) {
             setErrorMessage("Failed to update account");
-            setTimeout(() => setErrorMessage(null), 3000);
         }
         setIsEditing(false)
     };
