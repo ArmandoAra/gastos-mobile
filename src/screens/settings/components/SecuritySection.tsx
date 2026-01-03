@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
     View, 
     Text, 
@@ -12,25 +12,35 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ThemeColors } from '../../../types/navigation';
+import ChangePinModal from './ChangePinModal';
+import { useAuthStore } from '../../../stores/authStore';
+import useMessage from '../../../stores/useMessage';
+import { MessageType } from '../../../interfaces/message.interface';
+import { useSettingsStore } from '../../../stores/settingsStore';
+
 
 interface SecuritySectionProps {
     colors: ThemeColors;
-    isPinEnabled: boolean;
-    isBiometricEnabled: boolean;
-    onTogglePin: () => void;
-    onToggleBiometrics: () => void;
 }
 
-// TODO: Hacer que funcione el cambio de PIN dentro de la app
 // TODO: Hacer que funcione la implementacion y la desactivacion de la biometria
 
 export default function SecuritySection({ 
     colors, 
-    isPinEnabled, 
-    isBiometricEnabled,
-    onTogglePin,
-    onToggleBiometrics 
+
 }: SecuritySectionProps) {
+    const { changePin, isBiometricEnabled, toggleBiometrics, isPinEnabled, togglePin, } = useAuthStore();
+
+
+    const [isChangePinModalVisible, setChangePinModalVisible] = useState(false);
+    const { showMessage } = useMessage();
+
+    const handleChangePin = (oldPin: string, newPin: string) => {
+        changePin(oldPin, newPin);
+        setChangePinModalVisible(false);
+        showMessage(MessageType.SUCCESS, 'PIN changed successfully');
+        // Activar el modal de mensaje de exito o error si es necesario
+    }
 
     // --- Componente interno para los items de seguridad ---
     const SecurityItem = ({ 
@@ -81,6 +91,7 @@ export default function SecuritySection({
                 }
             ]}
         >
+
             {/* --- HEADER --- */}
             <View style={styles.headerRow}>
                 <View style={styles.titleContainer}>
@@ -94,18 +105,19 @@ export default function SecuritySection({
                     label="Security PIN" 
                     icon="lock-outline" 
                     value={isPinEnabled} 
-                    onToggle={onTogglePin} 
+                    onToggle={togglePin} 
                 />
                 
                 <SecurityItem 
                     label="Enable Biometrics" 
                     icon="fingerprint" 
                     value={isBiometricEnabled} 
-                    onToggle={onToggleBiometrics} 
+                    onToggle={toggleBiometrics} 
                 />
 
                 {/* Opción extra: Cambiar PIN (solo si está habilitado) */}
                 {isPinEnabled && (
+                    <TouchableOpacity onPress={() => setChangePinModalVisible(true)}>
                     <Animated.View entering={FadeIn}>
                         <SecurityItem 
                             label="Change PIN Code" 
@@ -114,8 +126,15 @@ export default function SecuritySection({
                             showChevron={true}
                         />
                     </Animated.View>
+                    </TouchableOpacity>
                 )}
             </View>
+
+            <ChangePinModal
+                visible={isChangePinModalVisible}
+                onClose={() => setChangePinModalVisible(false)}
+                onSave={handleChangePin}
+                colors={colors} />
         </Animated.View>
     );
 }

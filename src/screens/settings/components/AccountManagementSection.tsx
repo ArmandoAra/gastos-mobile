@@ -32,11 +32,10 @@ interface AccountManagementProps {
     colors: ThemeColors;
 }
 
-//TODO: Preguntar antes de borrar una cuenta si desea reasignar las transacciones a otra cuenta o eliminarlas (Ya esta hecho en la version web)
 
 export default function AccountManagementSection({ colors }: AccountManagementProps) {
     const { allAccounts, updateAccount, deleteAccountStore, syncAccountsWithTransactions } = useDataStore();
-    const { user } = useAuthStore();
+    const { user, currencySymbol } = useAuthStore();
     
     // 2. Estado Local
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -51,7 +50,6 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
     // Ref para focus
     const nameInputRef = useRef<any>(null);
 
-    const userCurrency = useMemo(() => getCurrencySymbol(user?.currency), [user?.currency]);
 
     // 3. Handlers
     const handleEdit = (id: string) => {
@@ -232,7 +230,7 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                             styles.balanceText, 
                                                 { color: account.balance >= 0 ? colors.income : colors.expense }
                                         ]}>
-                                                {userCurrency} {formatCurrency((account.balance))}
+                                                {currencySymbol} {formatCurrency((account.balance))}
                                         </Text>
                                     </View>
                                 </View>

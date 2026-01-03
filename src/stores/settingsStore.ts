@@ -20,6 +20,7 @@ interface SettingsState {
     theme: 'light' | 'dark';
     language: string;
     isPinEnabled: boolean;
+    isBiometricEnabled: boolean;
     isUnlocked: boolean;
     isAddOptionsOpen: boolean;
     isDateSelectorOpen: boolean;
@@ -30,6 +31,7 @@ interface SettingsState {
     setTheme: (theme: 'light' | 'dark') => void;
     setLanguage: (lang: string) => void;
     togglePin: () => void;
+    toggleBiometrics: () => void;
     setUnlocked: (unlocked: boolean) => void;
 }
 
@@ -39,6 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
             theme: 'light',
             language: 'es',
             isPinEnabled: false,
+            isBiometricEnabled: false,
             isUnlocked: true,
             isAddOptionsOpen: false,
             isDateSelectorOpen: false,
@@ -48,6 +51,9 @@ export const useSettingsStore = create<SettingsState>()(
             setInputNameActive: (inputNameActive) => set({ inputNameActive }),
             setTheme: (theme) => set({ theme }),
             setLanguage: (language) => set({ language }),
+            toggleBiometrics: () => set((state) => ({
+                isBiometricEnabled: !state.isBiometricEnabled
+            })),
             togglePin: () => set((state) => ({
                 isPinEnabled: !state.isPinEnabled,
                 isUnlocked: !state.isPinEnabled ? false : state.isUnlocked

@@ -75,7 +75,7 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
     return (
         <Animated.View
             entering={FadeIn.duration(500)}
-            style={[styles.container, { backgroundColor: colors.error + '08', borderColor: colors.error + '30' }]}
+            style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
             <View style={styles.header}>
                 <Text style={[styles.headerTitle, { color: colors.error }]}>Danger Zone</Text>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     container: {
         borderRadius: 16,
         padding: 20,
-        borderWidth: 1.5,
+        borderWidth: 0.5,
         marginBottom: 130,
     },
     header: {

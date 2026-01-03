@@ -18,6 +18,7 @@ interface UserProfile {
     name: string;
     email?: string;
     currency: string;
+
 }
 
 interface AuthState {
@@ -26,11 +27,17 @@ interface AuthState {
     isSetupComplete: boolean;    // ¿Ya creó usuario?
     isAuthenticated: boolean;    // ¿Ya ingresó el PIN hoy?
     isBiometricEnabled: boolean;
+    isPinEnabled: boolean;
+    currencySymbol: string;
+    setCurrencySymbol: (symbol: string) => void;
 
     // Acciones
     setupAccount: (name: string, pin: string, enableBiometrics: boolean) => Promise<UserProfile>;
     loginWithPin: (pin: string) => Promise<boolean>;
     loginWithBiometrics: () => Promise<boolean>;
+    changePin: (oldPin: string, newPin: string) => Promise<{ success: boolean; message: string }>;
+    togglePin: () => void;
+    toggleBiometrics: () => void;
     updateUser: (newData: Partial<UserProfile>) => void;
     deleteUser: () => void;
     logout: () => void;
@@ -41,9 +48,11 @@ export const useAuthStore = create<AuthState>()(
       (set, get) => ({
           user: null,
           pinHash: null,
+            isPinEnabled: false,
           isSetupComplete: false,
           isAuthenticated: false,
           isBiometricEnabled: false,
+            currencySymbol: '$',
 
             setupAccount: async (name, pin, enableBiometrics) => {
               const hashed = await hashPin(pin);
@@ -57,6 +66,7 @@ export const useAuthStore = create<AuthState>()(
               set({
                   user: newUser,
                   pinHash: hashed,
+                  isPinEnabled: true,
                   isBiometricEnabled: enableBiometrics,
                   isSetupComplete: true,
                   isAuthenticated: true, 
@@ -78,6 +88,29 @@ export const useAuthStore = create<AuthState>()(
               }
               return false;
           },
+            changePin: async (oldPin, newPin) => {
+                const storedHash = get().pinHash;
+                if (!storedHash) return { success: false, message: 'No PIN is set.' };
+
+                // 1. Validar el PIN antiguo
+                const oldPinHash = await hashPin(oldPin);
+                if (oldPinHash !== storedHash) {
+                    return { success: false, message: 'Current PIN is incorrect.' };
+                }
+
+                // 2. Hashear y guardar el nuevo PIN
+                try {
+                    const newPinHash = await hashPin(newPin);
+                    set({ pinHash: newPinHash });
+                    return { success: true, message: 'PIN updated successfully.' };
+                } catch (error) {
+                    return { success: false, message: 'Error updating PIN.' };
+                }
+            },
+
+            togglePin: () => {
+                set((state) => ({ isPinEnabled: !state.isPinEnabled }));
+            },
 
           loginWithBiometrics: async () => {
               const { isBiometricEnabled } = get();
@@ -89,6 +122,14 @@ export const useAuthStore = create<AuthState>()(
               }
               return success;
           },
+
+            toggleBiometrics: () => {
+                set((state) => ({ isBiometricEnabled: !state.isBiometricEnabled }));
+            },
+
+            setCurrencySymbol: (symbol: string) => {
+                set({ currencySymbol: symbol });
+            },
 
             updateUser: (newData: Partial<UserProfile>) => {
                 const currentUser = get().user;
@@ -108,10 +149,10 @@ export const useAuthStore = create<AuthState>()(
             storage: createJSONStorage(() => mmkvStorage),
         partialize: (state) => ({
             user: state.user,
+            isPinEnabled: state.isPinEnabled,
             pinHash: state.pinHash,
             isSetupComplete: state.isSetupComplete,
             isBiometricEnabled: state.isBiometricEnabled,
-            // isAuthenticated NO se guarda, esto es correcto.
         }),
       }
   )

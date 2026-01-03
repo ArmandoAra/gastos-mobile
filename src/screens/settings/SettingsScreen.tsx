@@ -29,14 +29,17 @@ import { ThemeColors } from '../../types/navigation';
 import AppearanceSection from './components/AppearanceSection';
 import LanguageSection from './components/LanguageSection';
 import SecuritySection from './components/SecuritySection';
+import InfoPopUp from '../../components/messages/InfoPopUp';
 
 export const SettingsScreen = () => {
-    const { theme, isPinEnabled, togglePin } = useSettingsStore();
+    const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
     return (
+        <>
+            <InfoPopUp />
         <ScrollView
-            style={[styles.container, { backgroundColor: theme === 'dark' ? '#121212' : '#F4F6F8' }]}
+                style={[styles.container, { backgroundColor: theme === 'dark' ? colors.background : colors.background }]}
             showsVerticalScrollIndicator={false}
         >
 
@@ -52,11 +55,7 @@ export const SettingsScreen = () => {
 
             {/* 6. Security (Del estilo RN proporcionado) */}
             <SecuritySection
-                colors={colors}
-                isPinEnabled={isPinEnabled}
-                isBiometricEnabled={false}
-                onTogglePin={togglePin}
-                onToggleBiometrics={() => { }}
+                    colors={colors}
             />
 
             {/* 7. Danger Zone (Traducido del MUI a estilos RN) */}
@@ -64,45 +63,6 @@ export const SettingsScreen = () => {
             <DangerZoneSection colors={colors} />
 
         </ScrollView>
+        </>
     );
 };
-
-// Estilos locales adicionales para lo que no estaba en styles2.ts (Header y Danger Zone específicos)
-const localStyles = StyleSheet.create({
-    headerContainer: {
-        paddingHorizontal: 20,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        marginBottom: 20,
-    },
-    backButton: {
-        marginBottom: 15,
-        alignSelf: 'flex-start',
-    },
-    backButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    headerTitle: {
-        fontSize: 32,
-        fontWeight: '700',
-        color: '#333', // O el color primario de tu tema
-        marginBottom: 5,
-        // Nota: React Native no soporta background-clip: text nativamente sin librerías complejas (MaskedView).
-        // Se usa un color sólido o LinearGradient overlay si es estrictamente necesario.
-    },
-    headerSubtitle: {
-        fontSize: 16,
-        color: '#666',
-        lineHeight: 22,
-    },
-    chevron: {
-        fontSize: 20,
-        color: '#ccc',
-        fontWeight: 'bold',
-    },
-    dangerZoneSection: {
-        borderColor: '#fca5a5', // Rojo claro
-        borderWidth: 1,
-        backgroundColor: '#fef2f2', // Fondo rojizo muy suave
-    }
-});

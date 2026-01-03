@@ -3,42 +3,63 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { format, isSameDay, set } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale'; // Opcional: si quieres español
 import ModernDateSelector from '../buttons/ModernDateSelector';
 import useDateStore from '../../stores/useDateStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { ThemeColors } from '../../types/navigation';
 import {darkTheme, lightTheme} from '../../theme/colors';
+import { ViewMode, ViewPeriod } from '../../interfaces/date.interface';
 
-// Tipos
-type ViewMode = 'day' | 'month' | 'year';
 
-interface TransactionsHeaderProps {
-  viewMode: ViewMode;
+
+export interface InfoHeaderProps {
+  viewMode: ViewMode | ViewPeriod;
 }
+
 
 const COLORS = {
   accentGradient: ['#f97316', '#dc2626'] as [string, string], // Naranja a Rojo (Tu marca)
   blueGradient: ['#3b82f6', '#2563eb'] as [string, string], // Azul para contraste
 };
 
-export default function TransactionsHeader({ 
+export default function InfoHeader({ 
   viewMode 
-}: TransactionsHeaderProps) {
+}: InfoHeaderProps) {
   const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const {localSelectedDay,setLocalSelectedDay} = useDateStore();
 
+
   // --- Lógica de Formato de Texto ---
   const dateText = useMemo(() => {
+    // Opciones comunes para date-fns (Semana empieza en Lunes)
+    const options = { locale: es };
+    const weekOptions = { locale: es, weekStartsOn: 1 }; // 1 es Lunes
+
     switch (viewMode) {
       case 'day':
-        return format(localSelectedDay, 'EEEE, d MMMM yyyy'); // Ej: Monday, 25 October 2023
-      case 'month':
-        return format(localSelectedDay, 'MMMM yyyy'); // Ej: October 2023
-      case 'year':
-        return format(localSelectedDay, 'yyyy'); // Ej: 2023
+      return format(localSelectedDay, "EEEE, d 'de' MMMM yyyy", options);
+
+    case 'week':
+      // 1. Calculamos el inicio de la semana (Lunes)
+      const start = startOfWeek(localSelectedDay);
+      // 2. Calculamos el fin de la semana (Domingo)
+      const end = endOfWeek(localSelectedDay);
+
+      // 3. Formateamos el rango. Ej: 23 Oct - 29 Oct 2023
+      const startFormat = format(start, 'd MMM', options);
+      const endFormat = format(end, 'd MMM yyyy', options);
+
+      return `${startFormat} - ${endFormat}`;
+
+    case 'month':
+      return format(localSelectedDay, 'MMMM yyyy', options);
+
+    case 'year':
+        return format(localSelectedDay, 'yyyy', options);
+
       default:
         return '';
     }

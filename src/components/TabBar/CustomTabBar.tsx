@@ -96,18 +96,20 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
             >
               <View style={[
                 styles.iconContainer,
-                isFocused && { 
-                  backgroundColor: colors.accent,
-                  borderColor: colors.border,
-                  borderWidth: 1,
+                { backgroundColor: isFocused ? colors.text : colors.surface },
+                isFocused ? [{
+                  backgroundColor: colors.text,
+                  borderColor: colors.surface,
                       elevation: 5 
-                    }
+                }] : [
+                  { borderColor: colors.border }
+                ]
               ]}>
                 <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
                   {IconComponent && (
                     <IconComponent 
-                        color={isFocused ? "#11224E" : "#043915"}
-                        size={32}
+                      color={isFocused ? colors.surface : colors.text}
+                      size={28}
                     />
                   )}
                 </Animated.View>
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     width: width * 0.92,
-    height: 70,
+    height: 60,
     borderRadius: 35,
     paddingHorizontal: 10,
   },
@@ -146,12 +148,12 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   iconContainer: {
-    width: 52,
-    height: 52,
+    width: 38,
+    height: 38,
     borderRadius: 50,
+    borderWidth: 0.5,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
-    backgroundColor: "#FFE6D4"
   },
 });

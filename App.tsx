@@ -35,7 +35,7 @@ import {
 } from './src/types/navigation';
 import { CustomTabBar } from './src/components/TabBar/CustomTabBar';
 import { ModernHeader } from './src/components/navigation/ModernHeader';
-import AnalyticsScreen from './src/screens/analitics/AnalyticsScreen';
+import AnalyticsScreen from './src/screens/analytics/AnalyticsScreen';
 
 
 // --- Creación de Navigators Tipados ---
@@ -149,6 +149,11 @@ const AppStack = () => {
 const RootNavigator = () => {
   const isSetupComplete = useAuthStore(state => state.isSetupComplete);
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+
+  // CORRECCIÓN: Leemos directamente el booleano del estado, no la existencia del hash
+  const isPinEnabled = useAuthStore(state => state.isPinEnabled);
+  const isBiometricEnabled = useAuthStore(state => state.isBiometricEnabled);
+
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -160,11 +165,14 @@ const RootNavigator = () => {
     return <View style={styles.loadingContainer} />;
   }
 
+  // Lógica: Solo mostramos bloqueo si el setup está listo, el PIN está habilitado y no está autenticado
+  const showLockScreen = isSetupComplete && !isAuthenticated && (isPinEnabled || isBiometricEnabled);
+
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       {!isSetupComplete ? (
         <RootStack.Screen name="Setup" component={SetupScreen} />
-      ) : !isAuthenticated ? (
+      ) : showLockScreen ? (
         <RootStack.Screen name="LockScreen" component={PinScreen} />
         ) : (
         <RootStack.Screen name="MainApp" component={AppStack} />

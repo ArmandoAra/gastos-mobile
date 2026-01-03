@@ -35,6 +35,13 @@ import ExpenseLineChart from './components/ExpenseLineChart';
 import useDataStore from '../../stores/useDataStore';
 import ExpenseHeatmapMobile from './components/ExpenseHeatmapMobile';
 import DailyExpenseViewMobile from './components/DailyExpenseView';
+import TransactionsHeader from '../../components/headers/InfoHeader';
+import InfoHeader from '../../components/headers/InfoHeader';
+import { ViewPeriod } from '../../interfaces/date.interface';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import useDateStore from '../../stores/useDateStore';
+import ExpenseBarChart from './components/ExpenseBarChart';
 
 const { width } = Dimensions.get('window');
 
@@ -44,7 +51,11 @@ const CATEGORY_COLORS = ['#EF5350', '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', 
 
 export default function AnalyticsScreen() {
   const {transactions}  = useDataStore();
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const {localSelectedDay} =useDateStore();
+  const {theme} = useSettingsStore();
+  const colors = theme === 'dark' ? darkTheme : lightTheme;
+
+  const [selectedPeriod, setSelectedPeriod] =  useState<ViewPeriod>('month');
  
   const font = useFont(require("../../../assets/fonts/Quicksand-Regular.ttf"), 12) || null; 
 
@@ -126,15 +137,6 @@ export default function AnalyticsScreen() {
     return days;
   }, [expenses, selectedPeriod]);
 
-  // Preparar datos para Line Chart
-  const trendData = useMemo(() => {
-     // Generamos datos dummy para que se vea la línea si no hay suficientes transacciones
-     return [
-       { x: 'Ene', y: 1200 }, { x: 'Feb', y: 900 }, { x: 'Mar', y: 1500 },
-       { x: 'Abr', y: 800 }, { x: 'May', y: 1100 }, { x: 'Jun', y: 1300 }
-     ];
-  }, []);
-
   const stats = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
     const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
@@ -149,63 +151,54 @@ export default function AnalyticsScreen() {
   const { state, isActive } = useChartPressState({ x: 0, y: { y: 0 } });
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Selector de Periodo */}
-       <View style={styles.periodSelector}>
-        {['week', 'month', 'year'].map((p) => (
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+    
+       <InfoHeader viewMode={selectedPeriod} />
+       {/* Period Selector */}
+       <View style={[styles.periodSelector, {backgroundColor: colors.surface}]}>
+        {['day','week', 'month', 'year'].map((p) => (
           <TouchableOpacity 
             key={p}
-            style={[styles.periodBtn, selectedPeriod === p && styles.periodBtnActive]}
-            onPress={() => setSelectedPeriod(p as any)}
+            style={[styles.periodBtn,
+               {backgroundColor: colors.surface,
+                 borderColor: colors.border},
+                  selectedPeriod === p && 
+                  [ {backgroundColor: colors.text, 
+                    borderColor: colors.border}
+                  ]]}
+            onPress={() => setSelectedPeriod(p as ViewPeriod)}
           >
-            <Text style={[styles.periodText, selectedPeriod === p && styles.periodTextActive]}>
-              {p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : 'Año'}
+            <Text style={[[styles.periodText, {color: colors.text}], selectedPeriod === p && [  {color: colors.surface}]]}>
+              {p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : p === 'year' ? 'Año' : 'Día'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+
+    <ScrollView >
+
       <DailyExpenseViewMobile
-        transactions={filteredTransactions}
-        year={new Date().getFullYear()}
-        month={new Date().getMonth() + 1}
-        day={new Date().getDate()}
+        currentPeriod={selectedPeriod}
       />
 
+       <ExpenseHeatmapMobile />
 
-
-        <ExpenseHeatmapMobile 
-        transactions={filteredTransactions}
-        viewMode={selectedPeriod === 'year' ? 'year' : selectedPeriod === 'month' ? 'month' : 'year'}
-        year={new Date().getFullYear()}
-        month={new Date().getMonth() + 1}
-        heatmapType="daily"
-        />
-
-      <ExpenseLineChart
-        transactions={filteredTransactions}
-        viewMode={selectedPeriod === 'year' ? 'year' : selectedPeriod === 'month' ? 'month' : 'year'} year={new Date().getFullYear()} month={new Date().getMonth() + 1}
-        showIncome={true}
-        showAverage={true}
-        chartStyle="area"
-        height={300}
-      />
-
-
-
-
+       <ExpenseBarChart 
+        currentPeriod={selectedPeriod}
+       />
 
 
       <View style={{ height: 40 }} />
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 2 },
-  periodSelector: { flexDirection: 'row', padding: 16, gap: 8, backgroundColor: 'white' },
-  periodBtn: { flex: 1, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F0F0F0', alignItems: 'center' },
-  periodBtnActive: { backgroundColor: '#6200EE' },
+  container: { flex: 1, paddingTop: 35 },
+  periodSelector: { flexDirection: 'row', paddingHorizontal: 8, paddingTop: 4, paddingBottom: 8, gap: 8, backgroundColor: 'white' },
+  periodBtn: { flex: 1, paddingVertical: 8, borderRadius: 24,  alignItems: 'center' , borderWidth: 0.5},
   periodText: { color: '#757575', fontWeight: '600' },
   periodTextActive: { color: 'white' },
   balanceCard: { backgroundColor: 'white', margin: 16, padding: 16, borderRadius: 16, elevation: 2 },

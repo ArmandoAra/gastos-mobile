@@ -109,17 +109,16 @@ export default function FilterFloatingButton({
                                         style={styles.optionWrapper}
                                     >
                                         {isActive ? (
-                                            <LinearGradient
-                                                colors={[colors.accent, colors.primary]}
-                                                style={[styles.optionActive, { borderColor: colors.border }]}
+                                            <View
+                                                style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.text }]}
                                             >
-                                                <Text style={[styles.textActive, { color: colors.text }]}>
+                                                <Text style={[styles.textActive, { color: colors.surface }]}>
                                                     {mode.charAt(0).toUpperCase() + mode.slice(1)}
                                                 </Text>
-                                            </LinearGradient>
+                                            </View>
                                         ) : (
-                                            <View style={styles.optionInactive}>
-                                                    <Text style={[styles.textInactive, { color: colors.textSecondary }]}>
+                                                <View style={[styles.optionInactive, { borderColor: colors.border }]}>
+                                                    <Text style={[styles.textInactive, { color: colors.textSecondary, borderColor: colors.border }]}>
                                                     {mode.charAt(0).toUpperCase() + mode.slice(1)}
                                                 </Text>
                                             </View>
@@ -141,16 +140,15 @@ export default function FilterFloatingButton({
                                         style={styles.optionWrapper}
                                     >
                                         {isActive ? (
-                                            <LinearGradient
-                                                colors={[colors.accent, colors.primary]}
-                                                style={[styles.optionActive, { borderColor: colors.border }]}
+                                            <View
+                                                style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.text }]}
                                             >
-                                                <Text style={[styles.textActive, { color: colors.text }]}>
+                                                <Text style={[styles.textActive, { color: colors.surface }]}>
                                                     {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
                                                 </Text>
-                                            </LinearGradient>
+                                            </View>
                                         ) : (
-                                            <View style={styles.optionInactive}>
+                                                <View style={[styles.optionInactive, { borderColor: colors.border }]}>
                                                     <Text style={[styles.textInactive, { color: colors.textSecondary }]}>
                                                      {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
                                                 </Text>
@@ -251,12 +249,10 @@ const styles = StyleSheet.create({
     },
     optionInactive: {
         flex: 1,
-        borderRadius: 12,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
     },
     textActive: {
         color: 'white',

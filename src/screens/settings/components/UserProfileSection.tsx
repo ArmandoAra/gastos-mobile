@@ -16,11 +16,12 @@ import Animated, {
 import { MaterialIcons } from '@expo/vector-icons';
 import { TextInput, ActivityIndicator } from 'react-native-paper';
 import { useAuthStore } from '../../../stores/authStore';
-import { getInitials } from '../../../utils/helpers';
+import { formatCurrency, getInitials } from '../../../utils/helpers';
 import { Theme } from '@react-navigation/native';
 import { ThemeColors } from '../../../types/navigation';
-import { currencyOptions } from '../../../constants/currency';
+import { currencyOptions, getCurrencySymbol } from '../../../constants/currency';
 import CurrencySelector from './CurrencySelector';
+
 
 // Stores
 
@@ -37,11 +38,10 @@ const INITIAL_USER_STATE: LocalUser = {
     currency: 'USD'
 };
 
-// TODO: Implementar el cambio de currency en todos los montos de la app
 
 export default function UserProfileSection({ colors }: { colors: ThemeColors }) {
     // 1. Hooks y Estado
-    const { user: sessionUser, updateUser } = useAuthStore(); // Asumiendo que updateUser existe en tu authStore
+    const { user: sessionUser, updateUser, setCurrencySymbol } = useAuthStore(); // Asumiendo que updateUser existe en tu authStore
     
     const [user, setUser] = useState<LocalUser>(INITIAL_USER_STATE);
     const [isEditing, setIsEditing] = useState(false);
@@ -70,8 +70,8 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
 
     // 6. Handlers
     const handleSave = async () => {
-        if (!tempName.trim() || !tempEmail.trim()) {
-            setApiError("Name and Email cannot be empty.");
+        if (!tempName.trim()) {
+            setApiError("Name  cannot be empty.");
             return;
         }
 
@@ -82,10 +82,12 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
 
         setIsLoading(true);
         setApiError(null);
+        const currencySymbol = getCurrencySymbol(tempCurrency);
 
         try {
             updateUser({ name: tempName, email: tempEmail, currency: tempCurrency });
             setUser({ name: tempName, email: tempEmail, currency: tempCurrency });
+            setCurrencySymbol(currencySymbol);
             setIsEditing(false);
         } catch (err) {
             setApiError("An unexpected error occurred. Please try again.");
@@ -185,35 +187,38 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
                                 colors={colors} // Tus colores del tema
                             />
 
-                            <View style={styles.actionButtonsRow}>
+                            {/* --- BOTONES DE ACCIÓN --- */}
+                            <View style={styles.buttonsRow}>
                                 {/* Cancelar */}
                                 <TouchableOpacity
                                     onPress={handleCancel}
                                     disabled={isLoading}
-                                    style={[styles.cancelButton, { backgroundColor: colors.expense }]}
+                                    style={[styles.button, styles.cancelButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
                                 >
-                                    <MaterialIcons name="close" size={18} color={colors.text} style={{ marginRight: 4 }} />
-                                    <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
+                                    <MaterialIcons name="close" size={18} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
                                 </TouchableOpacity>
 
                                 {/* Guardar */}
                                 <TouchableOpacity
                                     onPress={handleSave}
-                                    disabled={isLoading || !hasChanges}
+                                    disabled={isLoading}
                                     style={[
-                                        styles.saveButton,
-                                        { backgroundColor: colors.income },
-                                        (isLoading || !hasChanges) && styles.disabledButton
+                                        styles.button,
+                                        { backgroundColor: isLoading ? colors.border : colors.income } // Usamos color de Ingreso (Verde) para acciones positivas
                                     ]}
                                 >
                                     {isLoading ? (
-                                        <ActivityIndicator size={16} color={colors.text} style={{ marginRight: 6 }} />
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                            <ActivityIndicator size={16} color={colors.surface} />
+                                            <Text style={[styles.saveButtonText, { color: colors.surface }]}>Saving...</Text>
+                                        </View>
                                     ) : (
-                                            <MaterialIcons name="check" size={18} color={colors.text} style={{ marginRight: 4 }} />
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                <MaterialIcons name="check" size={18} color={colors.surface} />
+                                                <Text style={[styles.saveButtonText, { color: colors.surface }]}>Save </Text>
+                                            </View>
                                     )}
-                                    <Text style={[styles.saveButtonText, { color: colors.text }]}>
-                                        {isLoading ? 'Saving...' : 'Save'}
-                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         </Animated.View>
@@ -224,10 +229,11 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
                                     <Text style={[styles.label, { color: colors.textSecondary }]}>Name</Text>
                                     <Text style={[styles.value, { color: colors.text }]}>{user.name}</Text>
                             </View>
+                                {user.email &&
                             <View style={styles.infoBlock}>
-                                    <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
-                                    <Text style={[styles.value, { color: colors.text }]}>{user.email}</Text>
-                                </View>
+                                        <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+                                        <Text style={[styles.value, { color: colors.text }]}>{user.email}</Text>
+                                    </View>}
                                 <View style={styles.infoBlock}>
                                     <Text style={[styles.label, { color: colors.textSecondary }]}>Preferred Currency</Text>
                                     <Text style={[styles.value, { color: colors.text }]}>
@@ -325,6 +331,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         height: 40, 
     },
+    buttonsRow: {
+        flexDirection: 'row',
+        gap: 12,
+        justifyContent: 'flex-end', // Botones a la derecha
+        marginTop: 20,
+    },
+    button: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+    },
     actionButtonsRow: {
         flexDirection: 'row',
         gap: 10,
@@ -343,15 +363,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     cancelButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#e0e0e0',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 8,
+        borderWidth: 0.5,
     },
     cancelButtonText: {
-        color: '#333',
         fontWeight: '600',
         fontSize: 14,
     },

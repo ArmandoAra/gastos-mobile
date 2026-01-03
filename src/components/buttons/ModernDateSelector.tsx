@@ -17,18 +17,13 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { MONTHS, WEEKDAYS } from '../../constants/date';
+import { MONTHS, WEEKDAYS_SHORT } from '../../constants/date';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
 
 
 const { width } = Dimensions.get('window');
-
-// --- Constantes ---
-
-
-
 
 interface ModernCalendarSelectorProps {
   selectedDate: Date;
@@ -176,7 +171,7 @@ export default function ModernCalendarSelector({
 
                 {/* Días de la semana */}
                 <View style={styles.weekRow}>
-                    {WEEKDAYS.map((day, index) => (
+              {WEEKDAYS_SHORT.map((day, index) => (
                       <Text key={index} style={[styles.weekdayText, { color: colors.text }]}>{day}</Text>
                     ))}
                 </View>

@@ -16,12 +16,13 @@ import useDataStore from "../../stores/useDataStore";
 import { Transaction, TransactionType } from "../../interfaces/data.interface";
 import { formatCurrency } from "../../utils/helpers";
 import FilterFloatingButton from "./components/FilterFloatingButton";
-import TransactionsHeader from "../../components/headers/TransactionsHeader";
+import TransactionsHeader from "../../components/headers/InfoHeader";
 import useDateStore from "../../stores/useDateStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { ThemeColors } from "../../types/navigation";
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import InfoHeader from "../../components/headers/InfoHeader";
 
 type ViewMode = 'day' | 'month' | 'year';
 
@@ -197,7 +198,7 @@ export function TransactionsScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
             <InfoPopUp />
-            <TransactionsHeader viewMode={viewMode} />
+            <InfoHeader viewMode={viewMode} />
 
             {/* Filtros */}
             <View style={[localStyles.filterContainer, { borderBottomColor: colors.border }]}>
@@ -209,8 +210,8 @@ export function TransactionsScreen() {
                     colors={colors}
                 />
                 <View style={{ flexDirection: 'column', alignItems: 'center', gap: 1, width: 80, paddingHorizontal: 4 }}>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.accent, color: colors.text }}>{viewMode}</Text>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.accent, color: colors.text }}>{filter}</Text>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.text, color: colors.surface }}>{viewMode}</Text>
+                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.text, color: colors.surface }}>{filter}</Text>
                 </View>
 
                 {/* Search */}

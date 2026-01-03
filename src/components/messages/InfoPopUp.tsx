@@ -22,8 +22,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Store Hook (Asumiendo la misma estructura)
 import useMessage from '../../stores/useMessage';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import * as z from 'zod';
 
-const { width } = Dimensions.get('window');
 const DURATION = 3000;
 
 // Configuración de variantes por tipo (Colores y Gradientes)
@@ -49,8 +51,9 @@ const VARIANT_CONFIG = {
 };
 
 export default function InfoPopUp() {
-    const insets = useSafeAreaInsets();
     const { hideMessage, messageType, isMessageOpen, messageText } = useMessage();
+    const { theme } = useSettingsStore()
+    const colors = theme === 'dark' ? darkTheme : lightTheme;
     
     // Valores animados para la barra de progreso
     const progressWidth = useSharedValue(100);
@@ -88,10 +91,11 @@ export default function InfoPopUp() {
     if (!isMessageOpen) return null;
 
     return (
-        <View
+        <Animated.View
+            entering={FadeInUp.duration(300)}
+            exiting={FadeOutUp.duration(200)}
             style={[
                 styles.container,
-                // { top: insets.top + 10 } // Ajuste seguro para el notch
             ]}
         >
             <LinearGradient
@@ -100,50 +104,50 @@ export default function InfoPopUp() {
                 end={{ x: 1, y: 1 }}
                 style={[
                     styles.gradientCard,
-                    { shadowColor: config.shadowColor } // Sombra dinámica
+                    { shadowColor: colors.accent, borderColor: colors.border } // Sombra dinámica
                 ]}
             >
                 <View style={styles.contentContainer}>
                     {/* Icono Animado */}
                     <Animated.View 
-                        entering={ZoomIn.delay(200).springify().stiffness(200).damping(15)}
+                        entering={FadeInUp.duration(300).delay(100)}
                         style={styles.iconContainer}
                     >
-                        <MaterialIcons name={config.icon} size={32} color="white" />
+                        <MaterialIcons name={config.icon} size={32} color={colors.text} />
                     </Animated.View>
 
                     {/* Textos */}
                     <View style={styles.textContainer}>
-                        <Text style={styles.titleText}>{config.title}</Text>
-                        <Text style={styles.messageText}>{messageText}</Text>
+                        <Text style={[styles.titleText, { color: colors.text }]}>{config.title}</Text>
+                        <Text style={[styles.messageText, { color: colors.text }]}>{messageText}</Text>
                     </View>
 
                     {/* Botón de cerrar */}
                     <TouchableOpacity 
                         onPress={hideMessage}
-                        style={styles.closeButton}
+                        style={[styles.closeButton, { backgroundColor: colors.surfaceSecondary }]}
                         activeOpacity={0.7}
                     >
-                        <MaterialIcons name="close" size={20} color="white" />
+                        <MaterialIcons name="close" size={20} color={colors.text} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Barra de Progreso */}
                 <View style={styles.progressBarContainer}>
-                    <Animated.View style={[styles.progressBar, progressStyle]} />
+                    <Animated.View style={[styles.progressBar, progressStyle, { backgroundColor: colors.text }]} />
                 </View>
 
                 {/* Decoración de fondo (Blur Circle simulado) */}
-                <View style={styles.backgroundDecoration} />
+                <View style={[styles.backgroundDecoration, { backgroundColor: colors.surface }]} />
             </LinearGradient>
-        </View>
+        </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        top: -80,
+        top: 30,
         left: 20,
         right: 20,
         alignItems: 'center', 
@@ -151,9 +155,9 @@ const styles = StyleSheet.create({
     },
     gradientCard: {
         width: '100%',
-        maxWidth: 500, // Similar al CSS max-width
-        borderRadius: 16,
+        borderRadius: 26,
         overflow: 'hidden',
+        borderWidth: 0.5,
         // Sombras estilo iOS/Android
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.3,
@@ -195,7 +199,6 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -212,6 +215,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         borderTopRightRadius: 4,
         borderBottomRightRadius: 4,
+        zIndex: 3,
     },
     backgroundDecoration: {
         position: 'absolute',
@@ -220,8 +224,6 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        zIndex: 1,
         transform: [{ scale: 1.5 }],
     }
 });

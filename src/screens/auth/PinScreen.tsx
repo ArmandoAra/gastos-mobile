@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { da } from 'date-fns/locale';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export const PinScreen = () => {
+    const { theme } = useSettingsStore();
+    const colors = theme === 'dark' ? darkTheme : lightTheme;
+
     const [pin, setPin] = useState('');
     const [isProcessing, setIsProcessing] = useState(false); // Estado local para bloquear duplicados
 
@@ -45,28 +52,31 @@ export const PinScreen = () => {
     };
 
     return (
-      <View style={styles.container}>
-          <Text style={styles.greeting}>Hola, {user?.name} 👋</Text>
-          <Text style={styles.subtitle}>Ingresa tu PIN para acceder</Text>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Text style={[styles.greeting, { color: colors.text }]}>Hola, {user?.name}</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ingresa tu PIN para acceder</Text>
 
           <TextInput
-              style={styles.pinInput}
+                style={[styles.pinInput, { borderColor: colors.border, color: colors.text }]}
               value={pin}
               onChangeText={setPin}
               placeholder="****"
               keyboardType="numeric"
               secureTextEntry
               maxLength={6}
+                placeholderTextColor={colors.textSecondary}
               autoFocus
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Desbloquear</Text>
+            <TouchableOpacity style={[styles.button, { backgroundColor: colors.accent, borderColor: colors.border }]} onPress={handleLogin}>
+                <Text style={[styles.buttonText, { color: colors.text }]}>Desbloquear</Text>
           </TouchableOpacity>
 
           {isBiometricEnabled && (
-              <TouchableOpacity style={styles.bioButton} onPress={loginWithBiometrics}>
-                  <Text style={styles.bioText}>Usar Huella / FaceID 👆</Text>
+                <TouchableOpacity style={[styles.bioButton, { borderColor: colors.border, backgroundColor: colors.text }]} onPress={loginWithBiometrics}>
+                    <MaterialIcons name="fingerprint" size={24} color={colors.accent} />
+                    <Text style={[styles.bioText, { color: colors.accent }]}> / </Text>
+                    <MaterialIcons name="face" size={24} color={colors.accent} /> 
               </TouchableOpacity>
           )}
       </View>
@@ -74,12 +84,12 @@ export const PinScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+    container: { flex: 1, padding: 24, paddingTop: 200, alignItems: 'center' },
     greeting: { fontSize: 26, fontWeight: 'bold', marginBottom: 8 },
     subtitle: { fontSize: 16, color: '#666', marginBottom: 32 },
-    pinInput: { width: '80%', borderWidth: 1, borderColor: '#ddd', padding: 16, borderRadius: 12, fontSize: 24, textAlign: 'center', letterSpacing: 10, marginBottom: 24 },
-    button: { backgroundColor: '#6200EE', padding: 16, borderRadius: 12, width: '80%', alignItems: 'center' },
+    pinInput: { width: '80%', borderWidth: 0.5, padding: 16, borderRadius: 24, fontSize: 24, textAlign: 'center', letterSpacing: 10, marginBottom: 24 },
+    button: { backgroundColor: '#6200EE', padding: 16, borderRadius: 24, width: '80%', alignItems: 'center', borderWidth: 0.5 },
     buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-    bioButton: { marginTop: 20, padding: 10 },
-    bioText: { color: '#6200EE', fontWeight: '600' },
+    bioButton: { display: 'flex', flexDirection: 'row', marginTop: 20, padding: 10, borderWidth: 0.5, borderRadius: 24, width: '80%', alignItems: 'center', justifyContent: 'center' },
+    bioText: { fontWeight: '600', fontSize: 24, marginHorizontal: 10 },
 });

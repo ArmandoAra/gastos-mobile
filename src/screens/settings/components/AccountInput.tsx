@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     cancelButton: {
-        borderWidth: 1,
+        borderWidth: 0.5,
     },
     cancelButtonText: {
         fontWeight: '600',
