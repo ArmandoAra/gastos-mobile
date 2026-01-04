@@ -23,6 +23,7 @@ import { ThemeColors } from "../../types/navigation";
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import InfoHeader from "../../components/headers/InfoHeader";
+import { useAuthStore } from "../../stores/authStore";
 
 type ViewMode = 'day' | 'month' | 'year';
 
@@ -34,6 +35,7 @@ type ListItem =
 
 export function TransactionsScreen() {
     const { theme } = useSettingsStore();
+    const { currencySymbol } = useAuthStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
     const { localSelectedDay } = useDateStore();

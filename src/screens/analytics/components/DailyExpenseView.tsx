@@ -2,10 +2,12 @@ import React, { useMemo, useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     ScrollView,
     Dimensions,
-    Platform
+    TouchableOpacity,
+    Modal,
+    FlatList,
+    StyleSheet
 } from 'react-native';
 import Animated, {
     FadeIn,
@@ -21,14 +23,24 @@ import useDataStore from '../../../stores/useDataStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useAuthStore } from '../../../stores/authStore';
+import { isTablet, styles } from './styles';
+import { StatCard } from './subcomponents/StatsCard';
+import { InsightCard } from './subcomponents/InsightCard';
+import { EmptyState } from './subcomponents/EmptyState';
 
 interface DailyExpenseViewProps {
     currentPeriod: ViewPeriod;
 }
 
+interface CategoryModalData {
+    categoryName: string;
+    totalAmount: number;
+    color: string;
+    transactions: any[];
+}
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const isSmallScreen = SCREEN_WIDTH < 420;
-const isTablet = SCREEN_WIDTH >= 768;
 
 export default function DailyExpenseViewMobile({
     currentPeriod
@@ -36,12 +48,15 @@ export default function DailyExpenseViewMobile({
     const { theme } = useSettingsStore();
     const colors = theme === 'dark' ? darkTheme : lightTheme;
 
+    // Estado para selección visual y modal
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalData, setModalData] = useState<CategoryModalData | null>(null);
+
     const { localSelectedDay } = useDateStore();
     const { transactions } = useDataStore();
     const { currencySymbol } = useAuthStore();
 
-    // Extraer componentes de fecha
     const year = localSelectedDay.getFullYear();
     const month = localSelectedDay.getMonth() + 1;
     const day = localSelectedDay.getDate();
@@ -56,41 +71,33 @@ export default function DailyExpenseViewMobile({
                     return txDate.getFullYear() === year &&
                         txDate.getMonth() === month - 1 &&
                         txDate.getDate() === day;
-
                 case 'week': {
                     const startOfWeek = new Date(localSelectedDay);
                     startOfWeek.setDate(localSelectedDay.getDate() - localSelectedDay.getDay());
                     startOfWeek.setHours(0, 0, 0, 0);
-
                     const endOfWeek = new Date(startOfWeek);
                     endOfWeek.setDate(startOfWeek.getDate() + 6);
                     endOfWeek.setHours(23, 59, 59, 999);
-
                     return txDate >= startOfWeek && txDate <= endOfWeek;
                 }
-
                 case 'month':
                     return txDate.getFullYear() === year &&
                         txDate.getMonth() === month - 1;
-
                 case 'year':
                     return txDate.getFullYear() === year;
-
                 default:
                     return true;
             }
-        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ordenar descendente para el modal
     }, [transactions, localSelectedDay, currentPeriod, year, month, day]);
 
     // Info de fecha
     const dateInfo = useMemo(() => {
         const dayIndex = localSelectedDay.getDay();
-        const isWeekend = dayIndex === 0 || dayIndex === 6;
-
         return {
             dayOfWeek: WEEKDAYS[dayIndex],
             monthName: MONTHS[localSelectedDay.getMonth()],
-            isWeekend,
+            isWeekend: dayIndex === 0 || dayIndex === 6,
             periodLabel: currentPeriod.charAt(0).toUpperCase() + currentPeriod.slice(1)
         };
     }, [localSelectedDay, currentPeriod]);
@@ -120,28 +127,51 @@ export default function DailyExpenseViewMobile({
         return {
             totalExpenses, totalIncome, balance,
             expenseCount: expenses.length, incomeCount: income.length,
-            topCategory, largestTransaction, categoryTotals
+            topCategory, largestTransaction, categoryTotals,
+            expensesList: expenses // Guardamos la lista completa de gastos para el modal
         };
     }, [filteredTransactions]);
 
+    // --- MANEJO DE SELECCIÓN ---
+    const handleCategorySelect = (categoryName: string, totalValue: number, color: string) => {
+        // 1. Resaltar visualmente (Chart y Lista)
+        setSelectedCategory(categoryName);
+
+        // 2. Preparar datos para el modal
+        const categoryTransactions = stats.expensesList.filter(
+            t => t.category_name === categoryName
+        );
+
+        setModalData({
+            categoryName,
+            totalAmount: totalValue,
+            color,
+            transactions: categoryTransactions
+        });
+
+        // 3. Abrir modal
+        setModalVisible(true);
+    };
+
     // Datos para PieChart
     const pieData = useMemo(() => {
-        return Object.entries(stats.categoryTotals).map(([name, value], index) => ({
-            value,
-            color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-            text: name,
-            focused: selectedCategory === name
-        }));
+        return Object.entries(stats.categoryTotals).map(([name, value], index) => {
+            const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
+            return {
+                value,
+                color: color,
+                text: name,
+                focused: selectedCategory === name, // Resaltado del Gifted Charts
+                onPress: () => handleCategorySelect(name, value, color) // Click en el pedazo del pie
+            };
+        });
     }, [stats.categoryTotals, selectedCategory]);
 
-    // Calcular tamaño del PieChart según pantalla
     const pieRadius = isSmallScreen ? 120 : isTablet ? 140 : 85;
     const pieInnerRadius = isSmallScreen ? 50 : isTablet ? 80 : 60;
 
     return (
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-        >
+        <ScrollView showsVerticalScrollIndicator={false}>
             <Animated.View
                 entering={FadeIn.duration(600)}
                 style={[
@@ -150,7 +180,6 @@ export default function DailyExpenseViewMobile({
                     isTablet && styles.containerTablet
                 ]}
             >
-
                 {/* STATS GRID */}
                 <View style={[styles.statsGrid, isTablet && styles.statsGridTablet]}>
                     <StatCard
@@ -238,13 +267,22 @@ export default function DailyExpenseViewMobile({
 
                                     {pieData.map((item, idx) => {
                                         const percentage = ((item.value / stats.totalExpenses) * 100).toFixed(1);
+                                        // Estilo para resaltar la fila seleccionada
+                                        const isSelected = selectedCategory === item.text;
+                                        const rowBackgroundColor = isSelected ? item.color + '20' : 'transparent'; // 20 es transparencia hex
 
                                         return (
-                                            <View
+                                            <TouchableOpacity
                                                 key={idx}
+                                                onPress={() => handleCategorySelect(item.text, item.value, item.color)}
+                                                activeOpacity={0.7}
                                                 style={[
                                                     styles.categoryRow,
-                                                    { borderColor: colors.border },
+                                                    {
+                                                        borderColor: colors.border,
+                                                        backgroundColor: rowBackgroundColor,
+                                                        borderRadius: 8 // Añadimos borde redondeado para cuando se resalta
+                                                    }
                                                 ]}
                                             >
                                                 <View style={styles.catRowTop}>
@@ -280,7 +318,7 @@ export default function DailyExpenseViewMobile({
                                                     </View>
                                                     <Text style={[styles.catPercent, { color: colors.text }]}>{percentage}%</Text>
                                                 </View>
-                                            </View>
+                                            </TouchableOpacity>
                                         );
                                     })}
                                 </View>
@@ -328,299 +366,128 @@ export default function DailyExpenseViewMobile({
                     </Animated.View>
                 )}
 
+                {/* MODAL DE DETALLES */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        setModalVisible(false);
+                        setSelectedCategory(null); // Limpiar selección al cerrar
+                    }}
+                >
+                    <View style={localStyles.modalOverlay}>
+                        <View style={[localStyles.modalContent, { backgroundColor: colors.surface, shadowColor: colors.text }]}>
+                            {/* Header Modal */}
+                            <View style={[localStyles.modalHeader, { borderBottomColor: colors.border }]}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={[styles.colorDot, { backgroundColor: modalData?.color }]} />
+                                    <Text style={[localStyles.modalTitle, { color: colors.text }]}>
+                                        {modalData?.categoryName}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity onPress={() => {
+                                    setModalVisible(false);
+                                    setSelectedCategory(null);
+                                }}>
+                                    <Ionicons name="close-circle" size={28} color={colors.textSecondary} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Total Modal */}
+                            <View style={localStyles.modalSummary}>
+                                <Text style={[localStyles.modalTotalLabel, { color: colors.textSecondary }]}>Total Spent</Text>
+                                <Text style={[localStyles.modalTotalValue, { color: modalData?.color }]}>
+                                    -{currencySymbol} {modalData?.totalAmount.toFixed(2)}
+                                </Text>
+                            </View>
+
+                            {/* Lista de Transacciones Modal */}
+                            <FlatList
+                                data={modalData?.transactions}
+                                keyExtractor={(item) => item.id.toString()}
+                                style={{ maxHeight: 300 }}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item }) => (
+                                    <View style={[localStyles.transactionRow, { borderBottomColor: colors.border }]}>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[localStyles.txDescription, { color: colors.text }]} numberOfLines={1}>
+                                                {item.description || "No description"}
+                                            </Text>
+                                            <Text style={[localStyles.txDate, { color: colors.textSecondary }]}>
+                                                {new Date(item.date).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                        <Text style={[localStyles.txAmount, { color: colors.text }]}>
+                                            -{currencySymbol}{item.amount.toFixed(2)}
+                                        </Text>
+                                    </View>
+                                )}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+
             </Animated.View>
         </ScrollView>
     );
 }
 
-// SUBCOMPONENTES
-
-interface StatCardProps {
-    label: string;
-    value: string;
-    sub: string;
-    colorBgAndHeader: string;
-    colorText: string;
-    colorSubText: string;
-    colorBorder: string;
-    icon: keyof typeof Ionicons.glyphMap;
-    isTablet: boolean;
-}
-
-const StatCard = ({ label, value, sub, colorBgAndHeader, colorText, colorSubText, colorBorder, icon, isTablet }: StatCardProps) => (
-    <View style={[
-        styles.statCard,
-        { borderColor: colorBorder, backgroundColor: colorBgAndHeader + '15' },
-        isTablet && styles.statCardTablet
-    ]}>
-        <View style={styles.statHeader}>
-            <Ionicons name={icon} size={isSmallScreen ? 12 : 14} color={colorBgAndHeader} style={{ marginRight: 4 }} />
-            <Text style={[styles.statLabel, { color: colorBgAndHeader + 'dd' }, isSmallScreen && styles.statLabelSmall]}>
-                {label}
-            </Text>
-        </View>
-        <Text style={[styles.statValue, isSmallScreen && styles.statValueSmall, { color: colorText }]} numberOfLines={1}>
-            {value}
-        </Text>
-        <Text style={[styles.statSub, isSmallScreen && styles.statSubSmall, { color: colorSubText }]}>{sub}</Text>
-    </View>
-);
-
-interface InsightCardProps {
-    label: string;
-    title: string;
-    value: string;
-    color: string;
-    isSmallScreen: boolean;
-    amountColor?: string;
-}
-
-const InsightCard = ({ label, title, value, color, isSmallScreen, amountColor }: InsightCardProps) => (
-    <View style={[
-        styles.insightCard,
-        { backgroundColor: color + '15', borderColor: color + '30' }
-    ]}>
-        <Text style={[styles.insightLabel, { color }, isSmallScreen && styles.insightLabelSmall]}>
-            {label}
-        </Text>
-        <Text style={[styles.insightTitle, isSmallScreen && styles.insightTitleSmall, { color }]} numberOfLines={1}>
-            {title}
-        </Text>
-        <Text style={[styles.insightValue, isSmallScreen && styles.insightValueSmall, { color: amountColor }]}>{value}</Text>
-    </View>
-);
-
-const EmptyState = ({ period, color }: { period: string, color: string }) => (
-    <View style={styles.emptyState}>
-        <Ionicons name="moon" size={isSmallScreen ? 40 : 48} color={color} style={{ opacity: 0.5 }} />
-        <Text style={[styles.emptyTitle, isSmallScreen && styles.emptyTitleSmall, { color }]}>
-            No transactions this {period.toLowerCase()}
-        </Text>
-        <Text style={[styles.emptySub, isSmallScreen && styles.emptySubSmall, { color }]}>
-            {period === 'Day' ? 'Enjoy your rest day! 😊' : 'Time to add some transactions'}
-        </Text>
-    </View>
-);
-
-// STYLES
-
-const styles = StyleSheet.create({
-    container: {
-        borderRadius: isSmallScreen ? 16 : 20,
-        padding: isSmallScreen ? 12 : 16,
-        borderWidth: 0.5,
-        marginHorizontal: 4,
-        ...Platform.select({
-            ios: {
-                shadowColor: "#000",
-                shadowOpacity: 0.2,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 4 },
-            },
-            android: {
-                elevation: 6,
-            }
-        }),
-    },
-    containerTablet: {
-        maxWidth: 900,
-        alignSelf: 'center',
-        width: '100%',
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: isSmallScreen ? 12 : 16,
-        justifyContent: 'space-between',
-        marginBottom: isSmallScreen ? 16 : 20,
-    },
-    statsGridTablet: {
-        flexWrap: 'wrap',
-        gap: isSmallScreen ? 12 : 16,
-        justifyContent: 'center',
-    },
-    statCard: {
+// ESTILOS LOCALES PARA EL MODAL
+const localStyles = StyleSheet.create({
+    modalOverlay: {
         flex: 1,
-        padding: isSmallScreen ? 12 : 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        marginHorizontal: isSmallScreen ? 4 : 6,
-        marginBottom: isSmallScreen ? 0 : 0,
-        minWidth: isSmallScreen ? 120 : 100,
+        justifyContent: 'center', // O 'flex-end' si prefieres estilo BottomSheet
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        padding: 20
     },
-    statCardTablet: {
-        marginHorizontal: isSmallScreen ? 6 : 8,
-        maxWidth: 200,
+    modalContent: {
+        borderRadius: 20,
+        padding: 20,
+        maxHeight: '70%',
     },
-    statHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    statLabel: {
-        fontSize: isSmallScreen ? 11 : 12,
-        fontWeight: '600',
-    },
-    statLabelSmall: {
-        fontSize: 10,
-    },
-    statValue: {
-        fontSize: isSmallScreen ? 18 : 20,
-        fontWeight: '700',
-    },
-    statValueSmall: {
-        fontSize: 16,
-    },
-    statSub: {
-        fontSize: isSmallScreen ? 10 : 11,
-        marginTop: 4,
-    },
-    statSubSmall: {
-        fontSize: 9,
-    },
-    contentContainer: {
-        marginBottom: isSmallScreen ? 16 : 20,
-    },
-    chartContainer: {
-        alignItems: 'center',
-        marginBottom: isSmallScreen ? 20 : 24,
-    },
-    chartCenterValue: {
-        fontSize: isSmallScreen ? 18 : 22,
-        fontWeight: '500',
-    },
-    chartCenterValueSmall: {
-        fontSize: 16,
-    },
-    chartCenterLabel: {
-        fontSize: isSmallScreen ? 11 : 12,
-        marginTop: 4,
-    },
-    categoryList: {
-        marginTop: 8,
-    },
-    catHeader: {
+    modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        marginBottom: 10
     },
-    sectionTitle: {
-        fontSize: isSmallScreen ? 12 : 13,
-        fontWeight: '300',
-        letterSpacing: 0.5,
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
     },
-    categoryRow: {
-        paddingHorizontal: isSmallScreen ? 10 : 12,
-        paddingVertical: isSmallScreen ? 8 : 10,
+    modalSummary: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTotalLabel: {
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    modalTotalValue: {
+        fontSize: 28,
+        fontWeight: 'bold',
+    },
+    transactionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
         borderBottomWidth: 0.5,
     },
-    catRowTop: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 6,
+    txDescription: {
+        fontSize: 16,
+        fontWeight: '500',
     },
-    colorDot: {
-        width: isSmallScreen ? 10 : 12,
-        height: isSmallScreen ? 10 : 12,
-        borderRadius: 6,
-        marginRight: 8,
+    txDate: {
+        fontSize: 12,
+        marginTop: 2,
     },
-    catName: {
-        fontSize: isSmallScreen ? 12 : 13,
+    txAmount: {
+        fontSize: 16,
         fontWeight: '600',
-    },
-    catNameSmall: {
-        fontSize: 11,
-    },
-    catValue: {
-        fontSize: isSmallScreen ? 12 : 13,
-        fontWeight: '600',
-    },
-    catValueSmall: {
-        fontSize: 11,
-    },
-    catProgressRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    progressBarBg: {
-        flex: 1,
-        height: isSmallScreen ? 6 : 8,
-        borderRadius: 4,
-        overflow: 'hidden',
-    },
-    progressBarFill: {
-        height: '100%',
-        borderRadius: 4,
-    },
-    catPercent: {
-        fontSize: isSmallScreen ? 10 : 11,
-        fontWeight: '600',
-    },
-    insightsContainer: {
-        marginTop: isSmallScreen ? 16 : 20,
-    },
-    insightsGrid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: isSmallScreen ? 12 : 16,
-    },
-    insightsGridTablet: {
-        flexWrap: 'wrap',
-        gap: isSmallScreen ? 12 : 16,
-        justifyContent: 'center',
-    },
-    insightCard: {
-        flex: 1,
-        padding: isSmallScreen ? 12 : 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        marginHorizontal: isSmallScreen ? 4 : 6,
-        marginBottom: isSmallScreen ? 0 : 0,
-        minWidth: isSmallScreen ? 120 : 150,
-    },
-    insightLabel: {
-        fontSize: isSmallScreen ? 11 : 12,
-        fontWeight: '600',
-    },
-    insightLabelSmall: {
-        fontSize: 10,
-    },
-    insightTitle: {
-        fontSize: isSmallScreen ? 14 : 16,
-        fontWeight: '700',
-        marginVertical: 6,
-    },
-    insightTitleSmall: {
-        fontSize: 13,
-    },
-    insightValue: {
-        fontSize: isSmallScreen ? 16 : 18,
-        fontWeight: '700',
-    },
-    insightValueSmall: {
-        fontSize: 15,
-    },
-    emptyState: {
-        alignItems: 'center',
-        paddingVertical: isSmallScreen ? 40 : 48,
-    },
-    emptyTitle: {
-        fontSize: isSmallScreen ? 16 : 18,
-        fontWeight: '700',
-        marginTop: 12,
-    },
-    emptyTitleSmall: {
-        fontSize: 15,
-    },
-    emptySub: {
-        fontSize: isSmallScreen ? 12 : 13,
-        marginTop: 6,
-    },
-    emptySubSmall: {
-        fontSize: 11,
-    },
+    }
 });

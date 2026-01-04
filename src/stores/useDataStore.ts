@@ -54,6 +54,7 @@ type Actions = {
     // === Account Management ===
     setSelectedAccount: (accountId: string) => void
     setAllAccounts: (accounts: Account[]) => void
+    getAccountNameById: (accountId: string) => string
     getAllAccountsByUserId: (userId: string) => Account[]
     addAccount: (account: Account) => void
     createAccount: (accountData: Partial<Account>) => Promise<void>
@@ -140,6 +141,11 @@ const useDataStore = create<State & Actions>()(
 
                 setSelectedAccount: (accountId: string) => {
                     set({ selectedAccount: accountId, error: null }, false, 'setSelectedAccount')
+                },
+
+                getAccountNameById: (accountId: string): string => {
+                    const account = get().allAccounts.find(acc => acc.id === accountId);
+                    return account ? account.name : 'Unknown Account';
                 },
 
                 getAllAccountsByUserId: (userId: string): Account[] => {
@@ -281,10 +287,6 @@ const useDataStore = create<State & Actions>()(
                 syncAccountsWithTransactions: () => {
                     const accounts = get().allAccounts;
                     const transactions = get().transactions;
-                    console.log('Syncing accounts with transactions...');
-                    console.log('Accounts:', accounts);
-                    console.log('Transactions:', transactions[0]);
-
                     // 1. Crear un objeto para acumular los saldos (ej: { 'acc1': 0, 'acc2': 0 })
                     const balances: Record<string, number> = {};
                     accounts.forEach(acc => {

@@ -245,7 +245,7 @@ export default function EditTransactionFormMobile({
                             <View style={styles.rowSelectors}>
                                 <View style={{ flex: 7 }}>
                                     <AccountSelector
-                                        label="Account"
+                                        label="Accounts"
                                         accountSelected={newAccount}
                                         setAccountSelected={setNewAccount}
                                         accounts={allAccounts}

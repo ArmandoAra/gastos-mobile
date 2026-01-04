@@ -19,6 +19,7 @@ import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useAuthStore } from '../../../stores/authStore';
 import useDateStore from '../../../stores/useDateStore';
 import useDataStore from '../../../stores/useDataStore';
+import { styles } from './styles';
 
 
 type ViewMode = 'month' | 'year';
@@ -153,9 +154,7 @@ export default function ExpenseHeatmap() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.iconTitle}>
-            <LinearGradient colors={[colors.accent, '#ec4899']} style={styles.iconBox}>
-               <MaterialIcons name="grid-on" size={20} color="#FFF" />
-            </LinearGradient>
+
             <View>
               <Text style={[styles.title, { color: colors.text }]}>Heatmap</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -175,9 +174,9 @@ export default function ExpenseHeatmap() {
               <TouchableOpacity
                 key={m}
                 onPress={() => setViewMode(m)}
-                style={[styles.toggleBtn, viewMode === m && { backgroundColor: colors.surfaceSecondary }]}
+                style={[styles.toggleBtn, viewMode === m && { backgroundColor: colors.text }]}
               >
-                <Text style={[styles.toggleText, { color: viewMode === m ? colors.text : colors.textSecondary }]}>
+                <Text style={[styles.toggleText, { color: viewMode === m ? colors.surface : colors.text }]}>
                   {m === 'month' ? 'Month' : 'Year'}
                 </Text>
               </TouchableOpacity>
@@ -190,9 +189,9 @@ export default function ExpenseHeatmap() {
               <TouchableOpacity
                 key={t}
                 onPress={() => setHeatmapType(t)}
-                style={[styles.toggleBtn, heatmapType === t && { backgroundColor: colors.surfaceSecondary }]}
+                style={[styles.toggleBtn, heatmapType === t && { backgroundColor: colors.text }]}
               >
-                 <Text style={[styles.toggleText, { color: heatmapType === t ? colors.text : colors.textSecondary }]}>
+                <Text style={[styles.toggleText, { color: heatmapType === t ? colors.surface : colors.text }]}>
                   {t === 'daily' ? 'Grid' : 'Cats'}
                 </Text>
               </TouchableOpacity>
@@ -381,118 +380,3 @@ export default function ExpenseHeatmap() {
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 20,
-    borderWidth: 0.5,
-    marginHorizontal: 4,
-    padding: 16,
-    marginVertical: 10,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 },
-      android: { elevation: 4 }
-    })
-  },
-  header: { marginBottom: 16 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-  iconTitle: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  iconBox: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 16, fontWeight: '700' },
-  subtitle: { fontSize: 12 },
-  totalBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  totalText: { fontSize: 14, fontWeight: '700' },
-  
-  controlsRow: { flexDirection: 'row', gap: 10 },
-  toggleContainer: { flexDirection: 'row', borderRadius: 10, padding: 2, borderWidth: 1 },
-  toggleBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  toggleText: { fontSize: 11, fontWeight: '600' },
-
-  // Grid Styles
-  gridContainer: { alignItems: 'center' },
-  weekDaysRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 8, gap: 4 },
-  weekDayText: { textAlign: 'center', fontSize: 10, fontWeight: '700' },
-  gridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, justifyContent: 'center' },
-  gridWrapYear: { justifyContent: 'space-between', gap: 8 },
-  cell: { borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  cellText: { fontWeight: '700' },
-
-  // --- NEW STYLES FOR STICKY CATEGORY LAYOUT ---
-  catContainer: {
-    flexDirection: 'row', // Layout horizontal para dividir fija vs scroll
-  },
-  catFixedColumn: {
-    width: 80, // Ancho fijo para la columna de categorías
-    marginRight: 8,
-    borderRightWidth: 1, // Separador visual opcional
-    zIndex: 10,
-  },
-  catHeaderPlaceholder: {
-    height: 20, // Misma altura que catDateHeaderRow (sin margenes)
-    marginBottom: 8, 
-    justifyContent: 'center',
-  },
-  catHeaderLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  catNameRow: {
-    height: MINI_CELL_SIZE, // Misma altura que las celdas
-    marginBottom: GAP_SIZE, // Mismo gap
-    justifyContent: 'center',
-  },
-  catLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  
-  // Right Side (Scrollable content)
-  catDateHeaderRow: {
-    flexDirection: 'row',
-    height: 20,
-    marginBottom: 8,
-    gap: GAP_SIZE,
-  },
-  catHeaderCell: {
-    width: MINI_CELL_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  catColHeader: {
-    fontSize: 9,
-    textAlign: 'center',
-  },
-  catDataRow: {
-    flexDirection: 'row',
-    height: MINI_CELL_SIZE,
-    marginBottom: GAP_SIZE,
-    gap: GAP_SIZE,
-  },
-  miniCell: {
-    width: MINI_CELL_SIZE,
-    height: MINI_CELL_SIZE,
-    borderRadius: 4,
-  },
-
-  // Legend
-  legend: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 12, borderTopWidth: 1 },
-  legendLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase' },
-  scaleBar: { flexDirection: 'row', gap: 4 },
-  scaleDot: { width: 24, height: 8, borderRadius: 4 },
-
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalCard: { width: '100%', maxWidth: 300, borderRadius: 20, padding: 20, borderWidth: 1 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottomWidth: 1, marginBottom: 12 },
-  modalTitle: { fontSize: 16, fontWeight: '700' },
-  modalSub: { fontSize: 12 },
-  modalAmount: { fontSize: 18, fontWeight: '700' },
-  txRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-  txName: { fontSize: 13, flex: 1, marginRight: 10 },
-  txVal: { fontSize: 13, fontWeight: '600' },
-  noTx: { fontStyle: 'italic', textAlign: 'center', marginTop: 10 },
-  closeBtn: { marginTop: 16, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
-  closeText: { fontWeight: '700', fontSize: 12 }
-});

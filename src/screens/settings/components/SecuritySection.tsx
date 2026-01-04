@@ -23,7 +23,6 @@ interface SecuritySectionProps {
     colors: ThemeColors;
 }
 
-// TODO: Hacer que funcione la implementacion y la desactivacion de la biometria
 
 export default function SecuritySection({ 
     colors, 
@@ -43,42 +42,7 @@ export default function SecuritySection({
     }
 
     // --- Componente interno para los items de seguridad ---
-    const SecurityItem = ({ 
-        label, 
-        icon, 
-        value, 
-        onToggle,
-        showChevron = false 
-    }: { 
-        label: string; 
-        icon: keyof typeof MaterialIcons.glyphMap; 
-        value?: boolean; 
-        onToggle: () => void;
-        showChevron?: boolean;
-    }) => (
-        <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-            <View style={styles.itemLeft}>
-                <View style={[styles.iconBg, { backgroundColor: colors.surfaceSecondary }]}>
-                    <MaterialIcons name={icon} size={20} color={colors.income} />
-                </View>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
-            </View>
-            
-            {showChevron ? (
-                <TouchableOpacity onPress={onToggle}>
-                    <MaterialIcons name="chevron-right" size={24} color={colors.accent} />
-                </TouchableOpacity>
-            ) : (
-                <Switch
-                    value={value}
-                    onValueChange={onToggle}
-                    trackColor={{ false: colors.border, true: colors.income + '80' }}
-                    thumbColor={value ? colors.accent : colors.textSecondary}
-                    ios_backgroundColor={colors.border}
-                />
-            )}
-        </View>
-    );
+
 
     return (
         <Animated.View 
@@ -102,6 +66,7 @@ export default function SecuritySection({
             {/* --- ITEMS --- */}
             <View style={styles.listContainer}>
                 <SecurityItem 
+                    colors={colors}
                     label="Security PIN" 
                     icon="lock-outline" 
                     value={isPinEnabled} 
@@ -109,6 +74,7 @@ export default function SecuritySection({
                 />
                 
                 <SecurityItem 
+                    colors={colors}
                     label="Enable Biometrics" 
                     icon="fingerprint" 
                     value={isBiometricEnabled} 
@@ -120,6 +86,7 @@ export default function SecuritySection({
                     <TouchableOpacity onPress={() => setChangePinModalVisible(true)}>
                     <Animated.View entering={FadeIn}>
                         <SecurityItem 
+                                colors={colors}
                             label="Change PIN Code" 
                             icon="password" 
                             onToggle={() => {}} // Aquí iría tu lógica de navegación
@@ -138,6 +105,45 @@ export default function SecuritySection({
         </Animated.View>
     );
 }
+
+const SecurityItem = ({
+    colors,
+    label,
+    icon,
+    value,
+    onToggle,
+    showChevron = false
+}: {
+    colors: ThemeColors;
+    label: string;
+    icon: keyof typeof MaterialIcons.glyphMap;
+    value?: boolean;
+    onToggle: () => void;
+    showChevron?: boolean;
+}) => (
+    <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+        <View style={styles.itemLeft}>
+            <View style={[styles.iconBg, { backgroundColor: colors.surfaceSecondary }]}>
+                <MaterialIcons name={icon} size={20} color={colors.income} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
+        </View>
+
+        {showChevron ? (
+            <TouchableOpacity onPress={onToggle}>
+                <MaterialIcons name="chevron-right" size={24} color={colors.accent} />
+            </TouchableOpacity>
+        ) : (
+            <Switch
+                value={value}
+                onValueChange={onToggle}
+                trackColor={{ false: colors.border, true: colors.income + '80' }}
+                thumbColor={value ? colors.accent : colors.textSecondary}
+                ios_backgroundColor={colors.border}
+            />
+        )}
+    </View>
+);
 
 const styles = StyleSheet.create({
     card: {

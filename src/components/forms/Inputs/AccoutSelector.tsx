@@ -51,7 +51,7 @@ export default function AccountSelector({
     return (
         <View style={styles.container}>
             {/* Label Superior */}
-            <Text style={[styles.label, { color: colors.surface }]}>{label}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
 
             {/* Trigger (El botón que parece un Input) */}
             <TouchableOpacity 

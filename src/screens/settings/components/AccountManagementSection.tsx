@@ -230,7 +230,7 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                             styles.balanceText, 
                                                 { color: account.balance >= 0 ? colors.income : colors.expense }
                                         ]}>
-                                                {currencySymbol} {formatCurrency((account.balance))}
+                                                {`${account.balance >= 0 ? '' : '-'}${currencySymbol} ${formatCurrency(Math.abs(account.balance))}`}
                                         </Text>
                                     </View>
                                 </View>

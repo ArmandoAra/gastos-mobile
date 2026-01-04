@@ -17,6 +17,8 @@ import { Transaction, TransactionType } from '../../../interfaces/data.interface
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { CategoryLabel } from '../../../api/interfaces';
 import { ThemeColors } from '../../../types/navigation';
+import { useAuthStore } from '../../../stores/authStore';
+import useDataStore from '../../../stores/useDataStore';
 
 // Tus imports...
 
@@ -40,6 +42,8 @@ export const TransactionItemMobile = React.memo(({
     // 1. Estados
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isWarningOpen, setIsWarningOpen] = useState(false);
+    const { currencySymbol } = useAuthStore();
+    const { getAccountNameById } = useDataStore();
 
     // 2. Valores Animados
     const translateX = useSharedValue(0);
@@ -59,6 +63,10 @@ export const TransactionItemMobile = React.memo(({
             color: found?.gradientColors ? found.gradientColors[0] : '#B0BEC5',
         };
     }, [transaction.type, transaction.category_name]);
+
+    const accountName = useMemo(() => {
+        return getAccountNameById(transaction.account_id);
+    }, [transaction.account_id, getAccountNameById]);
 
     const { IconComponent, color } = categoryData;
     const isExpense = transaction.type === TransactionType.EXPENSE;
@@ -175,8 +183,16 @@ export const TransactionItemMobile = React.memo(({
 
                         {/* Amount */}
                         <View style={styles.amountContainer}>
+                            {/* Aqui debe ir el account referente */}
+                            <Text
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                style={[styles.accoutBadge, { backgroundColor: colors.primary + '22', color: colors.text }]}
+                            >
+                                {accountName}
+                            </Text>
                             <Text style={[styles.amountText, { color: isExpense ? '#ef4444' : '#10b981' }]}>
-                                {isExpense ? '-' : '+'}${formatCurrency(Math.abs(transaction.amount).toFixed(2))}
+                                {isExpense ? '-' : '+'}{currencySymbol} {formatCurrency(Math.abs(transaction.amount).toFixed(2))}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -272,6 +288,16 @@ const styles = StyleSheet.create({
     },
     amountContainer: {
         alignItems: 'flex-end',
+    },
+    accoutBadge: {
+        fontSize: 10,
+        marginBottom: 4,
+        width: 60,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        overflow: 'hidden', // Importante en iOS para que se vea el borderRadius con fondo
+        textAlign: 'center' // Centra el texto dentro del badge
     },
     amountText: {
         fontSize: 16,

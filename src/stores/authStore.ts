@@ -153,6 +153,7 @@ export const useAuthStore = create<AuthState>()(
             pinHash: state.pinHash,
             isSetupComplete: state.isSetupComplete,
             isBiometricEnabled: state.isBiometricEnabled,
+            currencySymbol: state.currencySymbol,
         }),
       }
   )

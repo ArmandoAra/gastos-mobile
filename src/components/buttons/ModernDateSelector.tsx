@@ -193,12 +193,12 @@ export default function ModernCalendarSelector({
                                 style={styles.dayCell}
                             >
                                 {selected ? (
-                                    <LinearGradient
-                                colors={[colors.accent, colors.primary]}
-                                        style={styles.selectedDayBg}
+                              <View
+
+                                style={[styles.selectedDayBg, { backgroundColor: colors.text }]}
                                     >
-                                <Text style={[styles.selectedDayText]}>{day}</Text>
-                                    </LinearGradient>
+                                <Text style={[styles.selectedDayText, { color: colors.surface }]}>{day}</Text>
+                              </View>
                                 ) : (
                                     <View style={[
                                         styles.dayContent, 
@@ -217,7 +217,7 @@ export default function ModernCalendarSelector({
                 </View>
           </Animated.View>
           {/* Footer: Jump to Today */}
-          <View style={[styles.footer, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+          <View style={[styles.footer, { borderColor: colors.accent, backgroundColor: colors.surface }]}>
                     <TouchableOpacity 
                         onPress={() => {
                             const now = new Date();
@@ -226,7 +226,7 @@ export default function ModernCalendarSelector({
                         }}
                         style={styles.todayButton}
                     >
-              <Text style={[styles.todayButtonText, { color: colors.text }]}>Go to Today</Text>
+              <Text style={[styles.todayButtonText, { color: colors.accent }]}>Go to Today</Text>
                     </TouchableOpacity>
           </View>
         </View>
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   todayBorder: {
-    borderWidth: 1,
+    borderWidth: 2,
   },
   selectedDayBg: {
     width: 38,
@@ -350,7 +350,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   selectedDayText: {
-    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -362,7 +361,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
     borderRadius: 24,
     alignItems: 'center',
-    borderWidth: 0.4,
+    borderWidth: 2,
   },
   todayButton: {
     paddingHorizontal: 20,

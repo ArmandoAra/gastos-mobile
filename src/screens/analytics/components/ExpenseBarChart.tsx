@@ -12,6 +12,8 @@ import useDateStore from '../../../stores/useDateStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { darkTheme, lightTheme } from '../../../theme/colors';
+import { isTablet, styles } from './styles';
+import { StatCard } from './subcomponents/StatsCard';
 
 interface ExpenseBarChartProps {
   currentPeriod: 'day' | 'week' | 'month' | 'year';
@@ -184,15 +186,12 @@ export default function ExpenseBarChart({
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-      <Animated.View entering={FadeInUp.duration(600)} style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Animated.View entering={FadeInUp.duration(600)} style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border, marginBottom: 60 }]}>
         
         {/* HEADER CON SWITCH */}
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
-            <LinearGradient colors={[colors.accent, '#8B5CF6']} style={styles.iconBox}>
-              <Ionicons name="bar-chart" size={20} color="#FFF" />
-            </LinearGradient>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 16 }}>
               <Text style={[styles.title, { color: colors.text }]}>Analytics</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 Overview per {currentPeriod}
@@ -202,53 +201,61 @@ export default function ExpenseBarChart({
             {/* SWITCH PARA ACTIVAR INGRESOS */}
             <View style={styles.switchContainer}>
                 <Text style={[styles.switchLabel, { color: colors.textSecondary }]}>
-                    Income
+                {isIncomeVisible ? 'Hide Income' : 'Show Income'}
                 </Text>
-                <Switch 
-                    value={isIncomeVisible}
-                    onValueChange={setIsIncomeVisible}
-                    trackColor={{ false: colors.border, true: colors.income + '50' }}
-                    thumbColor={isIncomeVisible ? colors.income : colors.textSecondary}
-                    // Ajustar tamaño en iOS
-                    style={{ transform: [{ scaleX: .8 }, { scaleY: .8 }] }}
-                />
+              <Switch
+                value={isIncomeVisible}
+                onValueChange={setIsIncomeVisible}
+                trackColor={{ false: colors.border, true: colors.income + '80' }}
+                thumbColor={isIncomeVisible ? colors.accent : colors.textSecondary}
+                ios_backgroundColor={colors.border}
+              />
             </View>
           </View>
         </View>
 
         {/* STATS ROW */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-          <StatsCard 
+          <StatCard 
             label="Total Spent" 
-            value={`${currencySymbol}${stats.totalExpenses.toFixed(0)}`} 
+            value={`-${currencySymbol} ${stats.totalExpenses.toFixed(0)}`} 
             icon="arrow-down" 
-            color={colors.expense} 
-            colors={colors}
+            colorBgAndHeader={colors.expense}
+            colorText={colors.text}
+            colorSubText={colors.textSecondary}
+            colorBorder={colors.border}
+            isTablet={isTablet}
           />
           
           {/* NUEVA CARD: TOTAL INCOME */}
-          <StatsCard 
+          <StatCard 
             label="Total Income" 
-            value={`${currencySymbol}${stats.totalIncome.toFixed(0)}`} 
+            value={`${currencySymbol} ${stats.totalIncome.toFixed(0)}`} 
             icon="arrow-up" 
-            color={colors.income} 
-            colors={colors}
+            colorBgAndHeader={colors.income}
+            colorText={colors.text}
+            colorSubText={colors.textSecondary}
+            colorBorder={colors.border}
+            isTablet={isTablet}
           />
 
-          <StatsCard 
+          <StatCard 
             label="Trend" 
             value={stats.trend === 'stable' ? 'Stable' : `${Math.abs(stats.trendPercent).toFixed(0)}%`} 
             sub={stats.trend === 'up' ? 'Increasing' : stats.trend === 'down' ? 'Decreasing' : ''}
             icon={stats.trend === 'up' ? 'trending-up' : stats.trend === 'down' ? 'trending-down' : 'remove'} 
-            color={stats.trend === 'up' ? colors.expense : stats.trend === 'down' ? colors.income : colors.textSecondary}
-            colors={colors}
+            colorBgAndHeader={stats.trend === 'up' ? colors.income : stats.trend === 'down' ? colors.expense : colors.textSecondary}
+            colorText={colors.text}
+            colorSubText={colors.textSecondary}
+            colorBorder={colors.border}
+            isTablet={isTablet}
           />
         </ScrollView>
 
         {/* CHART AREA */}
         <View style={styles.chartWrapper}>
   <BarChart
-    key={`${currentPeriod}-${isIncomeVisible}`} 
+            key={`${currentPeriod}-${isIncomeVisible}-${localSelectedDay.getTime()}`} 
     data={barData}
     height={220}
     width={chartVisibleWidth}
@@ -291,7 +298,7 @@ export default function ExpenseBarChart({
     )}
     autoCenterTooltip
   />
-</View>
+        </View>
 
         <View style={styles.footer}>
            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
@@ -308,9 +315,9 @@ export default function ExpenseBarChart({
             </View>
             <Text style={[styles.insightText, { color: colors.textSecondary }]}>
               {stats.trend === 'up' 
-                ? `Spending is trending up by ${stats.trendPercent.toFixed(1)}% compared to the first half of this period.` 
+                ? `Spending is up by ${stats.trendPercent.toFixed(1)}% compared to the first half of this period.`
                 : stats.trend === 'down'
-                  ? `Great job! Spending is down by ${Math.abs(stats.trendPercent).toFixed(1)}%.`
+                  ? `Great job! Spending is down by ${Math.abs(stats.trendPercent).toFixed(1)}% compared to the first half.`
                   : `Spending is relatively stable.`}
             </Text>
           </Animated.View>
@@ -320,57 +327,3 @@ export default function ExpenseBarChart({
     </ScrollView>
   );
 }
-
-// SUBCOMPONENTS
-const StatsCard = ({ label, value, sub, icon, color, colors }: any) => (
-  <View style={[styles.statCard, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-      <Ionicons name={icon} size={12} color={color} style={{ marginRight: 4 }} />
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
-    <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>{value}</Text>
-    {sub ? <Text style={[styles.statSub, { color: colors.textSecondary }]}>{sub}</Text> : null}
-  </View>
-);
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 24,
-    borderWidth: 0.5,
-    padding: 8,
-    marginVertical: 10,
-    marginBottom: 60,
-    marginHorizontal: 4,
-    overflow: 'hidden',
-  },
-  header: { marginBottom: 20 },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  iconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  title: { fontSize: 18, fontWeight: '700' },
-  subtitle: { fontSize: 12, textTransform: 'capitalize' },
-  
-  // Styles para el Switch
-  switchContainer: { alignItems: 'center', justifyContent: 'center', marginLeft: 'auto' },
-  switchLabel: { fontSize: 10, marginBottom: 2, fontWeight: '600' },
-
-  statsScroll: { paddingRight: 20, marginBottom: 10 },
-  statCard: { width: 120, padding: 12, borderRadius: 12, borderWidth: 1, marginRight: 8 },
-  statLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase' },
-  statValue: { fontSize: 16, fontWeight: '700', marginVertical: 2 },
-  statSub: { fontSize: 9 },
-  chartWrapper: { marginVertical: 10, marginLeft: -15 },
-  insightBox: { padding: 12, borderRadius: 12, marginTop: 16 },
-  insightHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  insightTitle: { fontSize: 12, fontWeight: '700', marginLeft: 6 },
-  insightText: { fontSize: 11, lineHeight: 16 },
-  tooltip: {
-    padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    minWidth: 80,
-    alignItems: 'center',
-    marginBottom: 4
-  },
-  footer: { marginTop: 5, alignItems: 'center' },
-  footerText: { fontSize: 10 }
-});
