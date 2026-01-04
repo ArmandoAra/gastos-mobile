@@ -5,10 +5,10 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createMMKV } from 'react-native-mmkv';
 import { InputNameActive } from '../interfaces/settings.interface';
+import { LanguageCode } from '../constants/languages';
 
 const storage = createMMKV();
 
-//TODO: Implementar el language change en toda la app
 
 const mmkvStorage = {
     setItem: (name: string, value: string) => storage.set(name, value),
@@ -18,7 +18,7 @@ const mmkvStorage = {
 
 interface SettingsState {
     theme: 'light' | 'dark';
-    language: string;
+    language: LanguageCode;
     isPinEnabled: boolean;
     isBiometricEnabled: boolean;
     isUnlocked: boolean;
@@ -29,7 +29,7 @@ interface SettingsState {
     setIsDateSelectorOpen: (isOpen: boolean) => void;
     setInputNameActive: (inputName: InputNameActive) => void;
     setTheme: (theme: 'light' | 'dark') => void;
-    setLanguage: (lang: string) => void;
+    setLanguage: (lang: LanguageCode) => void;
     togglePin: () => void;
     toggleBiometrics: () => void;
     setUnlocked: (unlocked: boolean) => void;
@@ -39,7 +39,7 @@ export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
             theme: 'light',
-            language: 'es',
+            language: LanguageCode.PT,
             isPinEnabled: false,
             isBiometricEnabled: false,
             isUnlocked: true,

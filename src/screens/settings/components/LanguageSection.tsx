@@ -4,32 +4,36 @@ import {
     Text, 
     TouchableOpacity, 
     StyleSheet, 
-    Platform
+    Platform,
+    AccessibilityInfo
 } from 'react-native';
 import Animated, { 
     FadeIn, 
     FadeInRight,
-    ZoomIn,
-    Layout, 
-    FadeInLeft
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ThemeColors } from '../../../types/navigation';
 import i18n from '../../../i18n';
-import { languages } from '../../../constants/languages';
+import { LanguageCode, languages } from '../../../constants/languages';
+import { useTranslation } from 'react-i18next';
 
 interface LanguageSectionProps {
     colors: ThemeColors;
 }
 
-
 export default function LanguageSection({ colors }: LanguageSectionProps) {
+    const { t } = useTranslation();
     const { language, setLanguage } = useSettingsStore();
 
-    const handleLanguageChange = (code: string) => {
+    const handleLanguageChange = (code: LanguageCode) => {
         setLanguage(code);
         i18n.changeLanguage(code);
+
+        // Feedback para lector de pantalla
+        if (Platform.OS !== 'web') {
+            AccessibilityInfo.announceForAccessibility(`${t('language.changed_to', 'Language changed to')} ${code}`);
+        }
     };
 
     return (
@@ -43,22 +47,35 @@ export default function LanguageSection({ colors }: LanguageSectionProps) {
                 }
             ]}
         >
-            {/* HEADER */}
-            <View style={styles.headerRow}>
+            {/* HEADER ACCESIBLE */}
+            <View
+                style={styles.headerRow}
+                accessibilityRole="header"
+            >
                 <View style={styles.titleContainer}>
-                    <View>
-                        <Text style={[styles.headerTitle, { color: colors.text }]}>
-                            Language
+                    <View style={{ flex: 1 }}>
+                        <Text
+                            style={[styles.headerTitle, { color: colors.text }]}
+                            maxFontSizeMultiplier={1.5} // Evita que el título rompa todo el layout
+                        >
+                            {t('language.titleHeader')}
                         </Text>
-                        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                            Choose your preferred language
+                        <Text
+                            style={[styles.headerSubtitle, { color: colors.textSecondary }]}
+                            maxFontSizeMultiplier={1.5}
+                        >
+                            {t('language.subtitle')}
                         </Text>
                     </View>
                 </View>
             </View>
 
-            {/* LISTA DE IDIOMAS */}
-            <View style={styles.listContainer}>
+            {/* LISTA DE IDIOMAS (RADIOGROUP) */}
+            <View
+                style={styles.listContainer}
+                accessibilityRole="radiogroup"
+                accessibilityLabel={t('language.select_language', 'Select a language')}
+            >
                 {languages.map((lang, index) => {
                     const isSelected = language === lang.code;
                     
@@ -67,20 +84,16 @@ export default function LanguageSection({ colors }: LanguageSectionProps) {
                             key={lang.code}
                             entering={FadeInRight.delay(index * 100).springify()}
                         >
-                             {/* Checkmark con animación */}
-                                {isSelected && (
-                                    <Animated.View 
-                                        entering={FadeIn.duration(200)}
-                                        style={styles.checkWrapper}
-                                    >
-                                        <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                                                                <MaterialIcons name="check" size={12} color={colors.text} />
-                                                            </View>
-                                    </Animated.View>
-                                )}
                             <TouchableOpacity
                                 activeOpacity={0.7}
                                 onPress={() => handleLanguageChange(lang.code)}
+
+                                // Accesibilidad: Radio Button
+                                accessibilityRole="radio"
+                                accessibilityState={{ checked: isSelected }}
+                                accessibilityLabel={`${lang.name}, ${lang.native}`}
+                                accessibilityHint={isSelected ? t('language.selected_hint', 'Currently selected') : t('language.select_hint', 'Double tap to select')}
+
                                 style={[
                                     styles.languageItem,
                                     { 
@@ -94,8 +107,9 @@ export default function LanguageSection({ colors }: LanguageSectionProps) {
                                     }
                                 ]}
                             >
-                                <View style={styles.languageInfo}>
-                                    {/* Contenedor de Bandera */}
+                                <View style={styles.languageContentRow}>
+
+                                    {/* 1. Bandera */}
                                     <View style={[
                                         styles.flagContainer, 
                                         { 
@@ -110,26 +124,46 @@ export default function LanguageSection({ colors }: LanguageSectionProps) {
                                         <Text style={styles.flagText}>{lang.flag}</Text>
                                     </View>
                                     
+                                    {/* 2. Textos (Flexible para no chocar) */}
                                     <View style={styles.languageTextContainer}>
-                                        <Text style={[
-                                            styles.languageName, 
-                                            { 
-                                                color: isSelected ? colors.text : colors.textSecondary,
-                                                fontWeight: isSelected ? '700' : '600'
-                                            }
-                                        ]}>
+                                        <Text
+                                            style={[
+                                                styles.languageName,
+                                                {
+                                                    color: isSelected ? colors.text : colors.textSecondary,
+                                                    fontWeight: isSelected ? '700' : '600'
+                                                }
+                                            ]}
+                                            numberOfLines={1}
+                                            adjustsFontSizeToFit // Ayuda a que quepa si es muy largo
+                                        >
                                             {lang.name}
                                         </Text>
-                                        <Text style={[
-                                            styles.nativeName, 
-                                            { color: colors.textSecondary }
-                                        ]}>
+                                        <Text
+                                            style={[styles.nativeName, { color: colors.textSecondary }]}
+                                        >
                                             {lang.native}
                                         </Text>
                                     </View>
-                                </View>
 
-                               
+                                    {/* 3. Checkmark (En flujo, no absoluto) */}
+                                    <View style={{ width: 24, alignItems: 'center' }}>
+                                        {isSelected && (
+                                            <Animated.View
+                                                entering={FadeIn.duration(200)}
+                                                style={[styles.checkBadge, { backgroundColor: colors.accent }]}
+                                            >
+                                                <MaterialIcons
+                                                    name="check"
+                                                    size={14}
+                                                    color={colors.surface}
+                                                    importantForAccessibility="no"
+                                                />
+                                            </Animated.View>
+                                        )}
+                                    </View>
+
+                                </View>
                             </TouchableOpacity>
                         </Animated.View>
                     );
@@ -163,41 +197,33 @@ const styles = StyleSheet.create({
     titleContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-    },
-    iconWrapper: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: '300',
-        marginBottom: 2,
+        marginBottom: 4,
+        flexWrap: 'wrap', // Permite que baje de línea
     },
     headerSubtitle: {
         fontSize: 13,
         fontWeight: '400',
+        flexWrap: 'wrap',
     },
     listContainer: {
         gap: 10,
     },
     languageItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 14,
+        paddingVertical: 12, // Padding vertical flexible
         paddingHorizontal: 16,
         borderRadius: 12,
-        minHeight: 70,
+        // Usamos minHeight en lugar de height fijo
+        minHeight: 72,
+        justifyContent: 'center',
     },
-    languageInfo: {
+    languageContentRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 14,
-        flex: 1,
     },
     flagContainer: {
         width: 48,
@@ -206,72 +232,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
+        // Evitamos que la bandera se aplaste
+        flexShrink: 0, 
     },
     flagText: {
         fontSize: 24,
     },
     languageTextContainer: {
-        flex: 1,
+        flex: 1, // Toma todo el espacio disponible central
+        justifyContent: 'center',
     },
     languageName: {
         fontSize: 16,
-        marginBottom: 3,
+        marginBottom: 2,
     },
     nativeName: {
         fontSize: 13,
         opacity: 0.8,
     },
-    checkWrapper: {
-        marginLeft: 8,
-        zIndex: 1,
-    },
-    infoFooter: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginTop: 16,
-        paddingTop: 16,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 10,
-    },
-    infoText: {
-        fontSize: 12,
-        flex: 1,
-    }, 
-     checkBadge: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 18,
-        height: 18,
-        borderRadius: 9,
+    // Checkbadge ahora es relativo, no absoluto
+    checkBadge: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         alignItems: 'center',
         justifyContent: 'center',
-       
     }
 });
-
-// ============================================
-// VERSIÓN CON i18n (OPCIONAL)
-// ============================================
-
-/*
-// Si usas react-i18next, importa:
-import { useTranslation } from 'react-i18next';
-import * as z from 'zod';
-
-// En el componente:
-const { i18n } = useTranslation();
-
-// Y en handleLanguageChange:
-const handleLanguageChange = (code: string) => {
-    setLanguage(code);
-    i18n.changeLanguage(code); // Cambia el idioma en i18next
-};
-
-// Puedes traducir los textos:
-<Text style={[styles.headerTitle, { color: colors.text }]}>
-    {t('settings.language.title')}
-</Text>
-*/

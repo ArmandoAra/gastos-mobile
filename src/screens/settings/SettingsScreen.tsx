@@ -41,26 +41,20 @@ export const SettingsScreen = () => {
         <ScrollView
                 style={[styles.container, { backgroundColor: theme === 'dark' ? colors.background : colors.background }]}
             showsVerticalScrollIndicator={false}
-        >
+            >
+                <UserProfileSection colors={colors} />
 
-            <UserProfileSection colors={colors} />
+                <AccountManagementSection colors={colors} />
 
-            <AccountManagementSection colors={colors} />
+                <AppearanceSection colors={colors} />
 
-            {/* 4. Appearance (Del estilo RN proporcionado) */}
-            <AppearanceSection colors={colors} />
+                <LanguageSection colors={colors} />
 
-            {/* 5. Language (Del estilo RN proporcionado) */}
-            <LanguageSection colors={colors} />
+                <SecuritySection colors={colors} />
 
-            {/* 6. Security (Del estilo RN proporcionado) */}
-            <SecuritySection
-                    colors={colors}
-            />
+                <DataManagementSection colors={colors} />
 
-            {/* 7. Danger Zone (Traducido del MUI a estilos RN) */}
-            <DataManagementSection colors={colors} />
-            <DangerZoneSection colors={colors} />
+                <DangerZoneSection colors={colors} />
 
         </ScrollView>
         </>

@@ -10,6 +10,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { ThemeColors } from '../../../types/navigation';
+import i18n from '../../../i18n';
 
 // 1. Definimos la interfaz para las opciones de moneda
 export interface CurrencyOption {
@@ -34,6 +35,7 @@ export default function CurrencySelector({
     currencies,
     colors
 }: CurrencySelectorProps) {
+    const { t } = i18n;
     const [isOpen, setIsOpen] = useState(false);
 
     // Buscamos el objeto de la moneda seleccionada para mostrar en el trigger
@@ -84,7 +86,7 @@ export default function CurrencySelector({
             <Modal
                 visible={isOpen}
                 transparent
-                animationType="none"
+                animationType="fade"
                 onRequestClose={() => setIsOpen(false)}
             >
                 {/* Backdrop Oscuro */}
@@ -110,6 +112,7 @@ export default function CurrencySelector({
                         {/* Header del Modal */}
                         <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>{label}</Text>
+                            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>{t('currency.subtitle')}</Text>
                         </View>
 
                         {/* Lista de Opciones */}
@@ -117,24 +120,39 @@ export default function CurrencySelector({
                             data={currencies}
                             keyExtractor={(item) => item.code}
                             contentContainerStyle={{ paddingVertical: 8 }}
+                            // 1. Indica que esta es una lista de selección
+                            accessibilityRole="list"
                             renderItem={({ item }) => {
                                 const isSelected = currencySelected === item.code;
                                 return (
                                     <TouchableOpacity 
+                                        // 2. Definir el rol como botón o radio button
+                                        accessibilityRole="button"
+                                        // 3. Informar el estado de selección al lector de pantalla
+                                        accessibilityState={{ selected: isSelected }}
+                                        // 4. Etiqueta descriptiva unificada
+                                        accessibilityLabel={`${item.name}, moneda ${item.code}, símbolo ${item.symbol}`}
+                                        // 5. Sugerencia de acción
+                                        accessibilityHint={isSelected ? "" : "Toca dos veces para seleccionar esta moneda"}
+
                                         style={[
                                             styles.optionItem,
-                                            isSelected && { backgroundColor: colors.surfaceSecondary } // Highlight sutil
+                                            isSelected && { backgroundColor: colors.surfaceSecondary }
                                         ]}
                                         onPress={() => handleSelect(item.code)}
                                     >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                            {/* Símbolo en la lista */}
+                                        <View
+                                            // 6. Evitar que el lector de pantalla se detenga en cada texto interno
+                                            // Tratamos el contenedor como una sola unidad
+                                            importantForAccessibility="no-hide-descendants"
+                                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                                        >
                                             <View style={[
-                                                styles.symbolCircleSmall, 
+                                                styles.symbolCircleSmall,
                                                 { backgroundColor: isSelected ? colors.accent : colors.surfaceSecondary }
                                             ]}>
                                                 <Text style={[
-                                                    styles.symbolTextSmall, 
+                                                    styles.symbolTextSmall,
                                                     { color: isSelected ? '#FFF' : colors.text }
                                                 ]}>
                                                     {item.symbol}
@@ -150,13 +168,20 @@ export default function CurrencySelector({
                                                     {item.code}
                                                 </Text>
                                                 <Text style={[styles.optionSubText, { color: colors.textSecondary }]}>
-                                                    {item.name}
+                                                    {t(`currency.${item.code}`)}
                                                 </Text>
                                             </View>
                                         </View>
-                                        
+
                                         {isSelected && (
-                                            <MaterialIcons name="check-circle" size={20} color={colors.accent} />
+                                            <MaterialIcons
+                                                name="check-circle"
+                                                size={20}
+                                                color={colors.accent}
+                                                // El icono es decorativo porque el estado ya se lee en el Touchable
+                                                accessibilityElementsHidden={true}
+                                                importantForAccessibility="no"
+                                            />
                                         )}
                                     </TouchableOpacity>
                                 );
@@ -238,7 +263,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     modalHeader: {
-        flexDirection: 'row',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
@@ -249,6 +274,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         textTransform: 'uppercase',
         letterSpacing: 1,
+    },
+    modalSubtitle: {
+        position: 'relative',
+        marginVertical: 4,
+        textAlign: 'center',
+        fontSize: 12,
+        fontWeight: '400',
     },
 
     // Estilos de la Lista

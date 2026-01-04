@@ -36,6 +36,7 @@ import {
 import { CustomTabBar } from './src/components/TabBar/CustomTabBar';
 import { ModernHeader } from './src/components/navigation/ModernHeader';
 import AnalyticsScreen from './src/screens/analytics/AnalyticsScreen';
+import { useTranslation } from 'react-i18next';
 
 
 // --- Creación de Navigators Tipados ---
@@ -62,6 +63,7 @@ const RenderModernHeader = (props: any, currentColors: ThemeColors) => {
 // MAIN TAB NAVIGATOR
 // ============================================
 const MainTabs = () => {
+  const { t } = useTranslation();
   const { theme } = useSettingsStore();
   const currentColors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
@@ -99,24 +101,24 @@ const MainTabs = () => {
         name="Transactions"
         component={TransactionsScreen}
         options={{
-          title: 'Transactions',
-          headerTitle: 'Transacciones'
+          title: t('navigation.transactions'),
+          headerTitle: t('navigation.transactions')
         }}
       />
       <Tab.Screen
         name="Analytics"
         component={AnalyticsScreen}
         options={{
-          title: 'Analytics',
-          headerTitle: 'Analytics'
+          title: t('navigation.analytics'),
+          headerTitle: t('navigation.analytics')
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'Settings',
-          headerTitle: 'Configuración'
+          title: t('navigation.settings'),
+          headerTitle: t('navigation.settings')
         }}
       />
     </Tab.Navigator>

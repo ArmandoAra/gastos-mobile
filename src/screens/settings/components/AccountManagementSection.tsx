@@ -1,18 +1,17 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
     View, 
     Text, 
     TouchableOpacity, 
     StyleSheet, 
-    Alert, 
     KeyboardAvoidingView,
     Platform,
-    Modal
+    Modal,
+    AccessibilityInfo
 } from 'react-native';
 import Animated, { 
     FadeIn, 
-    FadeOut, 
-    Layout,
+    FadeOut,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TextInput } from 'react-native-paper';
@@ -20,24 +19,23 @@ import { TextInput } from 'react-native-paper';
 // Stores & Utils
 import useDataStore from '../../../stores/useDataStore';
 import { formatCurrency } from '../../../utils/helpers';
-import AccountInputMobile from './AccountInput'; // Asumimos que este componente maneja sus propios estilos o recibe theme
+import AccountInputMobile from './AccountInput';
 import { ThemeColors } from '../../../types/navigation';
-import { set } from 'date-fns';
 import { useAuthStore } from '../../../stores/authStore';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import { getCurrencySymbol } from '../../../constants/currency';
 import WarningAccountDeleteMessage from './WarningAccountDeleteMessage';
+import { useTranslation } from 'react-i18next';
 
 interface AccountManagementProps {
     colors: ThemeColors;
 }
 
-
 export default function AccountManagementSection({ colors }: AccountManagementProps) {
-    const { allAccounts, updateAccount, deleteAccountStore, syncAccountsWithTransactions } = useDataStore();
-    const { user, currencySymbol } = useAuthStore();
-    
-    // 2. Estado Local
+    const { t } = useTranslation();
+
+    const { allAccounts, updateAccount, syncAccountsWithTransactions } = useDataStore();
+    const { currencySymbol } = useAuthStore();
+
+    // Estado Local
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState('');
@@ -47,11 +45,7 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
     const [warningOpen, setWarningOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Ref para focus
-    const nameInputRef = useRef<any>(null);
-
-
-    // 3. Handlers
+    // Handlers
     const handleEdit = (id: string) => {
         const account = allAccounts.find(acc => acc.id === id);
         if (account) {
@@ -65,7 +59,8 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
     const handleSaveEdit = async (id?: string) => {
         try {
             if (!tempName.trim()) {
-                setErrorMessage("Name cannot be empty");
+                setErrorMessage(t('commonWarnings.notEmptyField', "Name cannot be empty"));
+                if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Name cannot be empty");
                 return;
             }
 
@@ -75,6 +70,7 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
 
             setSelectedAccount(null);
             setErrorMessage(null);
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Account updated");
 
         } catch (err) {
             setErrorMessage("Failed to update account");
@@ -97,8 +93,16 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
 
     const handleSyncAccounts = () => {
         setIsSync(true);
+        // Anuncio de inicio
+        if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Syncing accounts");
+
         syncAccountsWithTransactions();
-        setIsSync(false);
+
+        // Simulamos fin de sync visualmente o esperamos promesa real si existe
+        setTimeout(() => {
+            setIsSync(false);
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Sync complete");
+        }, 1000); 
     }
 
     return (
@@ -107,32 +111,59 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
             style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
             {/* --- HEADER SECCIÓN --- */}
-            <View style={styles.headerRow}>
+            <View style={styles.headerRow} accessibilityRole="header">
                 <View style={styles.titleContainer}>
-                    {/* Icono del título usando el color de texto primario o secundario */}
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Accounts</Text>
-                </View>
-                {!isAdding &&
-                    <TouchableOpacity
-                        onPress={handleSyncAccounts}
-                        style={[styles.addButton, { backgroundColor: isAdding ? colors.error : colors.text }]}
+                    <Text
+                        style={[styles.headerTitle, { color: colors.text }]}
+                        maxFontSizeMultiplier={1.5}
                     >
-                        <MaterialIcons name={"refresh"} size={18} color={colors.surface} />
+                        {t('accounts.title')}
+                    </Text>
+                </View>
+
+                {/* Contenedor de Botones Header */}
+                <View style={styles.headerButtonsContainer}>
+                    {!isAdding &&
+                        <TouchableOpacity
+                            onPress={handleSyncAccounts}
+                            style={[
+                                styles.addButton,
+                                { backgroundColor: isSync ? colors.surfaceSecondary : colors.text, borderWidth: isSync ? 1 : 0, borderColor: colors.text }
+                            ]}
+                            accessibilityRole="button"
+                            accessibilityLabel={isSync ? t('accounts.syncing') : t('accounts.syncData')}
+                            accessibilityState={{ busy: isSync, disabled: isSync }}
+                        >
+                            <MaterialIcons
+                                name="refresh"
+                                size={20}
+                                color={isSync ? colors.text : colors.surface}
+                                importantForAccessibility="no"
+                            />
+                            <Text style={[styles.addButtonText, { color: isSync ? colors.text : colors.surface }]}>
+                                {isSync ? t('accounts.syncing') : t('accounts.syncData')}
+                            </Text>
+                        </TouchableOpacity>
+                    }
+
+                    <TouchableOpacity
+                        onPress={() => setIsAdding(!isAdding)}
+                        style={[styles.addButton, { backgroundColor: isAdding ? colors.error : colors.text }]}
+                        accessibilityRole="button"
+                        accessibilityLabel={isAdding ? t('common.cancel') : t('accounts.addAccount')}
+                        accessibilityHint={isAdding ? "Closes the add account form" : "Opens form to add a new account"}
+                    >
+                        <MaterialIcons
+                            name={isAdding ? "close" : "add"}
+                            size={20}
+                            color={colors.surface}
+                            importantForAccessibility="no"
+                        />
                         <Text style={[styles.addButtonText, { color: colors.surface }]}>
-                            {isSync ? "Sync..." : "Sync Data"}
+                            {isAdding ? t('common.cancel') : t('accounts.addAccount')}
                         </Text>
                     </TouchableOpacity>
-                }
-
-                <TouchableOpacity
-                    onPress={() => setIsAdding(!isAdding)}
-                    style={[styles.addButton, { backgroundColor: isAdding ? colors.error : colors.text }]}
-                >
-                    <MaterialIcons name={isAdding ? "close" : "add"} size={18} color={colors.surface} />
-                    <Text style={[styles.addButtonText, { color: colors.surface }]}>
-                        {isAdding ? "Cancel" : "Add New"}
-                    </Text>
-                </TouchableOpacity>
+                </View>
             </View>
 
             {/* --- FORMULARIO AÑADIR CUENTA (Collapsible) --- */}
@@ -145,16 +176,16 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                 </KeyboardAvoidingView>
             )}
 
-
-
             {/* --- LISTA DE CUENTAS --- */}
-            <View style={styles.listContainer}>
+            <View style={styles.listContainer} accessibilityRole="list">
                 {/* Mensaje de Error Global */}
                 {errorMessage && (
                     <Animated.Text 
                         entering={FadeIn} 
                         exiting={FadeOut}
                         style={[styles.errorText, { color: colors.error }]}
+                        accessibilityRole="alert"
+                        accessibilityLiveRegion="polite"
                     >
                         {errorMessage}
                     </Animated.Text>
@@ -168,19 +199,18 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                         style={[
                             styles.accountItem,
                             {
-                                backgroundColor: colors.surfaceSecondary || colors.background, // Fallback si no tienes surfaceSecondary
+                                backgroundColor: colors.surfaceSecondary || colors.background, 
                                 borderColor: colors.border
                             }
                         ]}
                     >
                         {(isEditing && selectedAccount === account.id) ? (
-                            // MODO EDICIÓN
+                            // ================= MODO EDICIÓN =================
                             <View style={styles.editModeContainer}>
                                 <View style={styles.inputsColumn}>
                                     <TextInput
-                                        ref={nameInputRef}
                                         mode="outlined"
-                                        label="Name"
+                                        label={t('accounts.accountName', 'Name')}
                                         value={tempName}
                                         onChangeText={setTempName}
                                         style={[styles.input, { backgroundColor: colors.surfaceSecondary || colors.background }]}
@@ -188,10 +218,13 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                         dense
                                         outlineColor={colors.border}
                                         activeOutlineColor={colors.accent}
+                                        // Accesibilidad
+                                        accessibilityLabel={t('accounts.accountName', 'Account Name')}
+                                        autoCapitalize="words"
                                     />
                                     <TextInput
                                         mode="outlined"
-                                        label="Type (e.g., Bank, Cash)"
+                                        label={t('accounts.typePlaceholder', 'Type')}
                                         value={tempType}
                                         onChangeText={setTempType}
                                         style={[styles.input, { backgroundColor: colors.surfaceSecondary || colors.background }]}
@@ -199,6 +232,8 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                         dense
                                         outlineColor={colors.border}
                                         activeOutlineColor={colors.accent}
+                                        // Accesibilidad
+                                        accessibilityLabel={t('accounts.typePlaceholder', 'Account Type')}
                                     />
                                 </View>
                                 
@@ -206,94 +241,108 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
                                     <TouchableOpacity 
                                         onPress={() => handleSaveEdit(account?.id)}
                                         style={[styles.iconButton, { backgroundColor: colors.income }]}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={t('common.save')}
                                     >
-                                        <MaterialIcons name="check" size={20} color={colors.text} />
+                                        <MaterialIcons name="check" size={24} color={colors.surface} importantForAccessibility="no" />
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                         onPress={handleCancelEdit}
                                         style={[styles.iconButton, { backgroundColor: colors.textSecondary }]}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={t('common.cancel')}
                                     >
-                                        <MaterialIcons name="close" size={20} color={colors.text} />
+                                        <MaterialIcons name="close" size={24} color={colors.surface} importantForAccessibility="no" />
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         ) : (
-                            // MODO VISTA
+                                // ================= MODO VISTA =================
+
                             <View style={styles.viewModeContainer}>
-                                <View style={styles.infoColumn}>
+                                    {/* Agrupamos la info para lectura continua */}
+                                    <View
+                                        style={styles.infoColumn}
+                                        accessible={true}
+                                        accessibilityLabel={`${account.name}, ${account.type}, ${t('common.balance')}: ${account.balance} ${currencySymbol}`}
+                                        accessibilityHint={t('accessibility.account_actions_hint', 'Swipe to edit or delete')}
+                                    >
                                         <Text style={[styles.accountName, { color: colors.text }]}>{account.name}</Text>
                                     <View style={styles.metaRow}>
                                             <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
-                                                <Text style={[styles.chipText, { color: colors.textSecondary }]}>{account.type}</Text>
+                                                <Text style={[styles.chipText, { color: colors.textSecondary }]} importantForAccessibility="no">
+                                                    {account.type}
+                                                </Text>
                                         </View>
-                                        <Text style={[
-                                            styles.balanceText, 
-                                                { color: account.balance >= 0 ? colors.income : colors.expense }
-                                        ]}>
+                                            <Text
+                                                style={[styles.balanceText, { color: account.balance >= 0 ? colors.income : colors.expense }]}
+                                                importantForAccessibility="no"
+                                            >
                                                 {`${account.balance >= 0 ? '' : '-'}${currencySymbol} ${formatCurrency(Math.abs(account.balance))}`}
                                         </Text>
                                     </View>
                                 </View>
 
+                                    {/* Acciones fuera del grupo de lectura */}
                                 <View style={styles.actionsRowView}>
                                     <TouchableOpacity 
                                         onPress={() => handleEdit(account.id)}
                                             style={[styles.iconButtonOutline, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`${t('common.edit')} ${account.name}`}
                                     >
-                                            <MaterialIcons name="edit" size={18} color={colors.textSecondary} />
+                                            <MaterialIcons name="edit" size={20} color={colors.textSecondary} importantForAccessibility="no" />
                                     </TouchableOpacity>
 
-                                        {allAccounts.length > 1 && <TouchableOpacity
+                                        {allAccounts.length > 1 && (
+                                            <TouchableOpacity
                                             onPress={() => handleDeletePress(account.id)}
                                             style={[styles.iconButtonOutline, { borderColor: colors.error + '50', backgroundColor: colors.surface }]}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={`${t('common.delete')} ${account.name}`}
                                         >
-                                            <MaterialIcons name="delete" size={18} color={colors.error} />
-                                        </TouchableOpacity>}
+                                                <MaterialIcons name="delete" size={20} color={colors.error} importantForAccessibility="no" />
+                                            </TouchableOpacity>
+                                        )}
                                 </View>
                             </View>
                         )}
                     </Animated.View>
                 ))}
 
+                {/* --- MODAL WARNING --- */}
                 <Modal
                     visible={warningOpen}
                     transparent={true}
-                    animationType="none" // Usamos Reanimated para el control total
+                    animationType="none"
                     onRequestClose={() => setWarningOpen(false)}
+                    accessibilityViewIsModal={true}
                 >
                     <View style={styles.modalOverlay}>
-                        {/* Backdrop para cerrar al tocar fuera si lo deseas */}
                         <TouchableOpacity
                             style={StyleSheet.absoluteFill}
                             activeOpacity={1}
                             onPress={() => setWarningOpen(false)}
-                        >
-                            <View style={styles.backdropBlur} />
-                        </TouchableOpacity>
-
-                        {/* El componente ahora sí aparecerá arriba de TODO */}
+                            accessibilityLabel={t('common.close')}
+                        />
                         <WarningAccountDeleteMessage
                             accountToDelete={selectedAccount!}
-                            message="Are you sure you want to delete this account?"
                             onClose={() => setWarningOpen(false)}
                             colors={colors}
                         />
                     </View>
                 </Modal>
 
-
                 {/* Empty State */}
                 {allAccounts.length === 0 && (
-                    <View style={styles.emptyState}>
-                        <MaterialIcons name="savings" size={40} color={colors.textSecondary} style={{ opacity: 0.5 }} />
+                    <View style={styles.emptyState} accessible={true}>
+                        <MaterialIcons name="savings" size={48} color={colors.textSecondary} style={{ opacity: 0.5 }} importantForAccessibility="no" />
                         <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-                            No accounts yet. Create your first one above!
+                            {t('accounts.emptyState', "No accounts yet. Create your first one above!")}
                         </Text>
                     </View>
                 )}
             </View>
-
-
         </Animated.View>
     );
 }
@@ -301,41 +350,48 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
 const styles = StyleSheet.create({
     card: {
         marginTop: 10,
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 20,
         marginBottom: 20,
-        // Sombras consistentes con UserProfile
+        borderWidth: 0.5,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
-        elevation: 5,
-        borderWidth: 0.5,
+        elevation: 3,
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 20,
+        flexWrap: 'wrap', // CLAVE: Permite que el título y botones se acomoden si el texto es grande
+        gap: 12,
     },
     titleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flex: 1, // Toma el espacio disponible
+        minWidth: 150, // Ancho mínimo antes de hacer wrap
     },
     headerTitle: {
-        fontSize: 24, // Ajustado para jerarquía visual
+        fontSize: 24,
         fontWeight: '300',
+    },
+    headerButtonsContainer: {
+        flexDirection: 'row',
+        gap: 8,
+        flexWrap: 'wrap', // Botones también pueden hacer wrap
     },
     addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 6,
+        paddingVertical: 8, // Área táctil mejorada
         paddingHorizontal: 12,
         borderRadius: 20,
-        gap: 4,
+        gap: 6,
+        minHeight: 40, // Altura mínima
     },
     addButtonText: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '600',
     },
     addFormContainer: {
@@ -350,10 +406,11 @@ const styles = StyleSheet.create({
     errorText: {
         textAlign: 'center',
         marginBottom: 10,
-        fontSize: 12,
+        fontSize: 14,
+        fontWeight: '500',
     },
     accountItem: {
-        borderRadius: 10,
+        borderRadius: 12,
         borderWidth: 1,
         overflow: 'hidden',
     },
@@ -363,10 +420,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
+        flexWrap: 'wrap', // Permite wrap en pantallas muy pequeñas
+        gap: 12,
     },
     infoColumn: {
         flex: 1,
         gap: 6,
+        minWidth: 150,
     },
     accountName: {
         fontSize: 16,
@@ -376,6 +436,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+        flexWrap: 'wrap',
     },
     chip: {
         paddingVertical: 2,
@@ -393,15 +454,17 @@ const styles = StyleSheet.create({
     },
     actionsRowView: {
         flexDirection: 'row',
-        gap: 8,
-        marginLeft: 10,
+        gap: 12,
+        alignItems: 'center',
     },
     iconButtonOutline: {
-        padding: 8,
-        borderRadius: 8,
+        padding: 10, // Área táctil generosa
+        borderRadius: 24,
         borderWidth: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        minWidth: 44, // Accesibilidad
+        minHeight: 44,
     },
     // --- ESTILOS MODO EDICIÓN ---
     editModeContainer: {
@@ -409,50 +472,48 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 12,
         gap: 12,
+        flexWrap: 'wrap', // IMPORTANTE: Si los inputs son grandes, los botones bajan
     },
     inputsColumn: {
         flex: 1,
-        gap: 8,
+        gap: 12,
+        minWidth: 180, // Ancho mínimo para inputs
     },
     input: {
-        fontSize: 14,
-        height: 40,
+        fontSize: 16,
+        minHeight: 50, // Altura accesible
     },
     actionsRowEdit: {
-        flexDirection: 'column',
-        gap: 8,
+        flexDirection: 'column', // Botones apilados al lado (o abajo si hay wrap)
+        gap: 12,
         justifyContent: 'center',
     },
     iconButton: {
-        padding: 8,
-        borderRadius: 8,
+        padding: 12,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
+        minWidth: 48,
+        minHeight: 48,
         elevation: 2,
     },
     // --- EMPTY STATE ---
     emptyState: {
-        padding: 20,
+        padding: 30,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: 12,
     },
     emptyStateText: {
-        fontSize: 14,
+        fontSize: 16,
         textAlign: 'center',
+        maxWidth: 250,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)', // Fondo oscuro traslúcido
-        justifyContent: 'flex-start', // Empuja el contenido hacia arriba
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: Platform.OS === 'ios' ? 60 : 30, // Margen superior para el Notch
-    },
-    backdropBlur: {
-        flex: 1,
+        padding: 20,
     }
 });

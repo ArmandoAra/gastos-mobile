@@ -1,9 +1,36 @@
 {
     "common": {
         "save": "Guardar",
+        "saving": "Guardando...",
+        "confirm": "Confirmar",
         "cancel": "Cancelar",
         "delete": "Eliminar",
-        "loading": "Cargando..."
+        "reset": "Restablecer",
+        "edit": "Editar",
+        "loading": "Cargando...",
+        "name": "Nombre",
+        "search": "Buscar",
+        "select": "Seleccionar",
+        "type": "Tipo",
+        "balance": "Saldo",
+        "expense": "Gasto",
+        "income": "Ingreso",
+        "total": "Total",
+        "settings": "Configuración",
+        "write": "Escribe",
+        "back": "Atrás",
+        "done": "Hecho",
+        "restore": "Restaurar"
+    },
+    "commonWarnings": {
+        "warning": "Advertencia",
+        "someErrorOccurred": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+        "requiredField": "Este campo es obligatorio.",
+        "fillAllFields": "Por favor, completa todos los campos.",
+        "notEmptyField": "Este campo no puede estar vacío.",
+        "invalidEmail": "Por favor, introduce una dirección de correo electrónico válida.",
+        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+        "passwordsDoNotMatch": "Las contraseñas no coinciden."
     },
     "auth": {
         "login": "Iniciar sesión",
@@ -11,13 +38,101 @@
         "password": "Contraseña",
         "register": "Registrarse"
     },
+    "profile": {
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "cancel": "Cancelar",
+        "title": "Perfil",
+        "settingsTitle": "Información del usuario",
+        "name": "Nombre",
+        "email": "Correo electrónico",
+        "currency": "Moneda de preferencia",
+        "selectCurrency": "Seleccionar moneda",
+        "editProfile": "Editar perfil",
+        "logout": "Cerrar sesión"
+    },
+    "profileAccessibility": {
+        "name_input_label": "Campo de entrada de nombre",
+        "name_input_hint": "Introduce tu nombre aquí",
+        "email_input_label": "Campo de entrada de correo electrónico",
+        "email_input_hint": "Introduce tu correo electrónico aquí"
+    },
     "accounts": {
         "title": "Cuentas",
-        "addAccount": "Agregar cuenta",
-        "balance": "Saldo",
+        "addAccount": "Agregar",
+        "syncData": "Sincronizar",
+        "syncing": "Sincronizando...",
         "savings": "Ahorros",
         "checking": "Corriente",
-        "cash": "Efectivo"
+        "cash": "Efectivo",
+        "accountName": "Nombre de la cuenta",
+        "accountNamePlaceholder": "Ingresa el nombre de la cuenta",
+        "typePlaceholder": "Selecciona el tipo de cuenta",
+        "typeExample": "Ejemplo: Efectivo, Débito, ...",
+        "noSelectedAccount": "Ninguna cuenta seleccionada",
+        "transferToAccount": "Seleccionar cuenta de destino",
+        "deleteWarning": "Eliminar una cuenta también eliminará todas las transacciones asociadas a ella.Tambien puedes transferirlas a otra cuenta. ¿Estás seguro de que deseas continuar?",
+        "transferAndDelete": "Transferir y eliminar",
+        "justDelete": "Eliminar Cuenta"
+    },
+    "theme": {
+        "titleHeader": "Apariencia",
+        "title": "Tema de la aplicación",
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema"
+    },
+    "language": {
+        "titleHeader": "Idioma",
+        "subtitle": "Selecciona el idioma de la aplicación",
+        "selectLanguage": "Seleccionar idioma",
+        "english": "Inglés",
+        "spanish": "Español",
+        "portuguese": "Portugués"
+    },
+    "security": {
+        "titleHeader": "Seguridad",
+        "subtitle": "Introduce el pin actual y a continuación el nuevo pin",
+        "setPin": "Establecer PIN",
+        "enterCurrentPin": "PIN actual",
+        "enterNewPin": "nuevo PIN",
+        "pin": "PIN de la aplicación",
+        "biometrics": "Autenticación biométrica",
+        "changePin": "Cambiar PIN",
+        "changedSuccessfully": "PIN cambiado con éxito",
+        "enablePin": "Habilitar PIN",
+        "disablePin": "Deshabilitar PIN",
+        "pinInfo": "Debe contener mínimo 4 dígitos.",
+        "newPinMustBeDifferent": "El nuevo PIN debe ser diferente al actual.",
+        "enableBiometrics": "Habilitar biometría",
+        "disableBiometrics": "Deshabilitar biometría"
+    },
+    "dataAndBackup": {
+        "tileHeader": "Datos y copia de seguridad",
+        "backupSubtitle": "Crea una copia de seguridad de tus datos de gastos y guárdala de forma segura en tu dispositivo o en la nube. O restaura tus datos desde una copia de seguridad existente.",
+        "createBackup": "Crear copia de seguridad",
+        "restoreBackup": "Restaurar copia de seguridad",
+        "importError": "Error al importar los datos.",
+        "exportError": "Error al exportar los datos.",
+        "exportSuccess": "Datos exportados con éxito.",
+        "importSuccess": "Datos importados con éxito.",
+        "restoreData": "Restaurar datos",
+        "restoreWarning": "Restaurar datos sobrescribirá tus datos actuales. ¿Estás seguro de que deseas continuar?",
+        "exporting": "Exportando...",
+        "importing": "Importando...",
+        "export": "Exportar datos",
+        "import": "Importar datos"
+    },
+    "dangerZone": {
+        "tileHeader": "Zona de peligro",
+        "deleteAccountSubHeader": "Eliminar tu cuenta borrará todos tus datos de gastos de forma permanente. Esta acción no se puede deshacer.",
+        "resetDataSubtitle": "Restablecer tus datos eliminará todas las transacciones y cuentas, pero mantendrá tu perfil y configuración.",
+        "resetData": "Restablecer datos",
+        "deleteAccount": "Eliminar cuenta",
+        "deleteAccountSubtitle": "Eliminar tu cuenta y todos tus datos de gastos de forma permanente.",
+        "confirmDeleteAccount": "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.",
+        "allDataWiped": "Todos tus datos han sido eliminados.",
+        "placeholderWrite": "Escribe aqui...",
     },
     "transactions": {
         "title": "Transacciones",
@@ -28,5 +143,24 @@
         "description": "Descripción",
         "date": "Fecha",
         "category": "Categoría"
+    },
+    "currency": {
+        "subtitle": "Selecciona tu moneda preferida. (No convierte monedas, solo establece el símbolo predeterminado)",
+        "USD": "Dólar estadounidense",
+        "EUR": "Euro",
+        "GBP": "Libra esterlina",
+        "JPY": "Yen japonés",
+        "MXN": "Peso mexicano",
+        "BRL": "Real brasileño",
+        "CAD": "Dólar canadiense",
+        "AUD": "Dólar australiano",
+        "CHF": "Franco suizo",
+        "CNY": "Yuan chino"
+    },
+    "navigation": {
+        "home": "Inicio",
+        "transactions": "Transacciones",
+        "accounts": "Cuentas",
+        "settings": "Configuración"
     }
 }

@@ -4,26 +4,23 @@ import {
     Text, 
     TouchableOpacity, 
     StyleSheet, 
-    Platform 
+    Platform,
+    AccessibilityInfo
 } from 'react-native';
 import Animated, { 
     FadeIn, 
     FadeOut, 
-    Layout, 
     ZoomIn, 
     ZoomOut 
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TextInput, ActivityIndicator } from 'react-native-paper';
 import { useAuthStore } from '../../../stores/authStore';
-import { formatCurrency, getInitials } from '../../../utils/helpers';
-import { Theme } from '@react-navigation/native';
+import { getInitials } from '../../../utils/helpers';
 import { ThemeColors } from '../../../types/navigation';
-import { currencyOptions, getCurrencySymbol } from '../../../constants/currency';
+import { getCurrencySymbol, currencyOptions } from '../../../constants/currency';
 import CurrencySelector from './CurrencySelector';
-
-
-// Stores
+import { useTranslation } from 'react-i18next';
 
 // Interfaces
 interface LocalUser {
@@ -38,10 +35,10 @@ const INITIAL_USER_STATE: LocalUser = {
     currency: 'USD'
 };
 
-
 export default function UserProfileSection({ colors }: { colors: ThemeColors }) {
     // 1. Hooks y Estado
-    const { user: sessionUser, updateUser, setCurrencySymbol } = useAuthStore(); // Asumiendo que updateUser existe en tu authStore
+    const { user: sessionUser, updateUser, setCurrencySymbol } = useAuthStore();
+    const { t } = useTranslation();
     
     const [user, setUser] = useState<LocalUser>(INITIAL_USER_STATE);
     const [isEditing, setIsEditing] = useState(false);
@@ -68,10 +65,12 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
 
     const hasChanges = tempName !== user.name || tempEmail !== user.email || tempCurrency !== user.currency;
 
-    // 6. Handlers
+    // 3. Handlers
     const handleSave = async () => {
         if (!tempName.trim()) {
-            setApiError("Name  cannot be empty.");
+            setApiError(t('commonWarnings.notEmptyField'));
+            // Anunciar error a lector de pantalla
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('commonWarnings.notEmptyField'));
             return;
         }
 
@@ -85,12 +84,18 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
         const currencySymbol = getCurrencySymbol(tempCurrency);
 
         try {
-            updateUser({ name: tempName, email: tempEmail, currency: tempCurrency });
+            // Asumiendo que updateUser devuelve una promesa
+            await updateUser({ name: tempName, email: tempEmail, currency: tempCurrency });
+
             setUser({ name: tempName, email: tempEmail, currency: tempCurrency });
             setCurrencySymbol(currencySymbol);
             setIsEditing(false);
+
+            // Confirmación de éxito accesible
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('profile.saveSuccess', 'Profile updated successfully'));
+
         } catch (err) {
-            setApiError("An unexpected error occurred. Please try again.");
+            setApiError(t('commonWarnings.someErrorOccurred'));
         } finally {
             setIsLoading(false);
         }
@@ -108,6 +113,7 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
         <Animated.View 
             entering={FadeIn.duration(300)}
             style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            accessible={false} // El contenedor no debe ser foco, sino sus hijos
         >
             {/* --- BOTÓN DE EDICIÓN FLOTANTE --- */}
             {!isEditing && (
@@ -119,127 +125,202 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
                     <TouchableOpacity 
                         onPress={() => setIsEditing(true)}
                         style={[styles.editIconButton, { shadowColor: colors.text, backgroundColor: colors.text }]}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('profile.edit_profile', 'Edit profile')}
+                        accessibilityHint={t('profile.edit_hint', 'Double tap to edit your name, email and currency')}
                     >
-                        <MaterialIcons name="edit" size={20} color={colors.accent} />
+                        <MaterialIcons
+                            name="edit"
+                            size={24}
+                            color={colors.accent}
+                            importantForAccessibility="no"
+                        />
                     </TouchableOpacity>
                 </Animated.View>
             )}
 
             {/* --- HEADER TÍTULO --- */}
-            <View style={styles.headerRow}>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Profile Information</Text>
+            <View style={styles.headerRow} accessibilityRole="header">
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.settingsTitle')}</Text>
             </View>
 
             {/* --- CONTENIDO PRINCIPAL --- */}
             <View style={styles.contentRow}>
                 
                 {/* AVATAR */}
-                <Animated.View style={[styles.avatarContainer, { backgroundColor: colors.surfaceSecondary, shadowColor: colors.text }]}>
-                    <Text style={[styles.avatarText, { color: colors.text }]}>{getInitials(user.name)}</Text>
-                </Animated.View>
+                {/* Usamos un View normal, el Animated.View a veces complica la accesibilidad si no se configura bien */}
+                <View
+                    style={[styles.avatarContainer, { backgroundColor: colors.surfaceSecondary }]}
+                    importantForAccessibility="no"
+                >
+                    <Text
+                        style={[styles.avatarText, { color: colors.text }]}
+                        maxFontSizeMultiplier={1.5} // Evita que la letra rompa el círculo
+                    >
+                        {getInitials(user.name)}
+                    </Text>
+                </View>
 
                 {/* FORMULARIO / VISTA DE DETALLES */}
                 <View style={styles.detailsContainer}>
                     
-                    {/* MENSAJE DE ERROR */}
+                    {/* MENSAJE DE ERROR (LIVE REGION) */}
                     {apiError && (
                         <Animated.View 
                             entering={FadeIn} 
                             exiting={FadeOut}
                             style={[styles.errorBox, { backgroundColor: colors.surface, borderColor: colors.error }]}
+                            accessibilityRole="alert"
+                            accessibilityLiveRegion="polite"
                         >
+                            <MaterialIcons name="error" size={20} color={colors.error} style={{ marginRight: 8 }} importantForAccessibility="no" />
                             <Text style={[styles.errorText, { color: colors.error }]}>{apiError}</Text>
                         </Animated.View>
                     )}
 
                     {isEditing ? (
-                        // MODO EDICIÓN
+                        // ================= MODO EDICIÓN =================
                         <Animated.View entering={FadeIn}>
-                            <TextInput
-                                mode="outlined"
-                                label="Name"
-                                value={tempName}
-                                onChangeText={setTempName}
-                                disabled={isLoading}
-                                style={[styles.input, { color: colors.text, backgroundColor: colors.surface }]}
-                                outlineColor={colors.border}
-                                activeOutlineColor={colors.accent}
-                                dense
-                            />
-                            <TextInput
-                                mode="outlined"
-                                label="Email"
-                                value={tempEmail}
-                                onChangeText={setTempEmail}
-                                disabled={isLoading}
-                                style={[styles.input, { color: colors.text, backgroundColor: colors.surface }]}
-                                outlineColor={colors.border}
-                                activeOutlineColor={colors.accent}
-                                keyboardType="email-address"
-                                dense
-                            />
+                            <View style={styles.inputWrapper}>
+                                <TextInput
+                                    mode="outlined"
+                                    label={t('profile.name')}
+                                    value={tempName}
+                                    onChangeText={setTempName}
+                                    disabled={isLoading}
+                                    style={[styles.input, { backgroundColor: colors.surfaceSecondary || colors.background }]}
+                                    textColor={colors.text}
+                                    outlineColor={colors.border}
+                                    activeOutlineColor={colors.accent}
+                                    maxLength={30}
+                                    dense
 
-                            <CurrencySelector
-                                label="Select Currency"
-                                currencySelected={tempCurrency}
-                                setCurrencySelected={setTempCurrency}
-                                currencies={currencyOptions}
-                                colors={colors} // Tus colores del tema
-                            />
+                                    // Accesibilidad
+                                    accessibilityLabel={t('profile.name')}
+                                    returnKeyType="next"
+                                    autoCapitalize="words"
+                                    autoComplete="name"
+                                    textContentType="name"
+                                />
+                            </View>
 
-                            {/* --- BOTONES DE ACCIÓN --- */}
+                            <View style={styles.inputWrapper}>
+                                <TextInput
+                                    mode="outlined"
+                                    label={t('profile.email')}
+                                    value={tempEmail}
+                                    onChangeText={setTempEmail}
+                                    disabled={isLoading}
+                                    style={[styles.input, { backgroundColor: colors.surfaceSecondary || colors.background }]}
+                                    textColor={colors.text}
+                                    outlineColor={colors.border}
+                                    activeOutlineColor={colors.accent}
+
+                                    // Accesibilidad
+                                    accessibilityLabel={t('profile.email')}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoComplete="email"
+                                    textContentType="emailAddress"
+                                />
+                            </View>
+
+                            <View style={styles.inputWrapper}>
+                                <CurrencySelector
+                                    label={t('profile.currency')}
+                                    currencySelected={tempCurrency}
+                                    setCurrencySelected={setTempCurrency}
+                                    currencies={currencyOptions}
+                                    colors={colors}
+                                />
+                            </View>
+
+                            {/* BOTONES DE ACCIÓN */}
                             <View style={styles.buttonsRow}>
-                                {/* Cancelar */}
                                 <TouchableOpacity
                                     onPress={handleCancel}
                                     disabled={isLoading}
                                     style={[styles.button, styles.cancelButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={t('common.cancel')}
                                 >
-                                    <MaterialIcons name="close" size={18} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
+                                    <MaterialIcons name="close" size={20} color={colors.textSecondary} style={{ marginRight: 4 }} importantForAccessibility="no" />
+                                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
                                 </TouchableOpacity>
 
-                                {/* Guardar */}
                                 <TouchableOpacity
                                     onPress={handleSave}
                                     disabled={isLoading}
                                     style={[
                                         styles.button,
-                                        { backgroundColor: isLoading ? colors.border : colors.income } // Usamos color de Ingreso (Verde) para acciones positivas
+                                        { backgroundColor: isLoading ? colors.border : colors.income }
                                     ]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={isLoading ? t('common.saving') : t('common.save')}
+                                    accessibilityState={{ disabled: isLoading, busy: isLoading }}
                                 >
                                     {isLoading ? (
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                            <ActivityIndicator size={16} color={colors.surface} />
-                                            <Text style={[styles.saveButtonText, { color: colors.surface }]}>Saving...</Text>
+                                            <ActivityIndicator size={18} color={colors.surface} />
+                                            <Text style={[styles.saveButtonText, { color: colors.surface }]}>{t('common.saving')}</Text>
                                         </View>
                                     ) : (
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                                <MaterialIcons name="check" size={18} color={colors.surface} />
-                                                <Text style={[styles.saveButtonText, { color: colors.surface }]}>Save </Text>
+                                                <MaterialIcons name="check" size={20} color={colors.surface} importantForAccessibility="no" />
+                                                <Text style={[styles.saveButtonText, { color: colors.surface }]}>{t('common.save')}</Text>
                                             </View>
                                     )}
                                 </TouchableOpacity>
                             </View>
                         </Animated.View>
                     ) : (
-                        // MODO VISTA
-                        <Animated.View entering={FadeIn}>
-                            <View style={styles.infoBlock}>
-                                    <Text style={[styles.label, { color: colors.textSecondary }]}>Name</Text>
-                                    <Text style={[styles.value, { color: colors.text }]}>{user.name}</Text>
-                            </View>
-                                {user.email &&
-                            <View style={styles.infoBlock}>
-                                        <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
-                                        <Text style={[styles.value, { color: colors.text }]}>{user.email}</Text>
-                                    </View>}
-                                <View style={styles.infoBlock}>
-                                    <Text style={[styles.label, { color: colors.textSecondary }]}>Preferred Currency</Text>
-                                    <Text style={[styles.value, { color: colors.text }]}>
+                            // ================= MODO LECTURA =================
+                            <Animated.View entering={FadeIn} accessibilityRole="summary">
+
+                                {/* Bloque Nombre */}
+                                <View
+                                    style={styles.infoBlock}
+                                    accessible={true}
+                                    accessibilityLabel={`${t('profile.name')}: ${user.name}`}
+                                >
+                                    <Text style={[styles.label, { color: colors.textSecondary }]} importantForAccessibility="no">
+                                        {t('profile.name')}
+                                    </Text>
+                                    <Text style={[styles.value, { color: colors.text }]} importantForAccessibility="no">
+                                        {user.name}
+                                    </Text>
+                                </View>
+
+                                {/* Bloque Email */}
+                                {user.email && (
+                                    <View
+                                        style={styles.infoBlock}
+                                        accessible={true}
+                                        accessibilityLabel={`${t('profile.email')}: ${user.email}`}
+                                    >
+                                        <Text style={[styles.label, { color: colors.textSecondary }]} importantForAccessibility="no">
+                                            {t('profile.email')}
+                                        </Text>
+                                        <Text style={[styles.value, { color: colors.text }]} importantForAccessibility="no">
+                                            {user.email}
+                                        </Text>
+                                    </View>
+                                )}
+
+                                {/* Bloque Moneda */}
+                                <View
+                                    style={styles.infoBlock}
+                                    accessible={true}
+                                    accessibilityLabel={`${t('profile.currency')}: ${currencyOptions.find(c => c.code === user.currency)?.name || user.currency}`}
+                                >
+                                    <Text style={[styles.label, { color: colors.textSecondary }]} importantForAccessibility="no">
+                                        {t('profile.currency')}
+                                    </Text>
+                                    <Text style={[styles.value, { color: colors.text }]} importantForAccessibility="no">
                                         {currencyOptions.find(c => c.code === user.currency)?.name || user.currency}
                                     </Text>
                             </View>
+
                         </Animated.View>
                     )}
                 </View>
@@ -249,27 +330,24 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
 }
 
 const styles = StyleSheet.create({
-    loadingContainer: {
-        height: 200,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 10,
-        color: '#666',
-    },
     card: {
         marginTop: 10,
-        borderRadius: 12,
+        borderRadius: 16, // Bordes un poco más suaves
         padding: 20,
         marginBottom: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 5,
         borderWidth: 0.5,
-        position: 'relative',
+        // Sombras sutiles
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 3,
+            }
+        })
     },
     editIconWrapper: {
         position: 'absolute',
@@ -278,25 +356,28 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     editIconButton: {
-        padding: 8,
-        borderRadius: 20,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        elevation: 2,
+        padding: 10, // Área táctil mejorada
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
     },
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 20,
+        paddingRight: 40, // Espacio para que el título no choque con el botón de editar
     },
     headerTitle: {
-        fontSize: 24,
+        fontSize: 24, // Texto grande por defecto
         fontWeight: '300',
+        flexShrink: 1, // Permite que el texto haga wrap si es necesario
     },
     contentRow: {
         flexDirection: 'row',
         gap: 20,
+        flexWrap: 'wrap', // CLAVE: Permite que el contenido se apile en pantallas pequeñas o texto grande
+        alignItems: 'flex-start',
     },
     avatarContainer: {
         width: 70,
@@ -304,85 +385,80 @@ const styles = StyleSheet.create({
         borderRadius: 35,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
+        // No permitimos que el avatar se encoja o deforme
+        flexGrow: 0,
+        flexShrink: 0,
     },
     avatarText: {
         fontSize: 28,
-        fontWeight: '400',
+        fontWeight: '500',
     },
     detailsContainer: {
         flex: 1,
+        minWidth: 200, // Asegura que el formulario no se aplaste demasiado antes de hacer wrap
     },
     errorBox: {
         borderWidth: 1,
         borderRadius: 8,
-        padding: 10,
-        marginBottom: 10,
+        padding: 12,
+        marginBottom: 16,
+        flexDirection: 'row',
+        alignItems: 'center'
     },
     errorText: {
-        color: '#d32f2f',
-        fontSize: 12,
+        fontSize: 14,
+        flex: 1,
+        flexWrap: 'wrap',
+    },
+    inputWrapper: {
+        marginBottom: 16, // Espaciado consistente entre inputs
     },
     input: {
-        marginBottom: 12,
-        fontSize: 14,
-        height: 40, 
+        fontSize: 16,
+        minHeight: 50, // Accesibilidad: Altura mínima táctil y visual
     },
     buttonsRow: {
         flexDirection: 'row',
         gap: 12,
-        justifyContent: 'flex-end', // Botones a la derecha
+        justifyContent: 'flex-end',
         marginTop: 20,
+        flexWrap: 'wrap', // Permite que los botones se apilen si no caben
     },
     button: {
         flex: 1,
+        minWidth: 120, // Ancho mínimo
+        minHeight: 48, // Altura mínima táctil
         paddingVertical: 10,
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
     },
-    actionButtonsRow: {
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: 20,
-        justifyContent: 'flex-end',
-    },
-    saveButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-    },
     saveButtonText: {
         fontWeight: '600',
-        fontSize: 14,
+        fontSize: 16,
     },
     cancelButton: {
-        borderWidth: 0.5,
+        borderWidth: 1,
     },
     cancelButtonText: {
         fontWeight: '600',
-        fontSize: 14,
-    },
-    disabledButton: {
-        opacity: 0.6,
+        fontSize: 16,
     },
     infoBlock: {
-        marginBottom: 15,
+        marginBottom: 16,
+        paddingVertical: 4, // Aumenta el área táctil del bloque de lectura
     },
     label: {
         fontSize: 12,
-        color: '#888',
-        marginBottom: 2,
+        marginBottom: 4,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        opacity: 0.8,
     },
     value: {
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '600',
+        fontSize: 18, // Valor más legible
+        fontWeight: '500',
+        flexWrap: 'wrap', // Permite que emails largos bajen de línea
     },
 });

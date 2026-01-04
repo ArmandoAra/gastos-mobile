@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
     View, 
     Text, 
     TouchableOpacity, 
     StyleSheet, 
     Keyboard,
-    ActivityIndicator
+    ActivityIndicator,
+    TextInput as RNTextInput // Importamos para tipos
 } from 'react-native';
 import Animated, { 
     SlideInDown, 
@@ -16,6 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import useDataStore from '../../../stores/useDataStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { ThemeColors } from '../../../types/navigation';
+import { useTranslation } from 'react-i18next';
 
 interface AccountInputMobileProps {
     onClose: () => void;
@@ -23,23 +25,27 @@ interface AccountInputMobileProps {
 }
 
 export default function AccountInputMobile({ onClose, colors }: AccountInputMobileProps) {
+    const { t } = useTranslation();
     const { user } = useAuthStore();
     const { createAccount } = useDataStore();
     
-    // 2. Estado Local
+    // Referencias para manejo de foco
+    const typeInputRef = useRef<any>(null);
+
+    // Estado Local
     const [name, setName] = useState("");
     const [typeAccount, setTypeAccount] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    // 3. Handlers
+    // Handlers
     const handleSave = async () => {
         Keyboard.dismiss();
         setIsLoading(true);
         setError(null);
 
         if (!name.trim() || !typeAccount.trim()) {
-            setError("Please fill in all fields");
+            setError(t("commonWarnings.fillAllFields"));
             setIsLoading(false);
             return;
         }
@@ -48,7 +54,7 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
             if (!user) return;
 
             // Simulación de delay para UX
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 300));
 
             createAccount({
                 name: name.trim(),
@@ -63,7 +69,7 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
             onClose(); 
 
         } catch (err: any) {
-            setError(err.message || "Error creating account");
+            setError(err.message || t("commonWarnings.someErrorOccurred"));
         } finally {
             setIsLoading(false);
         }
@@ -77,14 +83,22 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
 
-            {/* --- MENSAJE DE ERROR (ANIMADO) --- */}
+            {/* --- MENSAJE DE ERROR (ACCESIBLE) --- */}
             {error && (
                 <Animated.View 
                     entering={SlideInDown} 
                     exiting={SlideOutUp}
                     style={[styles.errorContainer, { backgroundColor: colors.surface, borderColor: colors.error }]}
+                    accessibilityRole="alert"
+                    accessibilityLiveRegion="polite"
                 >
-                    <MaterialIcons name="error-outline" size={16} color={colors.error} style={{ marginRight: 6 }} />
+                    <MaterialIcons
+                        name="error-outline"
+                        size={20} // Tamaño un poco más grande para mejor visibilidad
+                        color={colors.error}
+                        style={styles.iconSpacing}
+                        importantForAccessibility="no"
+                    />
                     <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                 </Animated.View>
             )}
@@ -94,8 +108,8 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
                 <View style={styles.inputGroup}>
                     <TextInput
                         mode="outlined"
-                        label="Account Name"
-                        placeholder="e.g. Main Wallet"
+                        label={t("accounts.accountName")}
+                        placeholder={t("accounts.accountNamePlaceholder")}
                         placeholderTextColor={colors.textSecondary}
                         value={name}
                         onChangeText={(text) => {
@@ -108,15 +122,22 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
                         outlineColor={colors.border}
                         activeOutlineColor={colors.accent}
                         dense
-                        // autoFocus // Opcional, a veces causa saltos en Android con KeyboardAvoidingView
+
+                        // Accesibilidad y UX
+                        accessibilityLabel={t("accounts.accountName")}
+                        accessibilityHint={t("accessibility.account_name_hint")}
+                        returnKeyType="next"
+                        onSubmitEditing={() => typeInputRef.current?.focus()}
+                        autoCapitalize="words"
                     />
                 </View>
 
                 <View style={styles.inputGroup}>
                     <TextInput
+                        ref={typeInputRef}
                         mode="outlined"
-                        label="Account Type"
-                        placeholder="e.g. Bank, Cash, Savings..."
+                        label={t("accounts.typePlaceholder")}
+                        placeholder={t("accounts.typeExample")}
                         placeholderTextColor={colors.textSecondary}
                         value={typeAccount}
                         onChangeText={(text) => {
@@ -129,20 +150,41 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
                         outlineColor={colors.border}
                         activeOutlineColor={colors.accent}
                         dense
+
+                        // Accesibilidad y UX
+                        accessibilityLabel={t("accounts.typePlaceholder")}
+                        accessibilityHint={t("accessibility.account_type_hint")}
+                        returnKeyType="done"
+                        onSubmitEditing={handleSave}
+                        autoCapitalize="words"
                     />
                 </View>
             </View>
 
-            {/* --- BOTONES DE ACCIÓN --- */}
+            {/* --- BOTONES DE ACCIÓN (WRAP PARA TEXTO GRANDE) --- */}
             <View style={styles.buttonsRow}>
                 {/* Cancelar */}
                 <TouchableOpacity
                     onPress={handleCancel}
                     disabled={isLoading}
                     style={[styles.button, styles.cancelButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("common.cancel")}
+                    accessibilityHint={t("accessibility.cancel_action_hint")}
                 >
-                    <MaterialIcons name="close" size={18} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
+                    <MaterialIcons
+                        name="close"
+                        size={20}
+                        color={colors.textSecondary}
+                        style={styles.iconSpacing}
+                        importantForAccessibility="no"
+                    />
+                    <Text
+                        style={[styles.cancelButtonText, { color: colors.textSecondary }]}
+                        maxFontSizeMultiplier={1.5} // Limita crecimiento extremo
+                    >
+                        {t("common.cancel")}
+                    </Text>
                 </TouchableOpacity>
 
                 {/* Guardar */}
@@ -151,18 +193,37 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
                     disabled={isLoading}
                     style={[
                         styles.button, 
-                        { backgroundColor: isLoading ? colors.border : colors.income } // Usamos color de Ingreso (Verde) para acciones positivas
+                        { backgroundColor: isLoading ? colors.border : colors.income } 
                     ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={isLoading ? t("common.saving") : t("profile.save")}
+                    accessibilityState={{ disabled: isLoading, busy: isLoading }}
                 >
                     {isLoading ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <ActivityIndicator size={16} color={colors.surface} />
-                            <Text style={[styles.saveButtonText, { color: colors.surface }]}>Saving...</Text>
+                        <View style={styles.buttonContent}>
+                            <ActivityIndicator size="small" color={colors.surface} style={styles.iconSpacing} />
+                            <Text
+                                style={[styles.saveButtonText, { color: colors.surface }]}
+                                maxFontSizeMultiplier={1.5}
+                            >
+                                {t("common.saving")}
+                            </Text>
                         </View>
                     ) : (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                <MaterialIcons name="check" size={18} color={colors.surface} />
-                                <Text style={[styles.saveButtonText, { color: colors.surface }]}>Save Account</Text>
+                            <View style={styles.buttonContent}>
+                                <MaterialIcons
+                                    name="check"
+                                    size={20}
+                                    color={colors.surface}
+                                    style={styles.iconSpacing}
+                                    importantForAccessibility="no"
+                                />
+                                <Text
+                                    style={[styles.saveButtonText, { color: colors.surface }]}
+                                    maxFontSizeMultiplier={1.5}
+                                >
+                                    {t("profile.save")}
+                                </Text>
                             </View>
                     )}
                 </TouchableOpacity>
@@ -174,62 +235,71 @@ export default function AccountInputMobile({ onClose, colors }: AccountInputMobi
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        paddingHorizontal: 8, // Pequeño padding interno
-        paddingVertical: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
     },
     errorContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         width: '100%',
-        padding: 10,
+        padding: 12, // Más espacio interno para texto grande
         borderWidth: 1,
         borderRadius: 8,
         marginBottom: 16,
     },
     errorText: {
         fontWeight: '500',
-        fontSize: 13,
-        flex: 1,
+        fontSize: 14, // Base un poco más grande
+        flex: 1, // Permite que el texto fluya y haga wrap
+        flexWrap: 'wrap',
     },
     inputsWrapper: {
-        gap: 12,
-        marginBottom: 20,
+        gap: 16, // Más espacio entre inputs
+        marginBottom: 24,
     },
     inputGroup: {
         gap: 4,
     },
-    label: {
-        fontSize: 12,
-        fontWeight: '600',
-        marginBottom: 2,
-        marginLeft: 2,
-    },
     input: {
-        fontSize: 14,
-        height: 40,
+        fontSize: 16,
+        minHeight: 50, 
     },
     buttonsRow: {
         flexDirection: 'row',
         gap: 12,
-        justifyContent: 'flex-end', // Botones a la derecha
+        justifyContent: 'flex-end',
+        flexWrap: 'wrap', // CLAVE: Permite que los botones bajen si el texto es enorme
     },
     button: {
         flex: 1,
-        paddingVertical: 10,
+        minWidth: 120, // Ancho mínimo para que no se aplasten
+        minHeight: 48, // Altura mínima táctil accesible
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
     },
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     cancelButton: {
-        borderWidth: 0.5,
+        borderWidth: 1, // Borde más visible (antes 0.5)
     },
     cancelButtonText: {
         fontWeight: '600',
-        fontSize: 14,
+        fontSize: 16, // Texto base legible
+        textAlign: 'center',
     },
     saveButtonText: {
         fontWeight: '600',
-        fontSize: 14,
+        fontSize: 16,
+        textAlign: 'center',
     },
+    iconSpacing: {
+        marginRight: 8, // Espaciado consistente
+    }
 });

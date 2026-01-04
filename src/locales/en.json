@@ -19,6 +19,19 @@
         "checking": "Checking",
         "cash": "Cash"
     },
+    "profile": {
+        "save": "Save",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "title": "Profile",
+        "settingsTitle": "User Information",
+        "name": "Name",
+        "email": "Email",
+        "currency": "Preferred Currency",
+        "selectCurrency": "Select Currency",
+        "editProfile": "Edit Profile",
+        "logout": "Log out"
+    },
     "transactions": {
         "title": "Transactions",
         "addTransaction": "New transaction",

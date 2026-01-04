@@ -5,6 +5,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     Alert,
+    Platform,
+    AccessibilityInfo
 } from 'react-native';
 import Animated, {
     FadeIn,
@@ -26,14 +28,19 @@ import * as DocumentPicker from 'expo-document-picker';
 import useDataStore from '../../../stores/useDataStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { ThemeColors } from '../../../types/navigation';
+import { useTranslation } from 'react-i18next';
+import useMessage from '../../../stores/useMessage';
+import { MessageType } from '../../../interfaces/message.interface';
 
 interface DataManagementProps {
     colors: ThemeColors;
 }
 
 export default function DataManagementSection({ colors }: DataManagementProps) {
+    const { t } = useTranslation();
     const [isDownloading, setIsDownloading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const { showMessage } = useMessage();
 
     const { user, updateUser } = useAuthStore();
     const {
@@ -78,6 +85,8 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
     const handleDownloadData = async () => {
         if (!user?.id) return;
         setIsDownloading(true);
+        if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.exporting'));
+
         try {
             const data = {
                 user,
@@ -89,7 +98,6 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
             const jsonData = JSON.stringify(data, null, 2);
             const fileName = `spendiary-backup-${Date.now()}.json`;
 
-            // Usando File System Next
             const file = new File(Paths.cache, fileName);
             file.create();
             file.write(jsonData);
@@ -101,8 +109,11 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
                     UTI: 'public.json'
                 });
             }
+            showMessage(MessageType.SUCCESS, t('dataAndBackup.exportSuccess'));
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.exportSuccess'));
         } catch (error) {
-            Alert.alert("Error", "Failed to export data.");
+            showMessage(MessageType.ERROR, t('dataAndBackup.exportError'));
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Export failed");
         } finally {
             setIsDownloading(false);
         }
@@ -128,25 +139,26 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
             }
 
             Alert.alert(
-                "Restore Data",
-                "This will overwrite your current data. Do you want to proceed?",
+                t('dataAndBackup.restoreData', "Restore Data"),
+                t('dataAndBackup.restoreWarning', "This will overwrite your current data. Do you want to proceed?"),
                 [
-                    { text: "Cancel", style: "cancel", onPress: () => setIsUploading(false) },
+                    { text: t('common.cancel'), style: "cancel", onPress: () => setIsUploading(false) },
                     { 
-                        text: "Restore",
+                        text: t('common.restore', "Restore"),
                         style: "destructive", 
                         onPress: () => {
                             if (parsedData.user) updateUser(parsedData.user);
                             setAllAccounts(parsedData.accounts);
                             setTransactions(parsedData.transactions);
                             setIsUploading(false);
-                            Alert.alert("Success", "Data restored successfully.");
+                            showMessage(MessageType.SUCCESS, t('dataAndBackup.importSuccess'));
+                            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.importSuccess'));
                         }
                     }
                 ]
             );
         } catch (error) {
-            Alert.alert("Error", "Invalid backup file.");
+            showMessage(MessageType.ERROR, t('dataAndBackup.importError'));
             setIsUploading(false);
         }
     };
@@ -157,49 +169,75 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
             layout={LinearTransition.springify()}
             style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
-            <View style={styles.headerRow}>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Data & Backup</Text>
+            <View style={styles.headerRow} accessibilityRole="header">
+                <Text
+                    style={[styles.headerTitle, { color: colors.text }]}
+                    maxFontSizeMultiplier={1.5}
+                >
+                    {t('dataAndBackup.tileHeader')}
+                </Text>
             </View>
 
-            <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
-                Secure your information. Export a JSON backup or restore a previous session.
+            <Text
+                style={[styles.descriptionText, { color: colors.textSecondary }]}
+                maxFontSizeMultiplier={1.5}
+            >
+                {t('dataAndBackup.backupSubtitle')}
             </Text>
 
             <View style={styles.actionsContainer}>
-                {/* EXPORT */}
+                {/* EXPORT BUTTON */}
                 <TouchableOpacity
                     onPress={handleDownloadData}
                     disabled={isDownloading || isUploading}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={isDownloading ? t('dataAndBackup.exporting') : t('dataAndBackup.export')}
+                    accessibilityHint="Saves a backup of your data to your device"
+                    accessibilityState={{ busy: isDownloading, disabled: isDownloading || isUploading }}
                 >
                     <View style={[styles.actionBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <Animated.View style={[styles.iconCircle, cloudStyle, { backgroundColor: colors.surface }]}>
+                        <Animated.View
+                            style={[styles.iconCircle, cloudStyle, { backgroundColor: colors.surfaceSecondary }]}
+                            importantForAccessibility="no"
+                        >
                             <MaterialIcons name="save" size={28} color={colors.income} />
                         </Animated.View>
                         <View style={styles.textWrapper}>
-                            <Text style={[styles.actionTitle, { color: colors.text }]}>
-                                {isDownloading ? 'Exporting...' : 'Export Data'}
+                            <Text
+                                style={[styles.actionTitle, { color: colors.text }]}
+                                maxFontSizeMultiplier={1.5}
+                            >
+                                {isDownloading ? t('dataAndBackup.exporting') : t('dataAndBackup.export')}
                             </Text>
-                            <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>Save to device</Text>
                         </View>
                     </View>
                 </TouchableOpacity>
 
-                {/* IMPORT */}
+                {/* IMPORT BUTTON */}
                 <TouchableOpacity
                     onPress={handleImportData}
                     disabled={isDownloading || isUploading}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={isUploading ? t('dataAndBackup.importing') : t('dataAndBackup.import')}
+                    accessibilityHint="Restores data from a backup file, overwriting current data"
+                    accessibilityState={{ busy: isUploading, disabled: isDownloading || isUploading }}
                 >
                     <View style={[styles.actionBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <Animated.View style={[styles.iconCircle, uploadStyle, { backgroundColor: colors.surface }]}>
+                        <Animated.View
+                            style={[styles.iconCircle, uploadStyle, { backgroundColor: colors.surfaceSecondary }]}
+                            importantForAccessibility="no"
+                        >
                             <MaterialIcons name="restore" size={28} color={colors.income} />
                         </Animated.View>
                         <View style={styles.textWrapper}>
-                            <Text style={[styles.actionTitle, { color: colors.text }]}>
-                                {isUploading ? 'Restoring...' : 'Import Data'}
+                            <Text
+                                style={[styles.actionTitle, { color: colors.text }]}
+                                maxFontSizeMultiplier={1.5}
+                            >
+                                {isUploading ? t('dataAndBackup.importing') : t('dataAndBackup.import')}
                             </Text>
-                            <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>Restore backup</Text>
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -210,7 +248,7 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 20,
         marginBottom: 20,
         borderWidth: 0.5,
@@ -230,8 +268,8 @@ const styles = StyleSheet.create({
         fontWeight: '300',
     },
     descriptionText: {
-        fontSize: 13,
-        lineHeight: 18,
+        fontSize: 14, // Ligeramente más grande para legibilidad
+        lineHeight: 20,
         marginBottom: 20,
     },
     actionsContainer: {
@@ -240,9 +278,10 @@ const styles = StyleSheet.create({
     actionBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
+        padding: 16, // Área táctil más grande
         borderRadius: 12,
         borderWidth: 1,
+        minHeight: 80, // Altura mínima para asegurar espacio
     },
     iconCircle: {
         width: 48,
@@ -250,7 +289,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 12,
+        marginRight: 16, // Espacio aumentado
         // Sutil sombra para el icono
         elevation: 2,
         shadowColor: '#000',
@@ -260,12 +299,11 @@ const styles = StyleSheet.create({
     },
     textWrapper: {
         flex: 1,
+        justifyContent: 'center',
     },
     actionTitle: {
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: '600',
+        flexWrap: 'wrap', // Permite que el texto baje si es necesario
     },
-    actionSubtitle: {
-        fontSize: 12,
-    }
 });

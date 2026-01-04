@@ -35,7 +35,6 @@ type ListItem =
 
 export function TransactionsScreen() {
     const { theme } = useSettingsStore();
-    const { currencySymbol } = useAuthStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
     const { localSelectedDay } = useDateStore();

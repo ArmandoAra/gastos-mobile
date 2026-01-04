@@ -5,7 +5,8 @@ import {
     TouchableOpacity, 
     StyleSheet, 
     Platform,
-    Switch
+    Switch,
+    AccessibilityInfo
 } from 'react-native';
 import Animated, { 
     FadeIn,
@@ -16,84 +17,80 @@ import ChangePinModal from './ChangePinModal';
 import { useAuthStore } from '../../../stores/authStore';
 import useMessage from '../../../stores/useMessage';
 import { MessageType } from '../../../interfaces/message.interface';
-import { useSettingsStore } from '../../../stores/settingsStore';
-
+import { useTranslation } from 'react-i18next';
 
 interface SecuritySectionProps {
     colors: ThemeColors;
 }
 
-
-export default function SecuritySection({ 
-    colors, 
-
-}: SecuritySectionProps) {
-    const { changePin, isBiometricEnabled, toggleBiometrics, isPinEnabled, togglePin, } = useAuthStore();
-
-
+export default function SecuritySection({ colors }: SecuritySectionProps) {
+    const { t } = useTranslation();
+    const { changePin, isBiometricEnabled, toggleBiometrics, isPinEnabled, togglePin } = useAuthStore();
     const [isChangePinModalVisible, setChangePinModalVisible] = useState(false);
     const { showMessage } = useMessage();
 
     const handleChangePin = (oldPin: string, newPin: string) => {
         changePin(oldPin, newPin);
         setChangePinModalVisible(false);
-        showMessage(MessageType.SUCCESS, 'PIN changed successfully');
-        // Activar el modal de mensaje de exito o error si es necesario
+        if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('security.changedSuccessfully'));
+        showMessage(MessageType.SUCCESS, t('security.changedSuccessfully'));
     }
-
-    // --- Componente interno para los items de seguridad ---
-
 
     return (
         <Animated.View 
             entering={FadeIn.duration(500)}
             style={[
                 styles.card, 
-                { 
-                    backgroundColor: colors.surface, 
-                    borderColor: colors.border 
-                }
+                { backgroundColor: colors.surface, borderColor: colors.border }
             ]}
         >
-
             {/* --- HEADER --- */}
-            <View style={styles.headerRow}>
+            <View style={styles.headerRow} accessibilityRole="header">
                 <View style={styles.titleContainer}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Security</Text>
+                    <Text
+                        style={[styles.headerTitle, { color: colors.text }]}
+                        maxFontSizeMultiplier={1.5}
+                    >
+                        {t('security.titleHeader')}
+                    </Text>
                 </View>
             </View>
 
             {/* --- ITEMS --- */}
             <View style={styles.listContainer}>
+
+                {/* 1. Switch PIN */}
                 <SecurityItem 
                     colors={colors}
-                    label="Security PIN" 
+                    label={t('security.enablePin')} 
                     icon="lock-outline" 
                     value={isPinEnabled} 
-                    onToggle={togglePin} 
+                    onAction={togglePin}
+                    type="switch"
                 />
                 
+                {/* 2. Switch Biometría */}
                 <SecurityItem 
                     colors={colors}
-                    label="Enable Biometrics" 
+                    label={t('security.enableBiometrics')}
                     icon="fingerprint" 
                     value={isBiometricEnabled} 
-                    onToggle={toggleBiometrics} 
+                    onAction={toggleBiometrics}
+                    type="switch"
                 />
 
-                {/* Opción extra: Cambiar PIN (solo si está habilitado) */}
+                {/* 3. Botón Cambiar PIN (Condicional) */}
                 {isPinEnabled && (
-                    <TouchableOpacity onPress={() => setChangePinModalVisible(true)}>
                     <Animated.View entering={FadeIn}>
                         <SecurityItem 
-                                colors={colors}
-                            label="Change PIN Code" 
+                            colors={colors}
+                            label={t('security.changePin')} 
                             icon="password" 
-                            onToggle={() => {}} // Aquí iría tu lógica de navegación
-                            showChevron={true}
+                            onAction={() => setChangePinModalVisible(true)}
+                            type="button"
+                            accessibilityHint="Opens a dialog to change your current PIN"
                         />
                     </Animated.View>
-                    </TouchableOpacity>
                 )}
             </View>
 
@@ -101,9 +98,21 @@ export default function SecuritySection({
                 visible={isChangePinModalVisible}
                 onClose={() => setChangePinModalVisible(false)}
                 onSave={handleChangePin}
-                colors={colors} />
+                colors={colors}
+            />
         </Animated.View>
     );
+}
+
+// --- SUBCOMPONENTE REFACTORIZADO ---
+interface SecurityItemProps {
+    colors: ThemeColors;
+    label: string;
+    icon: keyof typeof MaterialIcons.glyphMap;
+    value?: boolean; // Solo para switch
+    onAction: () => void;
+    type: 'switch' | 'button';
+    accessibilityHint?: string;
 }
 
 const SecurityItem = ({
@@ -111,56 +120,98 @@ const SecurityItem = ({
     label,
     icon,
     value,
-    onToggle,
-    showChevron = false
-}: {
-    colors: ThemeColors;
-    label: string;
-    icon: keyof typeof MaterialIcons.glyphMap;
-    value?: boolean;
-    onToggle: () => void;
-    showChevron?: boolean;
-}) => (
-    <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-        <View style={styles.itemLeft}>
-            <View style={[styles.iconBg, { backgroundColor: colors.surfaceSecondary }]}>
-                <MaterialIcons name={icon} size={20} color={colors.income} />
-            </View>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
-        </View>
+    onAction,
+    type,
+    accessibilityHint
+}: SecurityItemProps) => {
 
-        {showChevron ? (
-            <TouchableOpacity onPress={onToggle}>
-                <MaterialIcons name="chevron-right" size={24} color={colors.accent} />
+    // Renderizado del contenido interno para reutilizar
+    const InnerContent = () => (
+        <>
+            <View style={styles.itemLeft}>
+                <View style={[styles.iconBg, { backgroundColor: colors.surfaceSecondary }]}>
+                    <MaterialIcons
+                        name={icon}
+                        size={22}
+                        color={colors.income}
+                        importantForAccessibility="no"
+                    />
+                </View>
+                <View style={styles.textContainer}>
+                    <Text
+                        style={[styles.settingLabel, { color: colors.text }]}
+                        maxFontSizeMultiplier={2} // Permite crecer pero no romper infinitamente
+                    >
+                        {label}
+                    </Text>
+                </View>
+            </View>
+
+            {type === 'switch' ? (
+                <Switch
+                    value={value}
+                    onValueChange={onAction}
+                    trackColor={{ false: colors.border, true: colors.income + '80' }}
+                    thumbColor={value ? colors.accent : colors.textSecondary}
+                    ios_backgroundColor={colors.border}
+                    // Accesibilidad del Switch
+                    accessibilityLabel={label}
+                    accessibilityHint={accessibilityHint || "Double tap to toggle setting"}
+                />
+            ) : (
+                <MaterialIcons
+                    name="chevron-right"
+                    size={24}
+                    color={colors.accent}
+                    importantForAccessibility="no"
+                />
+            )}
+        </>
+    );
+
+    // Si es tipo botón, envolvemos todo en TouchableOpacity
+    if (type === 'button') {
+        return (
+            <TouchableOpacity
+                onPress={onAction}
+                style={[styles.settingItem, { borderBottomColor: colors.border }]}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+                accessibilityHint={accessibilityHint}
+            >
+                <InnerContent />
             </TouchableOpacity>
-        ) : (
-            <Switch
-                value={value}
-                onValueChange={onToggle}
-                trackColor={{ false: colors.border, true: colors.income + '80' }}
-                thumbColor={value ? colors.accent : colors.textSecondary}
-                ios_backgroundColor={colors.border}
-            />
-        )}
-    </View>
-);
+        );
+    }
+
+    // Si es switch, usamos View (el Switch maneja el touch)
+    return (
+        <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+            <InnerContent />
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 20,
         marginBottom: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 3,
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 3,
+            }
+        }),
         borderWidth: 0.5,
     },
     headerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 16,
     },
     titleContainer: {
         flexDirection: 'row',
@@ -171,29 +222,37 @@ const styles = StyleSheet.create({
         fontWeight: '300',
     },
     listContainer: {
-        marginTop: 5,
+        gap: 4,
     },
     settingItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 14,
+        paddingVertical: 16, // Aumentado ligeramente para mejor área táctil
         borderBottomWidth: StyleSheet.hairlineWidth,
+        minHeight: 60, // Altura mínima para accesibilidad
     },
     itemLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 16, // Espacio entre icono y texto
+        flex: 1, // CLAVE: Permite que el texto ocupe el espacio y empuje al switch
+        paddingRight: 12, // Evita que el texto toque el switch
     },
     iconBg: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
+        width: 40, // Tamaño fijo para alineación
+        height: 40,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
+        flexShrink: 0, // Evita que el icono se aplaste
+    },
+    textContainer: {
+        flex: 1, // Permite que el texto haga wrap
     },
     settingLabel: {
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: '500',
+        flexWrap: 'wrap', // Permite múltiples líneas
     },
 });

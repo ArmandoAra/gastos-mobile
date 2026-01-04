@@ -7,6 +7,7 @@ import { createMMKV } from 'react-native-mmkv';
 import es from './locales/es.json';
 import en from './locales/en.json';
 import pt from './locales/pt.json';
+import { LanguageCode } from './constants/languages';
 
 const storage = createMMKV({ id: 'settings-storage' });
 
@@ -19,7 +20,7 @@ const languageDetector = {
 
     // Expo Localization: toma el primer idioma del dispositivo
     const locales = Localization.getLocales();
-    return locales[0]?.languageCode ?? 'es';
+    return locales[0]?.languageCode ?? LanguageCode.ES;
   },
   init: () => {},
   cacheUserLanguage: (lng: string) => {
