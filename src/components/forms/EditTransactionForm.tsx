@@ -9,44 +9,45 @@ import {
     KeyboardAvoidingView, 
     ScrollView,
     Alert,
-    Dimensions
+    Keyboard,
+    AccessibilityInfo
 } from 'react-native';
 import Animated, {
     FadeIn,
     FadeOut,
     SlideInUp,
-    SlideOutUp
+    SlideOutUp,
+    SlideInDown,
+    SlideOutDown
 } from 'react-native-reanimated';
-import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { MaterialIcons } from '@expo/vector-icons';
 
-// Stores & Utils
-import { ICON_OPTIONS, IconKey, IconOption, transactions_icons } from '../../constants/icons';
-
-// Hooks
+// --- IMPORTS ---
+import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
 import { useTransactionForm } from '../../hooks/useTransactionForm';
 import useMessage from '../../stores/useMessage';
-
-// Interfaces
 import { Transaction } from '../../interfaces/data.interface';
 import { MessageType } from '../../interfaces/message.interface';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../theme/colors';
+import { ThemeColors } from '../../types/navigation';
+import { styles } from './stylesForm';
 
 // Componentes Hijos
 import CategoryAndAmountInput from './Inputs/CategoryAndAmountInput'; 
 import DescriptionInput from './Inputs/DescriptionInput';
 import AccountSelector from './Inputs/AccoutSelector';
-import IconsSelector from './Inputs/IconsSelector';
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
-import { IconsOptions } from '../../../../Gastos/frontend/app/dashboard/constants/icons';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { darkTheme, lightTheme } from '../../theme/colors';
-import { ThemeColors } from '../../types/navigation';
-import { styles } from './stylesForm';
 import IconsSelectorPopover from './Inputs/IconsSelector';
-import { InputNameActive } from '../../interfaces/settings.interface';
-
+import CalculatorSheet from './Inputs/CalculatorSheet';
+import useDataStore from '../../stores/useDataStore';
+import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
+import { set } from 'date-fns';
+import SubmitButton, { addOption } from '../buttons/submitButton';
 
 interface EditTransactionFormProps {
     open: boolean;
@@ -67,6 +68,7 @@ export default function EditTransactionFormMobile({
     onClose,
     onSave,
 }: EditTransactionFormProps) {
+    const { t } = useTranslation();
     const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
@@ -76,43 +78,67 @@ export default function EditTransactionFormMobile({
         amount,
         description,
         selectedAccount,
-        allAccounts,
         amountInputRef,
         setAmount,
         setDescription,
         setLocalSelectedDay,
         setSelectedAccount,
-        setSelectedIcon: setStoreIcon, // Asumo que tu hook tiene esto
     } = useTransactionForm();
 
     const { showMessage } = useMessage();
+    const { allAccounts } = useDataStore();
 
     // Estados Locales
-    const [newAccount, setNewAccount] = useState<string>('');
+    const [newAccount, setNewAccount] = useState<string>(selectedAccount || '');
     const [isLoading, setIsLoading] = useState(false);
     const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
     const [selectedIcon, setSelectedIcon] = useState<IconOption | null>(null);
 
-    // Efecto para cargar los datos de la transacción al abrir
+    // Monitorizamos el estado del teclado nativo
+    const isKeyboardVisible = useKeyboardStatus();
+
+    // Estado para la calculadora
+    const [showCalculator, setShowCalculator] = useState(false);
+
+    // Efecto de inicialización
     useEffect(() => {
         if (transaction && open) {
-        // Sincronizar Stores
             setAmount(Math.abs(transaction.amount).toString());
             setDescription(transaction.description || '');
             setSelectedAccount(transaction.account_id);
             setLocalSelectedDay(new Date(transaction.date));
             setNewAccount(transaction.account_id);
 
-            // Buscar e inicializar el icono correcto
             const icon = ICON_OPTIONS[
                 transaction.type === "income" ? IconKey.income : IconKey.spend
             ].find(icon => icon.label === transaction.category_name);
 
             setSelectedIcon(icon as IconOption);
+
+            if (Platform.OS !== 'web') {
+                AccessibilityInfo.announceForAccessibility(t('accessibility.edit_form_opened', 'Edit transaction form opened'));
+            }
         }
     }, [transaction, open]);
 
-    const handleIconPress = () => setIsIconSelectorOpen(true);
+    // Efecto: Cerrar calculadora si se abre teclado nativo
+    useEffect(() => {
+        if (isKeyboardVisible) {
+            setShowCalculator(false);
+        }
+    }, [isKeyboardVisible]);
+
+    const handleOpenCalculator = () => {
+        if (showCalculator) { return setShowCalculator(false) }; // Prevenir múltiples aperturas
+        Keyboard.dismiss();
+        // Pequeño delay para permitir que el teclado baje
+        setTimeout(() => {
+            setShowCalculator(true);
+            if (Platform.OS !== 'web') {
+                AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened', 'Calculator keypad opened'));
+            }
+        }, 100);
+    };
 
     const handleSelectIcon = (icon: IconOption) => {
         setSelectedIcon(icon);
@@ -122,8 +148,19 @@ export default function EditTransactionFormMobile({
     const handleUpdate = async () => {
         if (!transaction || !selectedIcon) return;
 
-        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) === 0) {
-            Alert.alert("Invalid Amount", "Please enter a valid amount.");
+        // Validamos evaluando la expresión matemática
+        let finalAmountVal = 0;
+        try {
+            // eslint-disable-next-line no-new-func
+            finalAmountVal = new Function('return ' + amount)();
+        } catch {
+            finalAmountVal = parseFloat(amount);
+        }
+
+        if (!finalAmountVal || isNaN(finalAmountVal) || finalAmountVal === 0) {
+            const msg = t('validation.invalid_amount', 'Please enter a valid amount');
+            Alert.alert(t('common.error'), msg);
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(msg);
             amountInputRef.current?.focus();
             return;
         }
@@ -131,11 +168,10 @@ export default function EditTransactionFormMobile({
         setIsLoading(true);
 
         try {
-            // Mantener la hora original si el día no ha cambiado
             const finalDate = new Date(localSelectedDay);
             const originalDate = new Date(transaction.date);
 
-            // Si el día es el mismo, preservamos la hora exacta original
+            // Mantener hora original si es el mismo día
             if (finalDate.toDateString() === originalDate.toDateString()) {
                 finalDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
             }
@@ -143,8 +179,8 @@ export default function EditTransactionFormMobile({
             const updatedTransaction: Transaction = {
                 ...transaction,
                 amount: transaction.type === 'expense'
-                    ? -Math.abs(parseFloat(amount))
-                    : Math.abs(parseFloat(amount)),
+                    ? -Math.abs(finalAmountVal)
+                    : Math.abs(finalAmountVal),
                 description: description.trim(),
                 date: finalDate.toISOString(),
                 category_name: selectedIcon.label,
@@ -153,12 +189,12 @@ export default function EditTransactionFormMobile({
             };
 
             await onSave(updatedTransaction, transaction.account_id, newAccount);
-            showMessage(MessageType.UPDATED, "Transaction updated successfully.");
+            showMessage(MessageType.UPDATED, t('messages.transaction_updated', 'Transaction updated'));
             onClose(false);
 
         } catch (error) {
             console.error(error);
-            showMessage(MessageType.ERROR, "Error updating transaction.");
+            showMessage(MessageType.ERROR, t('messages.error_updating', 'Error updating transaction'));
         } finally {
             setIsLoading(false);
         }
@@ -167,10 +203,7 @@ export default function EditTransactionFormMobile({
     if (!transaction) return null;
 
     const isExpense = transaction.type === 'expense';
-    const headerColor = isExpense ? '#EF5350' : '#667eea';
-    const formattedDate = localSelectedDay.toLocaleDateString('en-US', {
-        month: '2-digit', day: '2-digit', year: 'numeric'
-    });
+    const formattedDate = localSelectedDay.toLocaleDateString();
 
     return (
         <Modal
@@ -179,42 +212,43 @@ export default function EditTransactionFormMobile({
             animationType="none"
             onRequestClose={() => onClose(false)}
             statusBarTranslucent
+            accessibilityViewIsModal={true}
         >
             <View style={StyleSheet.absoluteFill}>
-                <Animated.View
-                    entering={FadeIn.duration(200)}
-                    exiting={FadeOut.duration(200)}
-                    style={StyleSheet.absoluteFill}
-                >
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
-                        <TouchableOpacity
-                            style={StyleSheet.absoluteFill}
-                            activeOpacity={1}
-                            onPress={() => onClose(false)} 
-                        />
-                    </BlurView>
-                </Animated.View>
-
+                {/* Backdrop Accesible */}
+                {/* Main Sheet */}
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
                     style={styles.container}
+                    pointerEvents="box-none"
                 >
                     <Animated.View 
                         entering={SlideInUp.duration(200)}
                         exiting={SlideOutUp.duration(200)}
-
                         style={[
                             styles.topSheet,
-                            { backgroundColor: colors.surfaceSecondary },
-                            { paddingTop: insets.top + 10 }
+                            { backgroundColor: colors.surfaceSecondary, paddingTop: insets.top + 10 }
                         ]}
-
+                        accessibilityRole="adjustable"
                     >
-                        <View style={styles.header}>
+                        {/* Header */}
+                        <View style={styles.header} accessibilityRole="header">
+                            <TouchableOpacity
+                                onPress={() => {
+                                    onClose(false);
+                                    setShowCalculator(false);
+                                }}
+                                style={[styles.closeButton, { backgroundColor: colors.text, borderColor: colors.border }]}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('common.close', 'Close')}
+                            >
+                                <MaterialIcons name="close" size={24} color={colors.surface} />
+                            </TouchableOpacity>
+
                             <TransactionHeaderTitle
-                                title={isExpense ? 'Edit Expense' : 'Edit Income'}
+                                title={isExpense ? t('transactions.edit_expense', 'Edit Expense') : t('transactions.edit_income', 'Edit Income')}
                                 date={formattedDate}
-                                titleColor={headerColor}
+                                titleColor={colors.text}
                             />
                             <ModernCalendarSelector
                                 selectedDate={localSelectedDay}
@@ -222,8 +256,13 @@ export default function EditTransactionFormMobile({
                             />
                         </View>
 
+                        {/* Contenido Scrollable */}
                         <ScrollView
-                            contentContainerStyle={styles.scrollContent}
+                            contentContainerStyle={[
+                                styles.scrollContent,
+                                // Padding dinámico para que la calculadora no tape el botón guardar
+                                { paddingBottom: (isKeyboardVisible || showCalculator) ? 370 : 100 }
+                            ]}
                             keyboardShouldPersistTaps="handled"
                             showsVerticalScrollIndicator={false}
                         >
@@ -231,9 +270,10 @@ export default function EditTransactionFormMobile({
                                 selectedIcon={selectedIcon}
                                 amount={amount}
                                 amountInputRef={amountInputRef}
-                                handleIconClick={handleIconPress}
+                                handleIconClick={() => setIsIconSelectorOpen(true)}
                                 setAmount={setAmount}
                                 colors={colors}
+                                onOpenCalculator={handleOpenCalculator}
                             />
 
                             <DescriptionInput
@@ -243,9 +283,9 @@ export default function EditTransactionFormMobile({
                             />
 
                             <View style={styles.rowSelectors}>
-                                <View style={{ flex: 7 }}>
+                                <View style={{ flex: 1 }}>
                                     <AccountSelector
-                                        label="Accounts"
+                                        label={t('accounts.label', 'Account')}
                                         accountSelected={newAccount}
                                         setAccountSelected={setNewAccount}
                                         accounts={allAccounts}
@@ -255,25 +295,51 @@ export default function EditTransactionFormMobile({
                             </View>
 
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity
-                                    onPress={handleUpdate} 
-                                    style={[styles.saveButton, { backgroundColor: headerColor }]}
-                                    disabled={isLoading}
-                                >
-                                    <Text style={styles.saveButtonText}>
-                                        {isLoading ? 'Saving...' : 'Save Changes'}
-                                    </Text>
-                                </TouchableOpacity>
+                                <SubmitButton
+                                    handleSave={handleUpdate}
+                                    selectedIcon={selectedIcon}
+                                    option={isExpense ? addOption.Spend : addOption.Income}
+                                    // Validación simple para deshabilitar
+                                    disabled={!amount || parseFloat(amount) === 0 || !selectedAccount}
+                                />
                             </View>
                         </ScrollView>
 
+                        {/* CALCULADORA (Posicionada Fixed al fondo) */}
+                        {showCalculator && (
+                            <Animated.View
+                                entering={SlideInDown.duration(300)}
+                                exiting={SlideOutDown.duration(100)}
+                                style={{
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    zIndex: 1000,
+                                    borderTopWidth: 1,
+                                    borderColor: colors.border,
+                                    shadowColor: "#000",
+                                    shadowOffset: { width: 0, height: -2 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 5,
+                                    elevation: 20,
+                                }}
+                            >
+                                <CalculatorSheet
+                                    colors={colors}
+                                    value={amount}
+                                    onChange={setAmount}
+                                    onClose={() => setShowCalculator(false)}
+                                />
+                            </Animated.View>
+                        )}
+
+                        {/* Popover Iconos */}
                         {isIconSelectorOpen && (
                             <IconsSelectorPopover
                                 popoverOpen={isIconSelectorOpen}
                                 handleClosePopover={() => setIsIconSelectorOpen(false)}
-                                iconOptions={ICON_OPTIONS[
-                                    transaction.type === "income" ? IconKey.income : IconKey.spend
-                                ] as unknown as IconOption[]}
+                                iconOptions={iconOptions}
                                 handleSelectIcon={handleSelectIcon}
                                 selectedIcon={selectedIcon}
                                 colors={colors}
@@ -285,4 +351,3 @@ export default function EditTransactionFormMobile({
         </Modal>
     );
 }
-

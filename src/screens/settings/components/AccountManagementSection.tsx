@@ -349,11 +349,10 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
 
 const styles = StyleSheet.create({
     card: {
-        marginTop: 10,
         borderRadius: 16,
         padding: 20,
-        marginBottom: 20,
         borderWidth: 0.5,
+        marginBottom: 10,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -490,12 +489,11 @@ const styles = StyleSheet.create({
     },
     iconButton: {
         padding: 12,
-        borderRadius: 12,
+        borderRadius: 24,
         alignItems: 'center',
         justifyContent: 'center',
         minWidth: 48,
         minHeight: 48,
-        elevation: 2,
     },
     // --- EMPTY STATE ---
     emptyState: {

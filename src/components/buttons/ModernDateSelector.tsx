@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Modal, 
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
   Platform,
-  Dimensions
+  Dimensions,
+  AccessibilityInfo
 } from 'react-native';
 import Animated, { 
-  FadeIn, 
-  FadeOut, 
-  ZoomIn, 
-  ZoomOut 
+  FadeIn,
+  FadeOut,
+  ZoomIn,
+  ZoomOut
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { MONTHS, WEEKDAYS_SHORT } from '../../constants/date';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
+import { useTranslation } from 'react-i18next';
 
-
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface ModernCalendarSelectorProps {
   selectedDate: Date;
@@ -31,25 +31,25 @@ interface ModernCalendarSelectorProps {
 }
 
 export default function ModernCalendarSelector({ 
-  selectedDate, 
-  onDateChange 
+  selectedDate,
+  onDateChange
 }: ModernCalendarSelectorProps) {
+  const { t } = useTranslation();
   const { theme } = useSettingsStore();
   const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-  
+
   const [isOpen, setIsOpen] = useState(false);
-  
-  // 'viewDate' controla qué mes estamos viendo en el calendario (independiente de la fecha seleccionada)
+
+  // Controla qué mes estamos viendo
   const [viewDate, setViewDate] = useState(selectedDate);
 
-  // Sincronizar viewDate cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
       setViewDate(selectedDate);
+      if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('calendar.opened', 'Calendar opened'));
     }
   }, [isOpen, selectedDate]);
 
-  // Cambiar mes (maneja cambio de año automático)
   const changeMonth = (increment: number) => {
     const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + increment, 1);
     setViewDate(newDate);
@@ -59,67 +59,64 @@ export default function ModernCalendarSelector({
     const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
     onDateChange(newDate);
     setIsOpen(false);
+    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(`${t('calendar.selected', 'Selected')} ${day}`);
   };
 
-  // Generar lógica de días para el calendario
+  // Generar días
   const getDaysArray = () => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
-    
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Domingo
-    
+
     const days = [];
-    
-    // Rellenar espacios vacíos antes del primer día
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      days.push(null);
-    }
-    
-    // Rellenar días reales
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-    
+    // Rellenar vacíos
+    for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
+    // Rellenar días
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
     return days;
   };
 
-
   const isSelected = (day: number) => {
     return selectedDate.getDate() === day &&
-           selectedDate.getMonth() === viewDate.getMonth() &&
-           selectedDate.getFullYear() === viewDate.getFullYear();
+      selectedDate.getMonth() === viewDate.getMonth() &&
+      selectedDate.getFullYear() === viewDate.getFullYear();
   };
 
   const isToday = (day: number) => {
     const today = new Date();
     return today.getDate() === day &&
-           today.getMonth() === viewDate.getMonth() &&
-           today.getFullYear() === viewDate.getFullYear();
+      today.getMonth() === viewDate.getMonth() &&
+      today.getFullYear() === viewDate.getFullYear();
   };
+
+  // Helper para nombre del mes accesible
+  const monthName = t(`months.${MONTHS[viewDate.getMonth()].toLowerCase()}`);
 
   return (
     <>
       {/* --- BOTÓN FLOTANTE --- */}
-      <Animated.View 
-        entering={FadeIn.delay(300)} 
+      <Animated.View
+        entering={FadeIn.delay(300)}
         style={styles.floatingContainer}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => setIsOpen(true)}
-          style={styles.pillButton}
+          style={[styles.pillButton, { borderColor: colors.border, backgroundColor: isOpen ? colors.surface : colors.text }]}
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.open_calendar', 'Open date picker')}
+          accessibilityHint={t('calendar.current_date', `Current date: ${selectedDate.toLocaleDateString()}`)}
         >
           {Platform.OS === 'ios' ? (
-             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={30} tint={theme === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: isOpen ? colors.surface : colors.text }]} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: isOpen ? colors.surface : colors.text, opacity: 0.95 }]} />
           )}
 
           <View style={styles.pillContent}>
-            <Ionicons name="calendar-clear-outline" size={18} color={colors.accent} />
-            {/* <Text style={styles.pillText}>{formatButtonDate()}</Text> */}
-            <MaterialIcons name="keyboard-arrow-down" size={20} color={colors.accent} />
+            <Ionicons name="calendar-clear-outline" size={20} color={colors.accent} importantForAccessibility="no" />
+            <MaterialIcons name="keyboard-arrow-down" size={24} color={colors.accent} importantForAccessibility="no" />
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -130,105 +127,137 @@ export default function ModernCalendarSelector({
         transparent
         animationType="none"
         onRequestClose={() => setIsOpen(false)}
+        accessibilityViewIsModal={true}
       >
         <View style={styles.modalOverlay}>
-            <TouchableOpacity 
-                style={StyleSheet.absoluteFill} 
-                activeOpacity={1} 
-                onPress={() => setIsOpen(false)}
+          {/* Backdrop Clickeable */}
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setIsOpen(false)}
+            accessibilityLabel={t('common.close')}
+            accessibilityRole="button"
             >
-                <Animated.View 
-                    entering={FadeIn} 
-                    exiting={FadeOut} 
-                    style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' }} 
-                />
+            <Animated.View
+              entering={FadeIn}
+              exiting={FadeOut} 
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }}
+            />
             </TouchableOpacity>
 
             <Animated.View 
-            entering={ZoomIn.duration(100)}
-                exiting={ZoomOut.duration(200)}
-            style={[styles.calendarCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            entering={ZoomIn.duration(200)}
+            exiting={ZoomOut.duration(150)}
+            style={[
+              styles.calendarCard,
+              { backgroundColor: colors.surface, borderColor: colors.border }
+            ]}
             >
-                {/* Header: Navegación de Mes */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.arrowBtn}>
-                <MaterialIcons name="chevron-left" size={28} color={colors.text} />
-                    </TouchableOpacity>
-                    
-                    <View style={{ alignItems: 'center' }}>
+            {/* Header: Navegación de Mes */}
+            <View style={styles.header} accessibilityRole="header">
+              <TouchableOpacity
+                onPress={() => changeMonth(-1)}
+                style={styles.arrowBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('calendar.prev_month', 'Previous month')}
+              >
+                <MaterialIcons name="chevron-left" size={32} color={colors.text} />
+              </TouchableOpacity>
+
+              <View style={{ alignItems: 'center' }} accessible={true}>
                 <Text style={[styles.monthTitle, { color: colors.text }]}>
-                            {MONTHS[viewDate.getMonth()]}
-                        </Text>
+                  {monthName}
+                </Text>
                 <Text style={[styles.yearSubtitle, { color: colors.textSecondary }]}>
-                            {viewDate.getFullYear()}
-                        </Text>
-                    </View>
-                    
-                    <TouchableOpacity onPress={() => changeMonth(1)} style={styles.arrowBtn}>
-                <MaterialIcons name="chevron-right" size={28} color={colors.text} />
-                    </TouchableOpacity>
-                </View>
+                  {viewDate.getFullYear()}
+                </Text>
+              </View>
 
-                {/* Días de la semana */}
-                <View style={styles.weekRow}>
+              <TouchableOpacity
+                onPress={() => changeMonth(1)}
+                style={styles.arrowBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('calendar.next_month', 'Next month')}
+              >
+                <MaterialIcons name="chevron-right" size={32} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Días de la semana (Ignorados por lector para no ser redundantes al navegar por días) */}
+            <View style={styles.weekRow} importantForAccessibility="no-hide-descendants">
               {WEEKDAYS_SHORT.map((day, index) => (
-                      <Text key={index} style={[styles.weekdayText, { color: colors.text }]}>{day}</Text>
-                    ))}
-                </View>
+                <Text key={index} style={[styles.weekdayText, { color: colors.textSecondary }]}>
+                  {day}
+                </Text>
+              ))}
+            </View>
 
-                {/* Grid de Días */}
-                <View style={styles.daysGrid}>
-                    {getDaysArray().map((day, index) => {
-                        if (day === null) {
-                            return <View key={`empty-${index}`} style={styles.dayCell} />;
-                        }
+            {/* Grid de Días */}
+            <View style={styles.daysGrid}>
+              {getDaysArray().map((day, index) => {
+                // Espacios vacíos (Decorativos)
+                if (day === null) {
+                  return <View key={`empty-${index}`} style={styles.dayCell} importantForAccessibility="no" />;
+                }
 
-                        const selected = isSelected(day);
-                        const today = isToday(day);
+                const selected = isSelected(day);
+                const today = isToday(day);
 
-                        return (
-                            <TouchableOpacity
-                                key={day}
-                                onPress={() => handleDaySelect(day)}
-                                style={styles.dayCell}
-                            >
-                                {selected ? (
-                              <View
-
-                                style={[styles.selectedDayBg, { backgroundColor: colors.text }]}
-                                    >
-                                <Text style={[styles.selectedDayText, { color: colors.surface }]}>{day}</Text>
-                              </View>
-                                ) : (
+                return (
+                  <TouchableOpacity
+                    key={day}
+                    onPress={() => handleDaySelect(day)}
+                    style={styles.dayCell}
+                    // Accesibilidad Clave
+                    accessibilityRole="button"
+                    accessibilityLabel={`${day}, ${monthName} ${viewDate.getFullYear()}`}
+                    accessibilityState={{ selected: selected }}
+                    accessibilityHint={today ? t('calendar.today_hint', 'Today') : t('calendar.select_hint', 'Tap to select')}
+                  >
                                     <View style={[
-                                        styles.dayContent, 
-                                  today && [styles.todayBorder, { borderColor: colors.accent }]
+                      styles.dayContent,
+                      selected && { backgroundColor: colors.text },
+                      today && !selected && { borderWidth: 2, borderColor: colors.accent }
                                     ]}>
-                                        <Text style={[
-                                            styles.dayText,
-                                    { color: colors.text },
-                                    today && { color: colors.accent, fontWeight: 'bold' }
-                                        ]}>{day}</Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
+                      <Text
+                        style={[
+                          styles.dayText,
+                          { color: selected ? colors.surface : colors.text },
+                          today && !selected && { color: colors.accent, fontWeight: 'bold' }
+                        ]}
+                        // CLAVE: Evita que el número se salga del círculo si el texto es gigante
+                        adjustsFontSizeToFit={true}
+                        numberOfLines={1}
+                        minimumFontScale={0.5}
+                      >
+                        {day}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Footer: Jump to Today */}
+            <TouchableOpacity
+              onPress={() => {
+                const now = new Date();
+                onDateChange(now);
+                setIsOpen(false);
+              }}
+              style={[
+                styles.footerButton,
+                { borderColor: colors.accent, backgroundColor: colors.surface }
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('calendar.go_to_today', 'Select Today')}
+            >
+              <Text style={[styles.todayButtonText, { color: colors.accent }]}>
+                {t('header.today')}
+              </Text>
+            </TouchableOpacity>
+
           </Animated.View>
-          {/* Footer: Jump to Today */}
-          <View style={[styles.footer, { borderColor: colors.accent, backgroundColor: colors.surface }]}>
-                    <TouchableOpacity 
-                        onPress={() => {
-                            const now = new Date();
-                            onDateChange(now);
-                            setIsOpen(false);
-                        }}
-                        style={styles.todayButton}
-                    >
-              <Text style={[styles.todayButtonText, { color: colors.accent }]}>Go to Today</Text>
-                    </TouchableOpacity>
-          </View>
         </View>
       </Modal>
     </>
@@ -240,26 +269,23 @@ const styles = StyleSheet.create({
   floatingContainer: {
     position: 'absolute',
     right: 0,
-    width: 'auto',
     zIndex: 100,
-
   },
   pillButton: {
     borderRadius: 30,
     overflow: 'hidden',
     borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   pillContent: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 10,
-    gap: 8,
-  },
-  pillText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    gap: 4,
+    minWidth: 44, // Touch target mínimo
   },
 
   // --- Modal Overlay ---
@@ -267,16 +293,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   calendarCard: {
-    width: width * 0.9,
-    maxWidth: 360,
-    height: 400,
+    width: '100%',
+    maxWidth: 380, 
     borderRadius: 24,
-    padding: 20,
+    padding: 24,
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
     shadowRadius: 25,
     elevation: 10,
   },
@@ -286,88 +313,74 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   monthTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    textTransform: 'capitalize',
   },
   yearSubtitle: {
     fontSize: 14,
-    marginTop: 2,
+    marginTop: 4,
   },
   arrowBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 10, // Touch target más grande
     borderRadius: 12,
+    backgroundColor: 'rgba(125,125,125,0.1)',
   },
 
   // --- Grid ---
   weekRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 12,
     justifyContent: 'space-between',
-    paddingHorizontal: 5,
   },
   weekdayText: {
     fontSize: 13,
     fontWeight: '600',
-    width: 40,
+    width: '14.28%', // Distribución exacta
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
   daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
+    marginBottom: 20,
   },
   dayCell: {
     width: '14.28%', // 100% / 7
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   dayContent: {
-    width: 36,
-    height: 36,
+    width: '85%', // Relativo al contenedor padre
+    height: '85%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 18,
-  },
-  todayBorder: {
-    borderWidth: 2,
-  },
-  selectedDayBg: {
-    width: 38,
-    height: 38,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 12, 
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
+    borderRadius: 999, // Círculo perfecto
   },
   dayText: {
-    fontSize: 15,
-  },
-  selectedDayText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
 
   // --- Footer ---
-  footer: {
-    height: 60,
+  footerButton: {
+    height: 56,
     justifyContent: 'center',
-    marginTop: 15,
-    borderRadius: 24,
     alignItems: 'center',
+    borderRadius: 16,
     borderWidth: 2,
-  },
-  todayButton: {
-    paddingHorizontal: 20,
+    width: '100%',
   },
   todayButtonText: {
-    fontWeight: '500',
+    fontWeight: '700',
     fontSize: 16,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

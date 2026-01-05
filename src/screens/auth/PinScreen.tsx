@@ -52,7 +52,7 @@ export const PinScreen = () => {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.container, { backgroundColor: colors.surface }]}>
             <Text style={[styles.greeting, { color: colors.text }]}>Hola, {user?.name}</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ingresa tu PIN para acceder</Text>
 

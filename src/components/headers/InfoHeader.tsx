@@ -1,81 +1,69 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, AccessibilityInfo } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { format, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
-import { es } from 'date-fns/locale'; // Opcional: si quieres español
+import { es, enUS, ptBR } from 'date-fns/locale';
 import ModernDateSelector from '../buttons/ModernDateSelector';
 import useDateStore from '../../stores/useDateStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { ThemeColors } from '../../types/navigation';
-import {darkTheme, lightTheme} from '../../theme/colors';
+import { darkTheme, lightTheme } from '../../theme/colors';
 import { ViewMode, ViewPeriod } from '../../interfaces/date.interface';
-
-
+import { useTranslation } from 'react-i18next';
 
 export interface InfoHeaderProps {
   viewMode: ViewMode | ViewPeriod;
 }
 
-
 const COLORS = {
-  accentGradient: ['#f97316', '#dc2626'] as [string, string], // Naranja a Rojo (Tu marca)
-  blueGradient: ['#3b82f6', '#2563eb'] as [string, string], // Azul para contraste
+  accentGradient: ['#f97316', '#dc2626'] as [string, string],
 };
 
-export default function InfoHeader({ 
-  viewMode 
-}: InfoHeaderProps) {
-  const { theme } = useSettingsStore();
-    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-    const {localSelectedDay,setLocalSelectedDay} = useDateStore();
-
+export default function InfoHeader({ viewMode }: InfoHeaderProps) {
+  const { theme, language } = useSettingsStore();
+  const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+  const { localSelectedDay, setLocalSelectedDay } = useDateStore();
+  const { t } = useTranslation();
 
   // --- Lógica de Formato de Texto ---
   const dateText = useMemo(() => {
-    // Opciones comunes para date-fns (Semana empieza en Lunes)
-    const options = { locale: es };
-    const weekOptions = { locale: es, weekStartsOn: 1 }; // 1 es Lunes
+    const options = {
+      locale: language === 'es' ? es : language === 'en' ? enUS : ptBR,
+      weekStartsOn: 1 as const
+    };
 
     switch (viewMode) {
       case 'day':
-      return format(localSelectedDay, "EEEE, d 'de' MMMM yyyy", options);
-
-    case 'week':
-      // 1. Calculamos el inicio de la semana (Lunes)
-      const start = startOfWeek(localSelectedDay);
-      // 2. Calculamos el fin de la semana (Domingo)
-      const end = endOfWeek(localSelectedDay);
-
-      // 3. Formateamos el rango. Ej: 23 Oct - 29 Oct 2023
-      const startFormat = format(start, 'd MMM', options);
-      const endFormat = format(end, 'd MMM yyyy', options);
-
-      return `${startFormat} - ${endFormat}`;
-
-    case 'month':
-      return format(localSelectedDay, 'MMMM yyyy', options);
-
-    case 'year':
+        return format(localSelectedDay, "EEEE, d 'de' MMMM yyyy", options);
+      case 'week':
+        const start = startOfWeek(localSelectedDay, options);
+        const end = endOfWeek(localSelectedDay, options);
+        const startFormat = format(start, 'd MMM', options);
+        const endFormat = format(end, 'd MMM yyyy', options);
+        return `${startFormat} - ${endFormat}`;
+      case 'month':
+        return format(localSelectedDay, 'MMMM yyyy', options);
+      case 'year':
         return format(localSelectedDay, 'yyyy', options);
-
       default:
         return '';
     }
-  }, [localSelectedDay, viewMode]);
+  }, [localSelectedDay, viewMode, language]);
 
   const subTitle = useMemo(() => {
     const today = new Date();
-    if (viewMode === 'day' && isSameDay(localSelectedDay, today)) return 'Today';
+    // Clave de traducción basada en el modo
+    if (viewMode === 'day' && isSameDay(localSelectedDay, today)) return 'header.today';
     
     switch (viewMode) {
-      case 'day': return 'Daily Overview';
-      case 'month': return 'Monthly Overview';
-      case 'year': return 'Annual Overview';
-      default: return 'Overview';
+      case 'day': return 'header.dailyoverview';
+      case 'month': return 'header.monthlyoverview';
+      case 'year': return 'header.annualoverview';
+      default: return 'header.overview';
     }
   }, [localSelectedDay, viewMode]);
+
+  const translatedSubtitle = t(subTitle);
 
   return (
     <Animated.View 
@@ -83,29 +71,52 @@ export default function InfoHeader({
       style={styles.container}
     >
       {/* Tarjeta de Fecha Principal */}
-      <View style={[styles.dateCard,{ 
+      <View style={[styles.dateCard, { 
         backgroundColor: colors.surface, 
-        shadowColor: colors.shadow ,
+        shadowColor: colors.shadow,
         borderColor: colors.border
-        }]}>
-        {/* Fondo con brillo sutil */}
-        <View style={styles.glowEffect} />
+      }]}>
         
-        <View style={styles.dateContent}>
-            <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View>
-                    <Text style={[styles.overviewLabel, {color: colors.text}]}>{subTitle}</Text>
-                <Text style={[styles.dateDisplay, {color: colors.text}]}>{dateText}</Text>
-                </View>
-                
-                <ModernDateSelector
-                                selectedDate={localSelectedDay}
-                                onDateChange={setLocalSelectedDay}
-                            />
-            </View>
-        </View>
-      </View>
+        {/* Fondo decorativo ignorado por accesibilidad */}
+        <View
+          style={styles.glowEffect}
+          importantForAccessibility="no-hide-descendants"
+        />
 
+        <View style={styles.dateContentRow}>
+          {/* Columna de Texto (Flexible) */}
+          <View
+            style={styles.textColumn}
+            accessible={true}
+            accessibilityRole="header"
+            accessibilityLabel={`${translatedSubtitle}, ${dateText}`}
+          >
+            <Text
+              style={[styles.overviewLabel, { color: colors.textSecondary }]}
+              maxFontSizeMultiplier={1.5}
+            >
+              {translatedSubtitle}
+            </Text>
+            <Text
+              style={[styles.dateDisplay, { color: colors.text }]}
+              maxFontSizeMultiplier={1.3} // Limitamos ligeramente para no romper la tarjeta
+            >
+              {dateText}
+            </Text>
+          </View>
+
+          {/* Columna del Selector (Fija/Auto) */}
+                <ModernDateSelector
+            selectedDate={localSelectedDay}
+            onDateChange={(date) => {
+              setLocalSelectedDay(date);
+              if (Platform.OS !== 'web') {
+                AccessibilityInfo.announceForAccessibility(`Date changed to ${format(date, 'P')}`);
+              }
+            }}
+          />
+            </View>
+      </View>
     </Animated.View>
   );
 }
@@ -113,81 +124,61 @@ export default function InfoHeader({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
-    paddingHorizontal: 4, // Pequeño padding para alinear con el resto si es necesario
+    paddingHorizontal: 4,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    // Sombra sutil
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  
-  // Tarjeta de Fecha
+  // Tarjeta
   dateCard: {
     borderRadius: 20,
-    padding: 16,
+    padding: 20, // Padding interno generoso
     borderWidth: 1,
     position: 'relative',
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 8,
-  },
-  glowEffect: {
-    position: 'absolute',
-    top: -50,
-    right: -50,
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: COLORS.accentGradient[0], // Naranja
-    opacity: 0.65,
-    transform: [{ scale: 1.5 }],
-  },
-  dateContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  dateIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    // shadowColor: COLORS.accentGradient[1], // Rojo
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    // Sombras
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
     elevation: 6,
   },
+  // Efecto visual
+  glowEffect: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: COLORS.accentGradient[0],
+    opacity: 0.15, // Opacidad reducida para no interferir con el texto
+    transform: [{ scale: 1.2 }],
+  },
+  // Layout interno
+  dateContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  // Columna de texto
+  textColumn: {
+    flex: 1, // CLAVE: Permite que el texto ocupe el espacio pero respete al botón
+    paddingRight: 8, // Espacio de seguridad contra el botón
+    justifyContent: 'center',
+  },
+
+  // Textos
   overviewLabel: {
     fontSize: 12,
     textTransform: 'uppercase',
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 2,
+    marginBottom: 4,
+    opacity: 0.8,
   },
   dateDisplay: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20, // Ligeramente más grande
+    fontWeight: '800',
     textTransform: 'capitalize',
+    lineHeight: 26, // Altura de línea para cuando hace wrap
+    flexWrap: 'wrap',
   },
 });

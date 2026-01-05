@@ -1,5 +1,7 @@
 {
     "common": {
+        "yes": "Sí",
+        "no": "No",
         "save": "Guardar",
         "saving": "Guardando...",
         "confirm": "Confirmar",
@@ -20,7 +22,9 @@
         "write": "Escribe",
         "back": "Atrás",
         "done": "Hecho",
-        "restore": "Restaurar"
+        "restore": "Restaurar",
+        "noDescription": "Sin descripción",
+        "close_modal": "Cerrar modal"
     },
     "commonWarnings": {
         "warning": "Advertencia",
@@ -57,8 +61,16 @@
         "email_input_label": "Campo de entrada de correo electrónico",
         "email_input_hint": "Introduce tu correo electrónico aquí"
     },
+    "header": {
+        "today": "Hoy",
+        "dailyoverview": "Resumen diario",
+        "monthlyoverview": "Resumen mensual",
+        "annualoverview": "Resumen anual",
+        "overview": "Resumen"
+    },
     "accounts": {
         "title": "Cuentas",
+        "label": "Cuenta seleccionada",
         "addAccount": "Agregar",
         "syncData": "Sincronizar",
         "syncing": "Sincronizando...",
@@ -138,11 +150,29 @@
         "title": "Transacciones",
         "addTransaction": "Nueva transacción",
         "expense": "Gasto",
+        "expensePlural": "Gastos",
         "income": "Ingreso",
+        "incomePlural": "Ingresos",
+        "all": "Todo",
+        "allPlural": "Todo",
+        "transfer": "Transferencia",
         "amount": "Monto",
         "description": "Descripción",
+        "descriptionPlaceholder": "Ingresa una descripción",
         "date": "Fecha",
-        "category": "Categoría"
+        "category": "Categoría",
+        "filtersAndView": "Filtros",
+        "period": "Período:",
+        "sortBy": "Ordenar por: ",
+        "by": "por ",
+        "day": "Día",
+        "month": "Mes",
+        "year": "Año",
+        "notFound": "No se encontraron transacciones este",
+        "deleteConfirm": "¿Estás seguro de que deseas eliminar esta transacción?",
+        "searchPlaceholder": "Buscar en este",
+        "edit_expense": "Editar gasto",
+        "edit_income": "Editar ingreso"
     },
     "currency": {
         "subtitle": "Selecciona tu moneda preferida. (No convierte monedas, solo establece el símbolo predeterminado)",
@@ -162,5 +192,57 @@
         "transactions": "Transacciones",
         "accounts": "Cuentas",
         "settings": "Configuración"
+    },
+    "months": {
+        "january": "Enero",
+        "february": "Febrero",
+        "march": "Marzo",
+        "april": "Abril",
+        "may": "Mayo",
+        "june": "Junio",
+        "july": "Julio",
+        "august": "Agosto",
+        "september": "Septiembre",
+        "october": "Octubre",
+        "november": "Noviembre",
+        "december": "Diciembre"
+    },
+    "weekdays": {
+        "monday": "Lunes",
+        "tuesday": "Martes",
+        "wednesday": "Miércoles",
+        "thursday": "Jueves",
+        "friday": "Viernes",
+        "saturday": "Sábado",
+        "sunday": "Domingo"
+    },
+    "calendar": {
+        "open_calendar": "Abrir calendario",
+        "current_date": "Fecha actual",
+        "prev_month": "Mes anterior",
+        "next_month": "Mes siguiente",
+        "today_hint": "Ir a hoy",
+        "select_hint": "Seleccionar fecha",
+        "go_to_today": "Ir a hoy",
+        "previous_month": "Mes anterior"
+    },
+    "expenseCategories": {
+        "food": "Comida",
+        "transportation": "Transporte",
+        "utilities": "Servicios",
+        "entertainment": "Entretenimiento",
+        "health": "Salud",
+        "shopping": "Compras",
+        "education": "Educación",
+        "travel": "Viajes",
+        "personalCare": "Cuidado personal",
+        "others": "Otros"
+    },
+    "accessibility": {
+        "save_hint": "Actualizar la transaccion y cerrar el formulario",
+        "save_changes": "Guardar cambios",
+        "delete_transaction": "Eliminar transacción",
+        "tap_outside_dismiss": "Toca fuera del área para cerrar el formulario",
+        "select_date": "Seleccionar fecha de la transacción"
     }
 }

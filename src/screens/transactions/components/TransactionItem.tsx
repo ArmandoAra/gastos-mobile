@@ -1,5 +1,15 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Dimensions,
+    Platform,
+    AccessibilityInfo,
+    AccessibilityActionInfo,
+    LayoutChangeEvent
+} from 'react-native';
 import Animated, { 
     useSharedValue, 
     useAnimatedStyle, 
@@ -19,9 +29,8 @@ import { CategoryLabel } from '../../../api/interfaces';
 import { ThemeColors } from '../../../types/navigation';
 import { useAuthStore } from '../../../stores/authStore';
 import useDataStore from '../../../stores/useDataStore';
-
-// Tus imports...
-
+import { useTranslation } from 'react-i18next';
+import EditTransactionFormMobile from '../../../components/forms/EditTransactionForm';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
@@ -39,19 +48,19 @@ export const TransactionItemMobile = React.memo(({
     onDelete,
     colors,
 }: TransactionItemProps) => {
-    // 1. Estados
+    const { t } = useTranslation();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isWarningOpen, setIsWarningOpen] = useState(false);
     const { currencySymbol } = useAuthStore();
     const { getAccountNameById } = useDataStore();
 
-    // 2. Valores Animados
+    // Valores Animados - altura ahora es dinámica
     const translateX = useSharedValue(0);
-    const itemHeight = useSharedValue(75); // Altura estimada de la fila
+    const itemHeight = useSharedValue<number | null>(null);
     const opacity = useSharedValue(1);
-    const marginBottom = useSharedValue(8); // Margen inferior para colapsar
+    const marginBottom = useSharedValue(8);
 
-    // 3. Memoize Datos (Lógica visual)
+    // Datos Memoizados
     const categoryData = useMemo(() => {
         const categoryKey = transaction.type as keyof typeof ICON_OPTIONS;
         const categoryIcons = ICON_OPTIONS[categoryKey] || [];
@@ -70,13 +79,23 @@ export const TransactionItemMobile = React.memo(({
 
     const { IconComponent, color } = categoryData;
     const isExpense = transaction.type === TransactionType.EXPENSE;
+    const formattedDate = format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm');
+    const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
 
-    // 4. Lógica de Borrado Real (Se llama al confirmar en el Modal)
+    // Callback para capturar la altura real del contenido
+    const handleLayout = useCallback((event: LayoutChangeEvent) => {
+        const { height } = event.nativeEvent.layout;
+        if (itemHeight.value === null) {
+            itemHeight.value = height;
+        }
+    }, []);
+
+    // Lógica de Borrado
     const performDelete = () => {
-        // Cerrar modal primero
         setIsWarningOpen(false);
+        if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('common.deleted'));
 
-        // Animar salida visual (colapso)
+        // Animación de salida
         translateX.value = withTiming(-SCREEN_WIDTH, { duration: 300 });
         itemHeight.value = withTiming(0, { duration: 300 });
         marginBottom.value = withTiming(0, { duration: 300 });
@@ -94,11 +113,10 @@ export const TransactionItemMobile = React.memo(({
 
     const handleCancelDelete = () => {
         setIsWarningOpen(false);
-        // Regresar la fila a su lugar
         translateX.value = withSpring(0);
     };
 
-    // 5. Gesto de Swipe
+    // Gesto Swipe
     const panGesture = Gesture.Pan()
         .activeOffsetX([-10, 10])
         .onUpdate((event) => {
@@ -106,7 +124,6 @@ export const TransactionItemMobile = React.memo(({
         })
         .onEnd(() => {
             if (Math.abs(translateX.value) > SWIPE_THRESHOLD) {
-                // Disparar apertura del modal en el hilo JS
                 runOnJS(setIsWarningOpen)(true);
             } else {
                 translateX.value = withSpring(0);
@@ -119,26 +136,48 @@ export const TransactionItemMobile = React.memo(({
     }));
 
     const rContainerStyle = useAnimatedStyle(() => ({
-        height: itemHeight.value,
+        height: itemHeight.value === null ? undefined : itemHeight.value,
         marginBottom: marginBottom.value,
         opacity: opacity.value,
-        overflow: 'hidden', // Necesario para que desaparezca al reducir altura
+        overflow: 'hidden',
     }));
 
     const rBackgroundStyle = useAnimatedStyle(() => {
-        const isSwipeLeft = translateX.value < 0;
-        const isSwipeRight = translateX.value > 0;
+        const isSwipe = Math.abs(translateX.value) > 0;
         return {
-            backgroundColor: (isSwipeLeft || isSwipeRight) ? colors.error : 'transparent',
-            justifyContent: isSwipeLeft ? 'flex-end' : 'flex-start', 
+            backgroundColor: isSwipe ? colors.error : 'transparent',
+            justifyContent: translateX.value < 0 ? 'flex-end' : 'flex-start', 
         };
     });
 
+    // Accesibilidad Actions
+    const accessibilityActions: AccessibilityActionInfo[] = [
+        { name: 'delete', label: t('common.delete') },
+        { name: 'activate', label: t('common.edit') }
+    ];
+
+    const handleAccessibilityAction = (event: any) => {
+        switch (event.nativeEvent.actionName) {
+            case 'delete':
+                setIsWarningOpen(true);
+                break;
+            case 'activate':
+                setIsEditOpen(true);
+                break;
+        }
+    };
+
     return (
-        <Animated.View style={[styles.containerWrapper, rContainerStyle]}>
+        <Animated.View
+            style={[styles.containerWrapper, rContainerStyle]}
+            onLayout={handleLayout}
+        >
             
-            {/* FONDO (Iconos de borrar) */}
-            <Animated.View style={[StyleSheet.absoluteFill, styles.backgroundContainer, rBackgroundStyle]}>
+            {/* FONDO (Swipe Actions) */}
+            <Animated.View
+                style={[StyleSheet.absoluteFill, styles.backgroundContainer, rBackgroundStyle]}
+                importantForAccessibility="no"
+            >
                 <View style={[styles.deleteIconContainer, { left: 20 }]}>
                     <MaterialIcons name="delete" size={24} color={colors.text} />
                 </View>
@@ -147,15 +186,27 @@ export const TransactionItemMobile = React.memo(({
                 </View>
             </Animated.View>
 
-            {/* CONTENIDO (Swipeable) */}
+            {/* CONTENIDO PRINCIPAL */}
             <GestureDetector gesture={panGesture}>
-                <Animated.View style={[styles.itemContainer, rStyle, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+                <Animated.View
+                    style={[
+                        styles.itemContainer,
+                        rStyle,
+                        { borderColor: colors.border, backgroundColor: colors.surface }
+                    ]}
+                >
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => setIsEditOpen(true)}
                         style={styles.touchableContent}
+                        // Accesibilidad
+                        accessibilityRole="button"
+                        accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_name}`}
+                        accessibilityHint={t('accessibility.swipe_hint', 'Tap to edit, use actions to delete')}
+                        accessibilityActions={accessibilityActions}
+                        onAccessibilityAction={handleAccessibilityAction}
                     >
-                        {/* Avatar */}
+                        {/* 1. Avatar */}
                         <View style={[styles.avatar, { backgroundColor: color }]}>
                             {IconComponent ? (
                                 <IconComponent size={24} color={colors.text} />
@@ -164,59 +215,76 @@ export const TransactionItemMobile = React.memo(({
                             )}
                         </View>
 
-                        {/* Textos */}
+                        {/* 2. Textos (Flexible) */}
                         <View style={styles.textContainer}>
                             <View style={styles.titleRow}>
-                                <Text style={[styles.description, { color: colors.text }]} numberOfLines={1}>
-                                    {transaction.description || 'No Description'}
+                                <Text
+                                    style={[styles.description, { color: colors.text }]}
+                                    numberOfLines={2}
+                                    ellipsizeMode="tail"
+                                >
+                                    {transaction.description || t('common.noDescription')}
                                 </Text>
+                                {/* Chip flexible */}
                                 <View style={[styles.chip, { backgroundColor: color + '33' }]}>
-                                    <Text style={[styles.chipText, { color: colors.textSecondary }]}>
+                                    <Text
+                                        style={[styles.chipText, { color: colors.textSecondary }]}
+                                        numberOfLines={1}
+                                    >
                                         {transaction.category_name}
                                     </Text>
                                 </View>
                             </View>
-                            <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                                {format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm')}
+                            <Text
+                                style={[styles.dateText, { color: colors.textSecondary }]}
+                                numberOfLines={2}
+                            >
+                                {formattedDate}
                             </Text>
                         </View>
 
-                        {/* Amount */}
+                        {/* 3. Monto y Cuenta (Fixed/Shrink) */}
                         <View style={styles.amountContainer}>
-                            {/* Aqui debe ir el account referente */}
+                            <View style={[styles.accountBadgeContainer, { backgroundColor: colors.primary + '22' }]}>
+                                <Text
+                                    numberOfLines={2}
+                                    ellipsizeMode="tail"
+                                    style={[styles.accountBadgeText, { color: colors.text }]}
+                                >
+                                    {accountName}
+                                </Text>
+                            </View>
                             <Text
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                                style={[styles.accoutBadge, { backgroundColor: colors.primary + '22', color: colors.text }]}
+                                style={[
+                                    styles.amountText,
+                                    { color: isExpense ? colors.expense : colors.income }
+                                ]}
+                                numberOfLines={2}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.8}
                             >
-                                {accountName}
-                            </Text>
-                            <Text style={[styles.amountText, { color: isExpense ? '#ef4444' : '#10b981' }]}>
-                                {isExpense ? '-' : '+'}{currencySymbol} {formatCurrency(Math.abs(transaction.amount).toFixed(2))}
+                                {formattedAmount}
                             </Text>
                         </View>
                     </TouchableOpacity>
                 </Animated.View>
             </GestureDetector>
 
-            {/* MODALES (Fuera de la vista animada interna, pero dentro del componente) */}
-            
-            {/* 1. Modal de Advertencia (Delete) */}
+            {/* MODALES */}
             {isWarningOpen && (
                 <WarningMessage
-                    message="Are you sure you want to delete this transaction?" //TODO - i18n
+                    message={t('transactions.deleteConfirm')}
                     onClose={handleCancelDelete}
                     onSubmit={performDelete}
                 />
             )}
 
-            {/* 2. Modal de Edición */}
-            <EditTransactionForm
+            <EditTransactionFormMobile
                 open={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
                 onSave={onSave}
                 transaction={transaction}
-                iconOptions={[]} // Pasa tus opciones reales aquí
+                iconOptions={ICON_OPTIONS[transaction.type === TransactionType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE]} 
             />
 
         </Animated.View>
@@ -226,8 +294,7 @@ export const TransactionItemMobile = React.memo(({
 const styles = StyleSheet.create({
     containerWrapper: {
         borderRadius: 12,
-        // No pongas overflow hidden aquí si quieres que la sombra se vea, 
-        // pero sí es necesario para la animación de colapso de altura.
+        minHeight: 80, // Altura mínima, pero puede crecer
     },
     backgroundContainer: {
         flexDirection: 'row',
@@ -243,64 +310,84 @@ const styles = StyleSheet.create({
     },
     itemContainer: {
         borderRadius: 12,
-        borderWidth: 0.4,
-        height: '100%', // Ocupar toda la altura del wrapper animado
+        borderWidth: 0.5,
+        height: '100%',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     touchableContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
+        padding: 16, // Aumentado de 12 a 16 para más espacio
         gap: 12,
         flex: 1,
+        minHeight: 80, // Altura mínima para el contenido
     },
     avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
+        flexShrink: 0,
     },
     textContainer: {
         flex: 1,
-        gap: 4,
+        gap: 6, // Aumentado de 4 a 6
+        justifyContent: 'center',
     },
     titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 4, // Aumentado de 2 a 4
+        flexWrap: 'wrap', 
     },
     description: {
         fontSize: 16,
-        fontWeight: '400',
-        maxWidth: 150,
+        fontWeight: '500',
+        flexShrink: 1,
+        lineHeight: 22, // Agregado para mejor legibilidad
     },
     chip: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
+        paddingHorizontal: 10, // Aumentado de 8 a 10
+        paddingVertical: 4, // Aumentado de 2 a 4
         borderRadius: 12,
+        maxWidth: 120, // Aumentado de 100 a 120
     },
     chipText: {
-        fontSize: 10,
-        fontWeight: '500',
+        fontSize: 11,
+        fontWeight: '600',
+        lineHeight: 14,
     },
     dateText: {
         fontSize: 12,
+        lineHeight: 16, // Agregado para mejor legibilidad
     },
     amountContainer: {
         alignItems: 'flex-end',
+        justifyContent: 'center',
+        flexShrink: 0,
+        gap: 6, // Aumentado de 4 a 6
+        minWidth: 90, // Ancho mínimo para evitar compresión
     },
-    accoutBadge: {
-        fontSize: 10,
-        marginBottom: 4,
-        width: 60,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-        overflow: 'hidden', // Importante en iOS para que se vea el borderRadius con fondo
-        textAlign: 'center' // Centra el texto dentro del badge
+    accountBadgeContainer: {
+        paddingHorizontal: 10, // Aumentado de 8 a 10
+        paddingVertical: 4, // Aumentado de 2 a 4
+        borderRadius: 6,
+        maxWidth: 100, // Aumentado de 80 a 100
+        minHeight: 22, // Altura mínima para el badge
+    },
+    accountBadgeText: {
+        fontSize: 11,
+        fontWeight: '500',
+        lineHeight: 14,
     },
     amountText: {
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '700',
+        lineHeight: 20, // Agregado para mejor legibilidad
     },
 });

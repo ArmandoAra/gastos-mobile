@@ -18,6 +18,7 @@ import Animated, {
     ZoomIn,
     ZoomOut
 } from 'react-native-reanimated';
+import { t } from 'i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -75,7 +76,7 @@ export default function WarningMessage({
 
                         {/* Contenido de Texto */}
                         <View style={styles.contentContainer}>
-                            <Text style={styles.title}>Warning</Text>
+                            <Text style={styles.title}>{t('commonWarnings.warning', 'Warning')}</Text>
                             <Text style={styles.message}>
                                 {message}
                             </Text>
@@ -85,7 +86,7 @@ export default function WarningMessage({
                         <View style={styles.buttonsContainer}>
                             {/* Botón NO (Verde) */}
                             <PopupButton 
-                                label="NO"
+                                label={t('common.no', 'NO')}
                                 colors={['#10b981', '#34d399']}
                                 hoverColors={['#14b8a6', '#10b981']} // En móvil no hay hover, pero usaremos el color base
                                 onPress={onClose}
@@ -93,7 +94,7 @@ export default function WarningMessage({
 
                             {/* Botón YES (Rojo) */}
                             <PopupButton 
-                                label="YES"
+                                label={t('common.yes', 'YES')}
                                 colors={['#ef4444', '#f87171']}
                                 onPress={onSubmit}
                             />

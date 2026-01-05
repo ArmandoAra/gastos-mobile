@@ -5,7 +5,9 @@ import {
     TextInput, 
     TouchableOpacity, 
     StyleSheet, 
-    Platform 
+    Keyboard,
+    AccessibilityInfo,
+    Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,20 +18,18 @@ import Animated, {
     FadeInLeft,
     FadeInRight
 } from 'react-native-reanimated';
-import { Icon } from '@expo/vector-icons/build/createIconSet';
 import { IconOption } from '../../../constants/icons';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { darkTheme, lightTheme } from '../../../theme/colors';
 import { ThemeColors } from '../../../types/navigation';
+import { useTranslation } from 'react-i18next';
 
-// Definimos la interfaz adaptada para RN
 interface CategoryAndAmountInputProps {
     selectedIcon: IconOption | null;
     amount: string;
     setAmount: (value: string) => void;
     amountInputRef?: RefObject<TextInput | null>;
-    handleIconClick: (event: any) => void; // <-- Debe recibir esto
+    handleIconClick: (event: any) => void;
     colors: ThemeColors;
+    onOpenCalculator: () => void;
 }
 
 export default function CategoryAndAmountInput({
@@ -39,74 +39,111 @@ export default function CategoryAndAmountInput({
     amountInputRef,
     handleIconClick,
     colors,
+    onOpenCalculator
 }: CategoryAndAmountInputProps) {
-
-    // Lógica de animación para el botón de categoría (Scale effect)
+    const { t } = useTranslation();
     const scale = useSharedValue(1);
 
-    const handlePressIn = () => {
-        scale.value = withSpring(0.95);
-    };
+    const handlePressIn = () => { scale.value = withSpring(0.95); };
+    const handlePressOut = () => { scale.value = withSpring(1); };
 
-    const handlePressOut = () => {
-        scale.value = withSpring(1);
-    };
+    const animatedIconStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }]
+    }));
 
     return (
-        <View 
-            style={styles.container}
-        >
-            {/* 1. Category Selector */}
+        <View style={styles.container}>
+            {/* 1. SELECCIÓN DE CATEGORÍA */}
             <View style={styles.categoryColumn}>
-                <Text style={styles.label}>CATEGORY</Text>
+                <Text
+                    style={[styles.label, { color: colors.textSecondary }]}
+                    maxFontSizeMultiplier={1.5} // Evita que labels auxiliares rompan el layout
+                    numberOfLines={1}
+                >
+                    {t('transactions.category', 'CATEGORY')}
+                </Text>
                 
                 <TouchableOpacity
-                    activeOpacity={1}
+                    activeOpacity={0.8}
                     onPress={handleIconClick}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('accessibility.select_category', 'Select Category')}
+                    accessibilityHint={selectedIcon ? `${t('common.current')}: ${selectedIcon.label}` : t('common.none_selected')}
                 >
-                    <Animated.View
-                        layout={FadeInLeft}
-                        entering={FadeInLeft}
-                        style={[styles.iconContainer]}>
-                        <LinearGradient
-                            colors={selectedIcon?.gradientColors || ['#ccc', '#999']}
-                            style={styles.gradient}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                        >
-                            {selectedIcon && React.createElement(selectedIcon.icon, { size: 28, color: colors.text })}
-                        </LinearGradient>
+                    <Animated.View entering={FadeInLeft} style={styles.iconContainer}>
+                        <Animated.View style={animatedIconStyle}>
+                            <LinearGradient
+                                colors={selectedIcon?.gradientColors || ['#ccc', '#999']}
+                                style={[styles.gradient, { borderColor: colors.border }]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                            >
+                                {selectedIcon ? (
+                                    React.createElement(selectedIcon.icon, {
+                                        size: 28, // Tamaño base, escalará con el sistema si es SVG/Font
+                                        color: colors.text
+                                    })
+                                ) : (
+                                    <MaterialIcons name="category" size={28} color={colors.textSecondary} />
+                                )}
+                            </LinearGradient>
+                        </Animated.View>
                     </Animated.View>
                 </TouchableOpacity>
             </View>
 
-            {/* 2. Amount Input */}
-            <View
-                style={styles.amountColumn}>
-                <Text style={styles.label}>AMOUNT</Text>
+            {/* 2. ENTRADA DE MONTO */}
+            <View style={styles.amountColumn}>
+                <Text
+                    style={[styles.label, { color: colors.textSecondary }]}
+                    maxFontSizeMultiplier={1.5}
+                    numberOfLines={1}
+                >
+                    {t('transactions.amount', 'AMOUNT')}* ({amount.length}/12)
+                </Text>
                 
                 <Animated.View
-                    layout={FadeInRight}
                     entering={FadeInRight}
-                    style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    style={[
+                        styles.inputWrapper,
+                        { backgroundColor: colors.surface, borderColor: colors.border }
+                    ]}
+                >
                     <TextInput
                         ref={amountInputRef}
                         value={amount}
-                        onChangeText={(text) => {
-                            // Validación de longitud y caracteres
-                            if (text.length <= 9) {
-                                // Opcional: Validar que sea número válido o permitir punto decimal
-                                setAmount(text);
-                            }
-                        }}
+                        onChangeText={setAmount}
                         placeholder="0.00"
+                        maxLength={12}
                         placeholderTextColor={colors.textSecondary}
-                        keyboardType="decimal-pad" // Teclado numérico con punto
-                        style={[styles.input, { color: colors.text, backgroundColor: colors.surface }]}
-                        returnKeyType="done"
+                        keyboardType="decimal-pad"
+                        style={[styles.input, { color: colors.text }]}
+                        // Accesibilidad
+                        accessibilityLabel={t('accessibility.amount_input', 'Amount input')}
+                        // Escalado dinámico
+                        allowFontScaling={true} // Permitir que el input crezca
                     />
+
+                    {/* BOTÓN CALCULADORA */}
+                    <TouchableOpacity
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            onOpenCalculator();
+                            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened', 'Calculator keyboard opened'));
+                        }}
+                        style={[styles.calcButton, { backgroundColor: colors.text }]} // Alto contraste
+                        accessibilityRole="button"
+                        accessibilityLabel={t('accessibility.open_calculator', 'Open Calculator')}
+                        accessibilityHint={t('accessibility.calculator_hint', 'Opens a numeric keypad with basic math functions')}
+                    >
+                        <MaterialIcons
+                            name="calculate"
+                            size={28} // Tamaño un poco más grande para mejor visibilidad
+                            color={colors.surface}
+                        />
+                    </TouchableOpacity>
                 </Animated.View>
             </View>
         </View>
@@ -116,59 +153,72 @@ export default function CategoryAndAmountInput({
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        gap: 16,
-        alignItems: 'flex-start',
+        gap: 12,
+        alignItems: 'flex-end',
         width: '100%',
+        paddingVertical: 8,
     },
-    // Columna de Categoría
+    // --- COLUMNA CATEGORÍA ---
     categoryColumn: {
-        alignItems: 'center', // Centrado para el icono
-        flex: 0, // No crece, tamaño fijo
+        alignItems: 'center',
+        flexShrink: 0, // No se encoge
+        maxWidth: 80, // Limita el ancho para que no empuje el input
     },
     iconContainer: {
-        // Contenedor para la animación de escala
+        // Wrapper para sombras si se desea en el futuro
+        minWidth: 58,
+        minHeight: 58,
     },
     gradient: {
-        width: 56,
-        height: 56,
-        borderRadius: 18, // Bordes redondeados modernos
+        // Dimensiones flexibles con mínimos para accesibilidad
+        minWidth: 58,
+        minHeight: 58,
+        padding: 12, // Padding interno asegura que el icono grande no toque bordes
+        borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        // CERO SOMBRAS
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
+        borderWidth: 1.5,
     },
 
-    // Columna de Monto
+    // --- COLUMNA MONTO ---
     amountColumn: {
-        flex: 1, // Ocupa el resto del espacio
+        flex: 1, // Toma todo el espacio restante
     },
     inputWrapper: {
-        width: '100%',
-        height: 56, // Misma altura que el icono para alineación visual
-        backgroundColor: '#F5F5F7', // Fondo gris estilo iOS Input
-        borderRadius: 16,
-        justifyContent: 'center',
-        paddingHorizontal: 16,
-        // Borde sutil en lugar de sombra
-        borderWidth: 1,
-        borderColor: 'transparent',
+        flexDirection: 'row',
+        alignItems: 'center',
+        // Altura mínima en lugar de fija para permitir crecimiento de fuente
+        minHeight: 58,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        paddingLeft: 16,
+        paddingRight: 6,
     },
     input: {
-        fontSize: 18,
-        fontWeight: '600',
-        height: '100%', // Ocupa todo el wrapper
+        flex: 1,
+        fontSize: 22, // Fuente base grande
+        fontWeight: '700',
+        minHeight: 44, // Altura táctil mínima
+        paddingVertical: 0, // Reset padding
+    },
+    calcButton: {
+        width: 46,
+        height: 46,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
+        // Asegura que el botón no se deforme
+        aspectRatio: 1,
     },
 
-    // Estilos Comunes
+    // --- TEXTOS ---
     label: {
-        fontSize: 8,
-        fontWeight: '700',
-        color: '#888', // text.secondary
-        marginBottom: 4,
+        fontSize: 11,
+        fontWeight: '800',
+        marginBottom: 8,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        alignSelf: 'flex-start',
         marginLeft: 4,
     }
 });

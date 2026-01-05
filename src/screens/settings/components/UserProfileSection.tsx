@@ -331,10 +331,9 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
 
 const styles = StyleSheet.create({
     card: {
-        marginTop: 10,
+        marginVertical: 10,
         borderRadius: 16, // Bordes un poco más suaves
         padding: 20,
-        marginBottom: 20,
         borderWidth: 0.5,
         // Sombras sutiles
         ...Platform.select({

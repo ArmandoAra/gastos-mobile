@@ -1,8 +1,16 @@
 import { format, parseISO, isSameMonth, isSameYear, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import React, { useState, useMemo, useCallback } from "react";
-import { View, TouchableOpacity, Text, TextInput, StyleSheet } from "react-native";
-import { styles } from "../../theme/styles";
+import {
+    View,
+    TouchableOpacity,
+    Text,
+    TextInput,
+    StyleSheet,
+    Platform,
+    AccessibilityInfo
+} from "react-native";
+import { styles } from "../../theme/styles"; // Estilos globales si los usas
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 
@@ -16,19 +24,17 @@ import useDataStore from "../../stores/useDataStore";
 import { Transaction, TransactionType } from "../../interfaces/data.interface";
 import { formatCurrency } from "../../utils/helpers";
 import FilterFloatingButton from "./components/FilterFloatingButton";
-import TransactionsHeader from "../../components/headers/InfoHeader";
 import useDateStore from "../../stores/useDateStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { ThemeColors } from "../../types/navigation";
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import InfoHeader from "../../components/headers/InfoHeader";
-import { useAuthStore } from "../../stores/authStore";
+import { useTranslation } from "react-i18next";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ViewMode = 'day' | 'month' | 'year';
 
-// --- TIPO DE DATOS PARA LA LISTA PLANA ---
-// Puede ser un Header (fecha) o un Item (transacción)
 type ListItem =
     | { type: 'header'; date: string; total: number; id: string }
     | { type: 'transaction'; data: Transaction };
@@ -36,6 +42,7 @@ type ListItem =
 export function TransactionsScreen() {
     const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+    const { t } = useTranslation();
 
     const { localSelectedDay } = useDateStore();
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -53,13 +60,10 @@ export function TransactionsScreen() {
     // --- 1. FILTRADO (Memoizado) ---
     const filteredTransactions = useMemo(() => {
         let result = transactions;
-
-        // Filtro rápido para evitar procesar todo si no hay transacciones
         if (!result || result.length === 0) return [];
 
         result = result.filter(t => {
             const tDate = parseISO(t.date);
-            // Optimización: Comparaciones simples primero
             if (viewMode === 'day') return isSameDay(tDate, localSelectedDay);
             if (viewMode === 'month') return isSameMonth(tDate, localSelectedDay) && isSameYear(tDate, localSelectedDay);
             if (viewMode === 'year') return isSameYear(tDate, localSelectedDay);
@@ -82,11 +86,9 @@ export function TransactionsScreen() {
     }, [filter, searchQuery, transactions, localSelectedDay, viewMode]);
 
     // --- 2. PREPARAR DATOS PARA FLASHLIST (Aplanado) ---
-    // Convertimos la estructura agrupada en un array plano lineal para máximo rendimiento
     const listData = useMemo(() => {
         const groups: Record<string, Transaction[]> = {};
 
-        // Agrupar
         filteredTransactions.forEach(t => {
             const date = parseISO(t.date);
             const groupKey = viewMode === 'year'
@@ -97,15 +99,12 @@ export function TransactionsScreen() {
             groups[groupKey].push(t);
         });
 
-        // Aplanar
         const flatList: ListItem[] = [];
         Object.entries(groups).forEach(([dateKey, items]) => {
-            // Calcular total del grupo
             const total = items.reduce((sum, t) =>
                 t.type === 'expense' ? sum - t.amount : sum + t.amount, 0
             );
 
-            // 1. Insertar Header
             flatList.push({
                 type: 'header',
                 date: dateKey,
@@ -113,7 +112,6 @@ export function TransactionsScreen() {
                 id: `header-${dateKey}`
             });
 
-            // 2. Insertar Items
             items.forEach(t => {
                 flatList.push({ type: 'transaction', data: t });
             });
@@ -129,10 +127,11 @@ export function TransactionsScreen() {
             if (account_id && amount && transactionType) {
                 deleteSomeAmountInAccount(account_id, Math.abs(amount), transactionType);
             }
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('common.deleted'));
         } catch (error) {
             console.error('Error deleting transaction:', error);
         }
-    }, [deleteTransaction, deleteSomeAmountInAccount]);
+    }, [deleteTransaction, deleteSomeAmountInAccount, t]);
 
     const handleSave = useCallback(async (updatedTransaction: Transaction, fromAccount: string | null = null, toAccount: string | null = null) => {
         if (!updatedTransaction) return;
@@ -149,26 +148,39 @@ export function TransactionsScreen() {
         }
     }, [updateTransaction, updateAccountBalance, deleteSomeAmountInAccount]);
 
-    // Helper para títulos de fecha
     const getGroupTitle = (dateKey: string) => {
         const date = parseISO(dateKey);
+        // Nota: Asegúrate de manejar el locale dinámicamente si soportas múltiples idiomas en date-fns
         if (viewMode === 'year') return format(date, 'MMMM', { locale: es });
         return format(date, 'EEEE, d MMMM', { locale: es });
     };
 
-    // --- RENDERIZADO DE ITEMS (OPTIMIZADO) ---
+    // --- RENDERIZADO DE ITEMS ---
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
         if (item.type === 'header') {
+            const title = getGroupTitle(item.date);
+            const totalFormatted = formatCurrency(item.total);
+
             return (
-                <View style={[styles.dateHeader, { backgroundColor: colors.surface }]}>
-                    <Text style={[styles.dateHeaderText, { color: colors.text }]}>
-                        {getGroupTitle(item.date)}
+                <View
+                    style={[localStyles.dateHeader, { backgroundColor: colors.surfaceSecondary }]}
+                    accessibilityRole="header"
+                    accessibilityLabel={`${title}, total ${totalFormatted}`}
+                >
+                    <Text
+                        style={[localStyles.dateHeaderText, { color: colors.text }]}
+                        maxFontSizeMultiplier={1.5}
+                    >
+                        {title}
                     </Text>
-                    <Text style={[
-                        styles.dateHeaderTotal,
-                        { color: item.total >= 0 ? colors.income : colors.expense }
-                    ]}>
-                        {formatCurrency(item.total)}
+                    <Text
+                        style={[
+                            localStyles.dateHeaderTotal,
+                            { color: item.total >= 0 ? colors.income : colors.expense }
+                        ]}
+                        maxFontSizeMultiplier={1.5}
+                    >
+                        {totalFormatted}
                     </Text>
                 </View>
             );
@@ -184,12 +196,10 @@ export function TransactionsScreen() {
         );
     }, [colors, handleDelete, handleSave, viewMode]);
 
-    // Key Extractor para rendimiento
     const keyExtractor = useCallback((item: ListItem) => {
         return item.type === 'header' ? item.id : item.data.id;
     }, []);
 
-    // Determinar qué índices son sticky (pegajosos)
     const stickyHeaderIndices = useMemo(() => {
         return listData
             .map((item, index) => (item.type === 'header' ? index : null))
@@ -197,37 +207,61 @@ export function TransactionsScreen() {
     }, [listData]);
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <SafeAreaView style={[localStyles.container, { backgroundColor: colors.surface }]}>
             <InfoPopUp />
             <InfoHeader viewMode={viewMode} />
 
-            {/* Filtros */}
-            <View style={[localStyles.filterContainer, { borderBottomColor: colors.border }]}>
-                <FilterFloatingButton
-                    viewMode={viewMode}
-                    setViewMode={setViewMode}
-                    filter={filter}
-                    setFilter={setFilter}
-                    colors={colors}
-                />
-                <View style={{ flexDirection: 'column', alignItems: 'center', gap: 1, width: 80, paddingHorizontal: 4 }}>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.text, color: colors.surface }}>{viewMode}</Text>
-                    <Text style={{ ...localStyles.modeLabel, backgroundColor: colors.text, color: colors.surface }}>{filter}</Text>
+            {/* --- CONTROLES Y FILTROS (Refactorizado para Wrap) --- */}
+            <View style={[localStyles.controlsContainer, { borderBottomColor: colors.border }]}>
+
+                {/* Grupo Izquierdo: Botón Filtro + Badges */}
+                <View style={localStyles.filterGroup}>
+                    <FilterFloatingButton
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
+                        filter={filter}
+                        setFilter={setFilter}
+                        colors={colors}
+                    />
+                    <View style={localStyles.badgesContainer}>
+                        <Text
+                            style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.5}
+                        >
+                            {t(`transactions.${viewMode}`)}
+                        </Text>
+                        <Text
+                            style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.5}
+                        >
+                            {t(`transactions.${filter}Plural`)}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Search */}
-                <View style={[localStyles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="search" size={20} color={colors.text} style={{ marginRight: 8 }} />
+                {/* Grupo Derecho: Búsqueda */}
+                <View style={[localStyles.searchContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+                    <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} importantForAccessibility="no" />
                     <TextInput
                         style={[localStyles.searchInput, { color: colors.text }]}
-                        placeholder={`Search in this ${viewMode}...`}
+                        // concatenar el tipo de vista al placeholder
+                        placeholder={`${t('transactions.searchPlaceholder')} ${t(`transactions.${viewMode}`).toLowerCase()}`}
                         placeholderTextColor={colors.textSecondary}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         autoCorrect={false}
+                        // Accesibilidad Input
+                        accessibilityLabel={t('transactions.searchPlaceholder', 'Search transactions')}
                     />
                     {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                        <TouchableOpacity
+                            onPress={() => setSearchQuery('')}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.clear', 'Clear search')}
+                            style={{ padding: 4 }}
+                        >
                             <Ionicons name="close-circle" size={20} color={colors.text} />
                         </TouchableOpacity>
                     )}
@@ -236,78 +270,117 @@ export function TransactionsScreen() {
 
             <View style={{ height: 1 }} />
 
-            {/* --- LISTA OPTIMIZADA (FLASHLIST) --- */}
+            {/* --- LISTA --- */}
             <View style={{ flex: 1 }}>
                 <GestureHandlerRootView style={{ flex: 1 }}>
                     <FlashList
                         data={listData}
                         renderItem={renderItem}
                         keyExtractor={keyExtractor}
-                        stickyHeaderIndices={stickyHeaderIndices} // Hace que los headers de fecha se peguen arriba
-                        contentContainerStyle={{ paddingBottom: 200, paddingHorizontal: 8 }}
+                        style={{ height: 200 }}
+                        stickyHeaderIndices={stickyHeaderIndices}
+                        contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 8 }}
+                        keyboardDismissMode="on-drag"
                         ListEmptyComponent={
-                        <View style={localStyles.emptyState}>
-                                <MaterialIcons name="receipt-long" size={48} color={colors.textSecondary} />
-                            <Text style={localStyles.emptyText}>
-                                No transactions found for this {viewMode}
-                            </Text>
-                        </View>
-                    }
+                            <View style={localStyles.emptyState} accessible={true}>
+                                <MaterialIcons name="receipt-long" size={48} color={colors.textSecondary} importantForAccessibility="no" />
+                                <Text style={[localStyles.emptyText, { color: colors.textSecondary }]}>
+                                    {`${t('transactions.notFound')} ${t(`transactions.${viewMode}`).toLowerCase()}.`}
+                                </Text>
+                            </View>
+                        }
                     />
                 </GestureHandlerRootView>
             </View>
 
             <AddTransactionsButton />
-        </View>
+        </SafeAreaView>
     );
 }
 
 const localStyles = StyleSheet.create({
-    filterContainer: {
-        paddingHorizontal: 16,
+    container: {
+        flex: 1,
+    },
+    controlsContainer: {
+        paddingHorizontal: 8,
         borderBottomWidth: 0.5,
-        paddingVertical: 8,
-        display: 'flex',
+        paddingVertical: 12,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    // Grupo Izquierdo (Botón Flotante + Badges)
+    filterGroup: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        gap: 8,
+        flexShrink: 0, // No se encoge, prioridad al filtro
+    },
+    badgesContainer: {
+        flexDirection: 'column',
+        alignItems: 'flex-start', // Alineado a la izq para texto variable
+        gap: 4,
+        maxWidth: 100, // Límite máximo para que no empuje demasiado
     },
     modeLabel: {
-        fontWeight: '400',
-        width: '100%',
-        textAlign: 'center',
-        paddingHorizontal: 4,
-        paddingVertical: 2,
+        fontWeight: '500',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
         borderRadius: 14,
         textTransform: 'capitalize',
-        fontSize: 12
+        fontSize: 11,
+        overflow: 'hidden',
     },
+    // Grupo Derecho (Búsqueda)
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'flex-end',
-        width: '60%',
-        height: "100%",
-        marginHorizontal: 4,
+        flex: 1, // Toma el espacio restante
+        minWidth: 200, // Si es menor a 200px, baja a la siguiente línea (wrap)
+        minHeight: 44, // Altura táctil accesible
         paddingHorizontal: 12,
         borderRadius: 12,
         borderWidth: 1,
     },
     searchInput: {
         flex: 1,
-        fontSize: 12,
-        padding: 0,
+        fontSize: 14,
+        paddingVertical: 8, // Área de toque vertical
+        height: '100%',
     },
+    // Headers de Fecha
+    dateHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginBottom: 8,
+        marginTop: 0,
+        borderRadius: 8,
+    },
+    dateHeaderText: {
+        fontSize: 14,
+        fontWeight: '700',
+        textTransform: 'capitalize',
+    },
+    dateHeaderTotal: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    // Empty State
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 50,
-        opacity: 0.7
+        marginTop: 60,
+        opacity: 0.7,
+        gap: 12,
     },
     emptyText: {
-        color: '#94a3b8',
-        marginTop: 10,
-        fontSize: 16
+        fontSize: 16,
+        textAlign: 'center',
     }
 });

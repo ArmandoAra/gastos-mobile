@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     card: {
         borderRadius: 16,
         padding: 20,
-        marginBottom: 20,
+        marginBottom: 10,
         borderWidth: 0.5,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },

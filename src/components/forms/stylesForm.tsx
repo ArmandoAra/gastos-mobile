@@ -16,9 +16,7 @@ export const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.1,
         shadowRadius: 20,
-        elevation: 10,
-        paddingBottom: 20,
-        maxHeight: '65%', 
+        height: '100%',
     },
     header: {
         marginTop: 5,
@@ -34,14 +32,25 @@ export const styles = StyleSheet.create({
         fontWeight: '700',
     },
     closeButton: {
+        position: 'absolute',
+        left: 12,
+        top: 10,
         padding: 6,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
+        width: 46,
+        height: 46,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 0.5,
+        borderRadius: 24,
     },
     scrollContent: {
         paddingHorizontal: 20,
         gap: 16,
         paddingBottom: 20, // Espacio extra al final del scroll
+    },
+    closeButtonText: {
+        fontSize: 24,
+        fontWeight: '600',
     },
     rowSelectors: {
         flexDirection: 'row',
@@ -66,8 +75,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
     },
     saveButtonText: {
-        color: 'white',
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '500',
     },
 });

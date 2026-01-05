@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { 
     View, 
     Text, 
@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { ThemeColors } from '../../../types/navigation';
+import { useTranslation } from 'react-i18next';
 
 // Tipos definidos en tu app
 type ViewMode = 'day' | 'month' | 'year';
@@ -40,6 +41,7 @@ export default function FilterFloatingButton({
     setFilter,
     colors,
 }: FilterFloatingButtonProps) {
+    const { t } = useTranslation();
     
     const [isOpen, setIsOpen] = useState(false);
 
@@ -91,14 +93,14 @@ export default function FilterFloatingButton({
                         style={[styles.modalContent, { borderColor: colors.border, backgroundColor: colors.surface }]}
                     >
                         <View style={styles.header}>
-                            <Text style={[styles.headerTitle, { color: colors.text }]}>Filters & View</Text>
+                            <Text style={[styles.headerTitle, { color: colors.text }]}>{t('transactions.filtersAndView')}</Text>
                             <TouchableOpacity onPress={() => setIsOpen(false)}>
                                 <Ionicons name="close-circle" size={32} color={colors.error} />
                             </TouchableOpacity>
                         </View>
 
                         {/* SECCIÓN 1: VIEW MODE */}
-                        <Text style={[styles.sectionLabel, { color: colors.text }]}>Time Period</Text>
+                        <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('transactions.period')}</Text>
                         <View style={styles.selectorContainer}>
                             {(['day', 'month', 'year'] as ViewMode[]).map((mode) => {
                                 const isActive = viewMode === mode;
@@ -112,14 +114,20 @@ export default function FilterFloatingButton({
                                             <View
                                                 style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.text }]}
                                             >
+                                                <Text style={[styles.textActive, { color: colors.surface, fontSize: 8, position: 'relative', bottom: 3 }]}>
+                                                    {t('transactions.by')}&nbsp;
+                                                </Text>
                                                 <Text style={[styles.textActive, { color: colors.surface }]}>
-                                                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                                    {t(`transactions.${mode}`)}
                                                 </Text>
                                             </View>
                                         ) : (
                                                 <View style={[styles.optionInactive, { borderColor: colors.border }]}>
+                                                    <Text style={[styles.textInactive, { color: colors.textSecondary, fontSize: 8, position: 'relative', bottom: 3 }]}>
+                                                        {t('transactions.by')}&nbsp;
+                                                    </Text>
                                                     <Text style={[styles.textInactive, { color: colors.textSecondary, borderColor: colors.border }]}>
-                                                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                                        {t(`transactions.${mode}`)}
                                                 </Text>
                                             </View>
                                         )}
@@ -129,7 +137,7 @@ export default function FilterFloatingButton({
                         </View>
 
                         {/* SECCIÓN 2: TIPO DE TRANSACCIÓN */}
-                        <Text style={[styles.sectionLabel, { marginTop: 20 }, { color: colors.text }]}>Transaction Type</Text>
+                        <Text style={[styles.sectionLabel, { marginTop: 20 }, { color: colors.text }]}>{t('transactions.sortBy')}</Text>
                         <View style={styles.selectorContainer}>
                             {['all', 'income', 'expense'].map((f) => {
                                 const isActive = filter === f;
@@ -144,13 +152,13 @@ export default function FilterFloatingButton({
                                                 style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.text }]}
                                             >
                                                 <Text style={[styles.textActive, { color: colors.surface }]}>
-                                                    {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
+                                                    {f === 'all' ? t('transactions.all') : t(`transactions.${f}Plural`)}
                                                 </Text>
                                             </View>
                                         ) : (
                                                 <View style={[styles.optionInactive, { borderColor: colors.border }]}>
                                                     <Text style={[styles.textInactive, { color: colors.textSecondary }]}>
-                                                     {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1) + 's'}
+                                                        {f === 'all' ? t('transactions.all') : t(`transactions.${f}Plural`)}
                                                 </Text>
                                             </View>
                                         )}
@@ -241,6 +249,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     optionActive: {
+        flexDirection: 'row',
         borderWidth: 0.4,
         flex: 1,
         borderRadius: 24,
@@ -248,6 +257,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     optionInactive: {
+        flexDirection: 'row',
         flex: 1,
         borderRadius: 24,
         justifyContent: 'center',
