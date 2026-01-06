@@ -17,7 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { MONTHS, WEEKDAYS_SHORT } from '../../constants/date';
+import { months, weekDaysShort } from '../../constants/date';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
@@ -35,7 +35,7 @@ export default function ModernCalendarSelector({
   onDateChange
 }: ModernCalendarSelectorProps) {
   const { t } = useTranslation();
-  const { theme } = useSettingsStore();
+  const { theme, language } = useSettingsStore();
   const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -91,7 +91,7 @@ export default function ModernCalendarSelector({
   };
 
   // Helper para nombre del mes accesible
-  const monthName = t(`months.${MONTHS[viewDate.getMonth()].toLowerCase()}`);
+  const monthName = months[language][viewDate.getMonth()];
 
   return (
     <>
@@ -185,7 +185,7 @@ export default function ModernCalendarSelector({
 
             {/* Días de la semana (Ignorados por lector para no ser redundantes al navegar por días) */}
             <View style={styles.weekRow} importantForAccessibility="no-hide-descendants">
-              {WEEKDAYS_SHORT.map((day, index) => (
+              {weekDaysShort[language].map((day, index) => (
                 <Text key={index} style={[styles.weekdayText, { color: colors.textSecondary }]}>
                   {day}
                 </Text>
@@ -210,7 +210,7 @@ export default function ModernCalendarSelector({
                     style={styles.dayCell}
                     // Accesibilidad Clave
                     accessibilityRole="button"
-                    accessibilityLabel={`${day}, ${monthName} ${viewDate.getFullYear()}`}
+                    accessibilityLabel={`${day}, ${months[language][viewDate.getMonth()]} ${viewDate.getFullYear()}`}
                     accessibilityState={{ selected: selected }}
                     accessibilityHint={today ? t('calendar.today_hint', 'Today') : t('calendar.select_hint', 'Tap to select')}
                   >
@@ -364,6 +364,7 @@ const styles = StyleSheet.create({
     borderRadius: 999, // Círculo perfecto
   },
   dayText: {
+    textAlign: 'center',
     fontSize: 16,
     fontWeight: '500',
   },

@@ -16,8 +16,7 @@ export const styles = StyleSheet.create({
         padding: isSmallScreen ? 12 : 16,
         borderWidth: 0.5,
         marginHorizontal: 4,
-        marginVertical: 10,
-        overflow: 'hidden', // Importante para que los hijos no rompan el borde
+        marginVertical: 10, overflow: 'hidden', // Importante para que los hijos no rompan el borde
         ...Platform.select({
             ios: {
                 shadowColor: "#000",

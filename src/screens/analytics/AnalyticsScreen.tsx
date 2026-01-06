@@ -5,25 +5,16 @@ import {
   ScrollView, 
   TouchableOpacity, 
   StyleSheet,
-  Dimensions 
+  Dimensions,
+  Platform,
+  AccessibilityInfo
 } from 'react-native';
 
-// 1. IMPORTACIONES DE VICTORY NATIVE XL (SKIA)
-import { 
-  CartesianChart, 
-  Bar, 
-  Line,
-  useChartPressState
-} from "victory-native";
-
-// 2. IMPORTACIONES DE SKIA (Necesario para fuentes y colores)
-import { useFont, Circle, vec } from "@shopify/react-native-skia";
-
+// Date-fns
 import { 
   format, 
   startOfMonth, 
   endOfMonth, 
-  subMonths, 
   parseISO, 
   startOfWeek, 
   endOfWeek, 
@@ -31,40 +22,43 @@ import {
   endOfYear 
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import ExpenseLineChart from './components/ExpenseLineChart';
+
+// Stores & Components
 import useDataStore from '../../stores/useDataStore';
 import ExpenseHeatmapMobile from './components/ExpenseHeatmapMobile';
 import DailyExpenseViewMobile from './components/DailyExpenseView';
-import TransactionsHeader from '../../components/headers/InfoHeader';
 import InfoHeader from '../../components/headers/InfoHeader';
+import ExpenseBarChart from './components/ExpenseBarChart';
 import { ViewPeriod } from '../../interfaces/date.interface';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import useDateStore from '../../stores/useDateStore';
-import ExpenseBarChart from './components/ExpenseBarChart';
+import { useTranslation } from 'react-i18next';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import PeriodSelector from './components/subcomponents/PeriodSelector';
+
+// Nota: Quitadas importaciones de Skia/Victory no usadas directamente en este archivo
+// para limpiar el componente padre.
 
 const { width } = Dimensions.get('window');
 
-
-// Colores para el gráfico de torta
+// Colores para el gráfico de torta (Mantenido por si se re-implementa el PieChart)
 const CATEGORY_COLORS = ['#EF5350', '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#26C6DA'];
 
 export default function AnalyticsScreen() {
-  const {transactions}  = useDataStore();
-  const {localSelectedDay} =useDateStore();
-  const {theme} = useSettingsStore();
+  const { transactions } = useDataStore();
+  const { t } = useTranslation();
+  const { localSelectedDay } = useDateStore();
+  const { theme } = useSettingsStore();
   const colors = theme === 'dark' ? darkTheme : lightTheme;
 
   const [selectedPeriod, setSelectedPeriod] =  useState<ViewPeriod>('month');
- 
-  const font = useFont(require("../../../assets/fonts/Quicksand-Regular.ttf"), 12) || null; 
-
 
   // ============================================
-  // LÓGICA DE DATOS (Igual que antes)
+  // LÓGICA DE DATOS
   // ============================================
   const filteredTransactions = useMemo(() => {
-    const now = new Date();
+    const now = new Date(); // OJO: ¿Debería ser localSelectedDay? Usando lógica original por ahora.
     let start, end;
 
     switch (selectedPeriod) {
@@ -80,7 +74,8 @@ export default function AnalyticsScreen() {
         start = startOfYear(now);
         end = endOfYear(now);
         break;
-      default:
+      default: // day
+      // Nota: Para 'day' la lógica original usaba month como fallback o necesita ajuste específico
         start = startOfMonth(now);
         end = endOfMonth(now);
     }
@@ -89,54 +84,12 @@ export default function AnalyticsScreen() {
       const date = parseISO(t.date);
       return date >= start && date <= end;
     });
-  }, [selectedPeriod]);
+  }, [selectedPeriod, transactions]);
 
   const expenses = filteredTransactions.filter(t => t.type === 'expense');
   const income = filteredTransactions.filter(t => t.type === 'income');
 
-  const expensesPieData = useMemo(() => {
-    const groups: Record<string, number> = {};
-    expenses.forEach(t => {
-      if (!groups[t.category_name]) groups[t.category_name] = 0;
-      groups[t.category_name] += t.amount;
-    });
-    
-    return Object.entries(groups)
-      .map(([label, value], index) => ({
-        label,
-        value,
-        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length]
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [expenses]);
-
-  // Preparar datos para Bar Chart
-  const dailyExpenses = useMemo(() => {
-    const days = [];
-    const dayCount = selectedPeriod === 'week' ? 7 : selectedPeriod === 'month' ? 30 : 6;
-    
-    for (let i = dayCount - 1; i >= 0; i--) {
-      const date = new Date();
-      if(selectedPeriod === 'year') {
-         date.setMonth(date.getMonth() - i);
-         const monthStr = format(date, 'MMM', { locale: es });
-         // Suma dummy o real
-         days.push({ x: monthStr, y: Math.random() * 500 + 100 }); 
-      } else {
-        date.setDate(date.getDate() - i);
-        const dateStr = format(date, 'yyyy-MM-dd');
-        const dayLabel = format(date, 'd/MM');
-        
-        const dayTotal = expenses
-          .filter(t => format(parseISO(t.date), 'yyyy-MM-dd') === dateStr)
-          .reduce((sum, t) => sum + t.amount, 0);
-
-        days.push({ x: dayLabel, y: dayTotal });
-      }
-    }
-    return days;
-  }, [expenses, selectedPeriod]);
-
+  // Stats básicos para accesibilidad o headers futuros
   const stats = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
     const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
@@ -147,65 +100,100 @@ export default function AnalyticsScreen() {
     };
   }, [expenses, income]);
 
-  // Interaction State (Hook necesario para tooltips en el futuro)
-  const { state, isActive } = useChartPressState({ x: 0, y: { y: 0 } });
+  const handlePeriodChange = (p: string) => {
+    const newPeriod = p as ViewPeriod;
+    setSelectedPeriod(newPeriod);
+    if (Platform.OS !== 'web') {
+      AccessibilityInfo.announceForAccessibility(t(`transactions.${newPeriod}`) + ' selected');
+    }
+  };
+
+  const PERIODS = ['day', 'week', 'month', 'year'];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface }]}>
-    
-       <InfoHeader viewMode={selectedPeriod} />
-       {/* Period Selector */}
-       <View style={[styles.periodSelector, {backgroundColor: colors.surface}]}>
-        {['day','week', 'month', 'year'].map((p) => (
-          <TouchableOpacity 
-            key={p}
-            style={[styles.periodBtn,
-               {backgroundColor: colors.surface,
-                 borderColor: colors.border},
-                  selectedPeriod === p && 
-                  [ {backgroundColor: colors.text, 
-                    borderColor: colors.border}
-                  ]]}
-            onPress={() => setSelectedPeriod(p as ViewPeriod)}
-          >
-            <Text style={[[styles.periodText, {color: colors.text}], selectedPeriod === p && [  {color: colors.surface}]]}>
-              {p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : p === 'year' ? 'Año' : 'Día'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
 
+      <InfoHeader viewMode={selectedPeriod} />
 
-    <ScrollView >
-
-      <DailyExpenseViewMobile
-        currentPeriod={selectedPeriod}
+      {/* Period Selector - Accesible y Escalable */}
+      <PeriodSelector
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={handlePeriodChange}
+        colors={colors}
+        periods={PERIODS}
       />
 
-       <ExpenseHeatmapMobile />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 1. Daily View */}
+        <View style={styles.sectionContainer}>
+          <DailyExpenseViewMobile currentPeriod={selectedPeriod} />
+        </View>
 
-       <ExpenseBarChart 
-        currentPeriod={selectedPeriod}
-       />
+        {/* 2. Heatmap */}
+        <View style={styles.sectionContainer}>
+          <ExpenseHeatmapMobile />
+        </View>
 
+        {/* 3. Bar Chart */}
+        {/* <View style={[styles.sectionContainer, { marginBottom: 40 }]}>
+          <ExpenseBarChart currentPeriod={selectedPeriod} />
+        </View> */}
 
-      <View style={{ height: 40 }} />
     </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 35 },
-  periodSelector: { flexDirection: 'row', paddingHorizontal: 8, paddingTop: 4, paddingBottom: 8, gap: 8, backgroundColor: 'white' },
-  periodBtn: { flex: 1, paddingVertical: 8, borderRadius: 24,  alignItems: 'center' , borderWidth: 0.5},
-  periodText: { color: '#757575', fontWeight: '600' },
-  periodTextActive: { color: 'white' },
-  balanceCard: { backgroundColor: 'white', margin: 16, padding: 16, borderRadius: 16, elevation: 2 },
-  balanceLabel: { color: '#757575', marginBottom: 8 },
+  container: {
+    flex: 1,
+  },
+  periodSelectorWrapper: {
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+  },
+  // Contenido flex-wrap para escalabilidad
+  periodSelectorContent: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // CLAVE: Permite que los botones bajen si la fuente es gigante
+    gap: 8,
+    justifyContent: 'center', // Centrado si sobran espacios o hacen wrap
+  },
+  periodBtn: {
+    // Flex grow ayuda a llenar espacios, minWidth asegura tocabilidad
+    flexGrow: 1,
+    flexBasis: '20%', // Base aproximada para 4 items
+    minWidth: 70,
+    minHeight: 44, // Altura táctil mínima recomendada
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1, // Cambiado a 1 para mejor visibilidad en bordes
+  },
+  periodText: {
+    fontWeight: '600',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  scrollContent: {
+    paddingTop: 8,
+  },
+  sectionContainer: {
+    marginBottom: 60,
+    // No forzamos altura, dejamos que el hijo decida
+  },
+  // Estilos legacy mantenidos por si acaso, aunque no usados directamente en el JSX actual
+  balanceCard: { margin: 16, padding: 16, borderRadius: 16, elevation: 2 },
+  balanceLabel: { marginBottom: 8 },
   balanceAmount: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
   balanceRow: { flexDirection: 'row', gap: 16, justifyContent:'space-between' },
-  balanceItemLabel: { fontSize: 12, color: '#757575' },
-  chartContainer: { backgroundColor: 'white', margin: 16, marginTop: 0, padding: 16, borderRadius: 16, elevation: 2 },
+  balanceItemLabel: { fontSize: 12 },
+  chartContainer: { margin: 16, marginTop: 0, padding: 16, borderRadius: 16, elevation: 2 },
   chartTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
 });
