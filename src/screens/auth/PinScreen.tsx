@@ -1,19 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    Alert,
+    StyleSheet,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    PixelRatio
+} from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { da } from 'date-fns/locale';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+
+// Función auxiliar para escalar iconos según la configuración del dispositivo
+const getScaledSize = (size: number) => size * PixelRatio.getFontScale();
 
 export const PinScreen = () => {
     const { theme } = useSettingsStore();
     const colors = theme === 'dark' ? darkTheme : lightTheme;
+    const { t } = useTranslation();
 
     const [pin, setPin] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false); // Estado local para bloquear duplicados
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    // Usar selectores específicos para evitar re-renders innecesarios
     const loginWithPin = useAuthStore(state => state.loginWithPin);
     const loginWithBiometrics = useAuthStore(state => state.loginWithBiometrics);
     const isBiometricEnabled = useAuthStore(state => state.isBiometricEnabled);
@@ -21,7 +35,6 @@ export const PinScreen = () => {
     const user = useAuthStore(state => state.user);
 
     useEffect(() => {
-        // Solo disparar si no estamos ya autenticados y no estamos procesando
         if (isBiometricEnabled && !isAuthenticated && !isProcessing) {
             handleBiometricLogin();
         }
@@ -32,7 +45,6 @@ export const PinScreen = () => {
         try {
             await loginWithBiometrics();
         } finally {
-            // No lo ponemos en false inmediatamente para evitar disparos en cadena
             setTimeout(() => setIsProcessing(false), 2000);
         }
     };
@@ -44,52 +56,185 @@ export const PinScreen = () => {
         const success = await loginWithPin(pin);
 
         if (!success) {
-            Alert.alert('Error', 'PIN Incorrecto');
+            // Accesibilidad: Es mejor anunciar el error que solo mostrar un Alert, 
+            // pero mantenemos Alert por consistencia con tu código base.
+            Alert.alert(t('commonWarnings.warning'), t('auth.invalidPin', 'PIN Incorrecto'));
             setPin('');
             setIsProcessing(false);
         }
-        // Si tiene éxito, el RootNavigator nos sacará de aquí automáticamente
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.greeting, { color: colors.text }]}>Hola, {user?.name}</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ingresa tu PIN para acceder</Text>
+        <View style={[styles.mainContainer, { backgroundColor: colors.surface }]}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={styles.keyboardView}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* ENCABEZADO */}
+                    <View style={styles.headerContainer}>
+                        <Text
+                            style={[styles.greeting, { color: colors.text }]}
+                            accessibilityRole="header"
+                        >
+                            {t('auth.hi')}, {user?.name}
+                        </Text>
+                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                            {t('auth.inserYourPin')}
+                        </Text>
+                    </View>
 
-          <TextInput
-                style={[styles.pinInput, { borderColor: colors.border, color: colors.text }]}
-              value={pin}
-              onChangeText={setPin}
-              placeholder="****"
-              keyboardType="numeric"
-              secureTextEntry
-              maxLength={6}
-                placeholderTextColor={colors.textSecondary}
-              autoFocus
-          />
+                    {/* INPUT PIN */}
+                    <TextInput
+                        style={[
+                            styles.pinInput,
+                            { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }
+                        ]}
+                        value={pin}
+                        onChangeText={setPin}
+                        placeholder="****"
+                        placeholderTextColor={colors.textSecondary}
+                        keyboardType="numeric"
+                        secureTextEntry
+                        maxLength={6}
+                        autoFocus={true} // Útil para PIN screen, pero cuidado en navegación compleja
+                        // ACCESIBILIDAD
+                        accessibilityLabel={t('auth.pinInputLabel', 'Campo numérico para PIN')}
+                        accessibilityHint={t('auth.pinInputHint', 'Ingresa tu código de 4 a 6 dígitos')}
+                    />
 
-            <TouchableOpacity style={[styles.button, { backgroundColor: colors.accent, borderColor: colors.border }]} onPress={handleLogin}>
-                <Text style={[styles.buttonText, { color: colors.text }]}>Desbloquear</Text>
-          </TouchableOpacity>
+                    {/* BOTÓN DESBLOQUEAR */}
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.accent, borderColor: colors.border }]}
+                        onPress={handleLogin}
+                        activeOpacity={0.7}
+                        // ACCESIBILIDAD
+                        accessibilityRole="button"
+                        accessibilityLabel={t('auth.unlock')}
+                        accessibilityState={{ disabled: isProcessing }}
+                    >
+                        <Text style={[styles.buttonText, { color: colors.text }]}>
+                            {t('auth.unlock')}
+                        </Text>
+                    </TouchableOpacity>
 
-          {isBiometricEnabled && (
-                <TouchableOpacity style={[styles.bioButton, { borderColor: colors.border, backgroundColor: colors.text }]} onPress={loginWithBiometrics}>
-                    <MaterialIcons name="fingerprint" size={24} color={colors.accent} />
-                    <Text style={[styles.bioText, { color: colors.accent }]}> / </Text>
-                    <MaterialIcons name="face" size={24} color={colors.accent} /> 
-              </TouchableOpacity>
-          )}
-      </View>
-  );
+                    {/* BOTÓN BIOMETRÍA */}
+                    {isBiometricEnabled && (
+                        <TouchableOpacity
+                            style={[styles.bioButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                            onPress={loginWithBiometrics}
+                            activeOpacity={0.7}
+                            // ACCESIBILIDAD
+                            accessibilityRole="button"
+                            accessibilityLabel={t('auth.unlockWithBiometrics', 'Desbloquear con huella o rostro')}
+                        >
+                            {/*  */}
+                            <MaterialIcons
+                                name="fingerprint"
+                                size={getScaledSize(24)} // Icono escala con el texto del sistema
+                                color={colors.accent}
+                                importantForAccessibility="no" // El botón padre ya tiene la etiqueta
+                            />
+                            <Text
+                                style={[styles.bioText, { color: colors.accent }]}
+                                maxFontSizeMultiplier={2} // Limite razonable para separadores
+                                importantForAccessibility="no"
+                            >
+                                /
+                            </Text>
+                            {/* 
+
+[Image of face recognition icon]
+ */}
+                            <MaterialIcons
+                                name="face"
+                                size={getScaledSize(24)} // Icono escala con el texto del sistema
+                                color={colors.accent}
+                                importantForAccessibility="no"
+                            />
+                        </TouchableOpacity>
+                    )}
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 24, paddingTop: 200, alignItems: 'center' },
-    greeting: { fontSize: 26, fontWeight: 'bold', marginBottom: 8 },
-    subtitle: { fontSize: 16, color: '#666', marginBottom: 32 },
-    pinInput: { width: '80%', borderWidth: 0.5, padding: 16, borderRadius: 24, fontSize: 24, textAlign: 'center', letterSpacing: 10, marginBottom: 24 },
-    button: { backgroundColor: '#6200EE', padding: 16, borderRadius: 24, width: '80%', alignItems: 'center', borderWidth: 0.5 },
-    buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-    bioButton: { display: 'flex', flexDirection: 'row', marginTop: 20, padding: 10, borderWidth: 0.5, borderRadius: 24, width: '80%', alignItems: 'center', justifyContent: 'center' },
-    bioText: { fontWeight: '600', fontSize: 24, marginHorizontal: 10 },
+    mainContainer: {
+        flex: 1,
+    },
+    keyboardView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center', // Centra verticalmente si hay espacio
+        alignItems: 'center',
+        padding: 24,
+        paddingBottom: 40, // Espacio extra para el teclado
+    },
+    headerContainer: {
+        alignItems: 'center',
+        marginBottom: 32,
+        width: '100%',
+    },
+    greeting: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 16,
+        textAlign: 'center',
+    },
+    pinInput: {
+        width: '80%', // Relativo, mejor para tablets
+        maxWidth: 400, // Límite para tablets
+        minHeight: 60, // Altura mínima para accesibilidad táctil
+        borderWidth: 1, // Mejor visibilidad que 0.5
+        padding: 16,
+        borderRadius: 24,
+        fontSize: 24,
+        textAlign: 'center',
+        letterSpacing: 10,
+        marginBottom: 24,
+    },
+    button: {
+        padding: 16,
+        borderRadius: 24,
+        width: '80%',
+        maxWidth: 400,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1, // Mejor contraste
+        minHeight: 56, // Altura táctil recomendada
+    },
+    buttonText: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        textAlign: 'center',
+    },
+    bioButton: {
+        flexDirection: 'row',
+        marginTop: 24,
+        padding: 12,
+        borderWidth: 1,
+        borderRadius: 24,
+        width: '80%',
+        maxWidth: 400,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 56, // Altura táctil recomendada
+    },
+    bioText: {
+        fontWeight: '600',
+        fontSize: 24,
+        marginHorizontal: 10,
+    },
 });

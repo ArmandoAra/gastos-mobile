@@ -20,18 +20,13 @@ import AddTransactionForm from '../forms/AddTransactionForm';
 import useDataStore from '../../stores/useDataStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
+import { useTranslation } from 'react-i18next';
 
 const FAB_SIZE = 62;
 
-// Configuración de animación Spring optimizada
-const SPRING_CONFIG = {
-    damping: 15, // Un poco más bajo para más rebote
-    stiffness: 150,
-    mass: 1
-};
-
 export default function AddTransactionsButton() {
     const { theme } = useSettingsStore();
+    const { t } = useTranslation();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
     const { allAccounts, setSelectedAccount, selectedAccount } = useDataStore();
@@ -79,16 +74,6 @@ export default function AddTransactionsButton() {
         };
     });
 
-    // Estilo animado para el icono dentro del FAB
-    const iconAnimatedStyle = useAnimatedStyle(() => {
-        const color = interpolateColor(
-            animationProgress.value,
-            [0, 1],
-            [colors.accent, colors.text] // Cambia el color del ícono
-        );
-        return { color }; // Nota: Esto requiere que Animated.Text o Animated.Props soporten color, a veces es mejor cambiar el prop directamente o usar dos iconos superpuestos si esto falla.
-    });
-
     return (
         <>
             {/* Modal del Formulario (Gasto/Ingreso) */}
@@ -97,7 +82,6 @@ export default function AddTransactionsButton() {
             )}
 
             {/* --- BACKDROP (FONDO OSCURO) --- */}
-            {/* [Image of React Native Z-Index Layers showing Backdrop between Content and FAB] */}
             {isAddOptionsOpen && (
                 <Animated.View
                     style={styles.backdrop}
@@ -115,7 +99,7 @@ export default function AddTransactionsButton() {
                     <View style={styles.optionsWrapper}>
                         {/* Opción 1: Ingreso */}
                         <InputOptionsNoShadow
-                            title="Add Income"
+                            title={t('common.addIncome')}
                             iconName="trending-up"
                             gradientColors={['#10b981', '#34d399']}
                             onPress={() => {
@@ -127,7 +111,7 @@ export default function AddTransactionsButton() {
 
                         {/* Opción 2: Gasto */}
                         <InputOptionsNoShadow
-                            title="Add Spend"
+                            title={t('common.addExpense')}
                             iconName="trending-down"
                             gradientColors={['#ec4899', '#f43f5e']}
                             onPress={() => {
@@ -214,10 +198,6 @@ const InputOptionsNoShadow = ({ title, iconName, gradientColors, onPress, index 
         </Animated.View>
     );
 };
-
-// ==========================================
-// Estilos
-// ==========================================
 
 const styles = StyleSheet.create({
     // El Backdrop cubre toda la pantalla

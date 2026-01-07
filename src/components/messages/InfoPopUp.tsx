@@ -24,7 +24,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useMessage from '../../stores/useMessage';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
-import * as z from 'zod';
 
 const DURATION = 3000;
 

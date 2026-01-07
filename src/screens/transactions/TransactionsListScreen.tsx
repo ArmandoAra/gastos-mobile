@@ -1,5 +1,5 @@
 import { format, parseISO, isSameMonth, isSameYear, isSameDay } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, pt, enGB } from "date-fns/locale";
 import React, { useState, useMemo, useCallback } from "react";
 import {
     View,
@@ -40,7 +40,7 @@ type ListItem =
     | { type: 'transaction'; data: Transaction };
 
 export function TransactionsScreen() {
-    const { theme } = useSettingsStore();
+    const { theme, language } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const { t } = useTranslation();
 
@@ -102,7 +102,7 @@ export function TransactionsScreen() {
         const flatList: ListItem[] = [];
         Object.entries(groups).forEach(([dateKey, items]) => {
             const total = items.reduce((sum, t) =>
-                t.type === 'expense' ? sum - t.amount : sum + t.amount, 0
+                t.type === 'expense' ? sum - Math.abs(t.amount) : sum + Math.abs(t.amount), 0
             );
 
             flatList.push({
@@ -133,26 +133,55 @@ export function TransactionsScreen() {
         }
     }, [deleteTransaction, deleteSomeAmountInAccount, t]);
 
-    const handleSave = useCallback(async (updatedTransaction: Transaction, fromAccount: string | null = null, toAccount: string | null = null) => {
+    const handleSave = useCallback(async (
+        updatedTransaction: Transaction,
+        fromAccount: string | null = null,
+        toAccount: string | null = null
+    ) => {
         if (!updatedTransaction) return;
+
+        // 1. Buscamos la transacción original para conocer el estado previo
+        const oldTx = transactions.find(t => t.id === updatedTransaction.id);
+        if (!oldTx) return;
+
         try {
             updateTransaction(updatedTransaction);
             if (fromAccount !== toAccount) {
-                if (fromAccount) deleteSomeAmountInAccount(fromAccount, Math.abs(updatedTransaction.amount), updatedTransaction.type);
-                if (toAccount) updateAccountBalance(toAccount, Math.abs(updatedTransaction.amount), updatedTransaction.type);
+                if (fromAccount) deleteSomeAmountInAccount(fromAccount, oldTx.amount, updatedTransaction.type);
+                if (toAccount) updateAccountBalance(toAccount, updatedTransaction.amount, updatedTransaction.type);
             }
+
+            else {
+                // Calculamos los valores reales con signo (+ para ingreso, - para gasto)
+                const oldReal = oldTx.type === TransactionType.EXPENSE ? -Math.abs(oldTx.amount) : Math.abs(oldTx.amount);
+                const newReal = updatedTransaction.type === TransactionType.EXPENSE ? -Math.abs(updatedTransaction.amount) : Math.abs(updatedTransaction.amount);
+
+                // Delta = Nuevo - Viejo. 
+                // Si el resultado es positivo, la cuenta debe subir. Si es negativo, bajar.
+                const delta = newReal - oldReal;
+
+                if (delta !== 0) {
+                    const adjustmentType = delta > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
+                    updateAccountBalance(updatedTransaction.account_id, Math.abs(delta), adjustmentType);
+                }
+            }
+
+            // 2. Actualizamos el registro técnico de la transacción
+            updateTransaction(updatedTransaction);
+
             return updatedTransaction;
+
         } catch (error) {
-            console.error('Error updating transaction:', error);
+            console.error('❌ Error updating transaction:', error);
             return null;
         }
-    }, [updateTransaction, updateAccountBalance, deleteSomeAmountInAccount]);
+    }, [transactions, updateTransaction, updateAccountBalance, deleteSomeAmountInAccount]);
 
     const getGroupTitle = (dateKey: string) => {
         const date = parseISO(dateKey);
         // Nota: Asegúrate de manejar el locale dinámicamente si soportas múltiples idiomas en date-fns
-        if (viewMode === 'year') return format(date, 'MMMM', { locale: es });
-        return format(date, 'EEEE, d MMMM', { locale: es });
+        if (viewMode === 'year') return format(date, 'MMMM', { locale: language === 'es' ? es : language === 'pt' ? pt : enGB });
+        return format(date, 'EEEE, d MMMM', { locale: language === 'es' ? es : language === 'pt' ? pt : enGB });
     };
 
     // --- RENDERIZADO DE ITEMS ---
@@ -176,7 +205,7 @@ export function TransactionsScreen() {
                     <Text
                         style={[
                             localStyles.dateHeaderTotal,
-                            { color: item.total >= 0 ? colors.income : colors.expense }
+                            { color: item.total < 0 ? colors.error : colors.success }
                         ]}
                         maxFontSizeMultiplier={1.5}
                     >
@@ -252,7 +281,6 @@ export function TransactionsScreen() {
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         autoCorrect={false}
-                        // Accesibilidad Input
                         accessibilityLabel={t('transactions.searchPlaceholder', 'Search transactions')}
                     />
                     {searchQuery.length > 0 && (

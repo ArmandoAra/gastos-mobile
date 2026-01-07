@@ -47,6 +47,7 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
         getAllTransactionsByUserId,
         getAllAccountsByUserId,
         setAllAccounts,
+        syncAccountsWithTransactions,
         setTransactions
     } = useDataStore();
 
@@ -113,7 +114,7 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
             if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.exportSuccess'));
         } catch (error) {
             showMessage(MessageType.ERROR, t('dataAndBackup.exportError'));
-            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Export failed");
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('accessibility.exportFailed'));
         } finally {
             setIsDownloading(false);
         }
@@ -150,6 +151,7 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
                             if (parsedData.user) updateUser(parsedData.user);
                             setAllAccounts(parsedData.accounts);
                             setTransactions(parsedData.transactions);
+                            handleSyncAccounts();
                             setIsUploading(false);
                             showMessage(MessageType.SUCCESS, t('dataAndBackup.importSuccess'));
                             if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.importSuccess'));
@@ -162,6 +164,15 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
             setIsUploading(false);
         }
     };
+
+    const handleSyncAccounts = () => {
+        // Anuncio de inicio
+        if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.syncing_accounts'));
+        syncAccountsWithTransactions();
+        setTimeout(() => {
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('dataAndBackup.sync_complete', "Sync complete"));
+        }, 1000);
+    }
 
     return (
         <Animated.View
@@ -193,7 +204,7 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
                     activeOpacity={0.7}
                     accessibilityRole="button"
                     accessibilityLabel={isDownloading ? t('dataAndBackup.exporting') : t('dataAndBackup.export')}
-                    accessibilityHint="Saves a backup of your data to your device"
+                    accessibilityHint={t('accessibility.export_data', "Exports app data to a backup file")}
                     accessibilityState={{ busy: isDownloading, disabled: isDownloading || isUploading }}
                 >
                     <View style={[styles.actionBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -221,7 +232,7 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
                     activeOpacity={0.7}
                     accessibilityRole="button"
                     accessibilityLabel={isUploading ? t('dataAndBackup.importing') : t('dataAndBackup.import')}
-                    accessibilityHint="Restores data from a backup file, overwriting current data"
+                    accessibilityHint={t('accessibility.restore_data', "Imports data from a backup file, overwriting current data")}
                     accessibilityState={{ busy: isUploading, disabled: isDownloading || isUploading }}
                 >
                     <View style={[styles.actionBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -278,10 +289,10 @@ const styles = StyleSheet.create({
     actionBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16, // Área táctil más grande
+        padding: 16, 
         borderRadius: 12,
         borderWidth: 1,
-        minHeight: 80, // Altura mínima para asegurar espacio
+        minHeight: 80
     },
     iconCircle: {
         width: 48,

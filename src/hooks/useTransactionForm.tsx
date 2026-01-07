@@ -1,12 +1,10 @@
 'use client';
 
-
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { TextInput } from "react-native";
+import { TextInput, View } from "react-native";
 import { MessageType } from "../interfaces/message.interface";
 import useMessage from "../stores/useMessage";
 import useDateStore from "../stores/useDateStore";
-import { calculateDaysInMonth } from "../utils/helpers";
 import { InputNameActive } from "../interfaces/settings.interface";
 import { useSettingsStore } from "../stores/settingsStore";
 import useDataStore from "../stores/useDataStore";
@@ -15,26 +13,16 @@ import { Transaction, TransactionType } from "../types/schemas";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "../stores/authStore";
-import { se } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
-
-// ============================================
-// 💡 CONSTANTES
-// ============================================
 const INITIAL_FORM_STATE = {
     amount: "",
     description: "",
-    selectedDay: new Date(),
 };
 
-// ============================================
-// 💡 CUSTOM HOOK: useTransactionForm
-// ============================================
-
-
-
 export function useTransactionForm() {
-    const {user} =useAuthStore();
+    const { user } = useAuthStore();
+    const { t } = useTranslation();
     const { selectedAccount, allAccounts, setSelectedAccount, addTransactionStore, updateAccountBalance } = useDataStore();
     const { showMessage } = useMessage();
     const { setInputNameActive, inputNameActive } = useSettingsStore();
@@ -42,11 +30,11 @@ export function useTransactionForm() {
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
     const { localSelectedDay, setLocalSelectedDay } = useDateStore();
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const [anchorEl, setAnchorEl] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
 
-    // Determinar el tipo de icono según el inputNameActive
+    // Determinar icono
     const iconsKey = useMemo(() => {
         return inputNameActive === InputNameActive.INCOME ? IconKey.income : IconKey.spend;
     }, [inputNameActive]);
@@ -59,19 +47,16 @@ export function useTransactionForm() {
 
     const popoverOpen = Boolean(anchorEl);
 
-
-
-    // Actualizar icono cuando cambia el tipo de transacción
     useEffect(() => {
         setSelectedIcon(ICON_OPTIONS[iconsKey][0]);
     }, [iconsKey]);
 
-    // Reset form cuando se cierra el dialog
     useEffect(() => {
         if (inputNameActive === InputNameActive.NONE) {
             setAmount(INITIAL_FORM_STATE.amount);
             setDescription(INITIAL_FORM_STATE.description);
             setIsSubmitting(false);
+            setAnchorEl(null);
         }
     }, [inputNameActive]);
 
@@ -92,83 +77,90 @@ export function useTransactionForm() {
         setInputNameActive(InputNameActive.NONE);
     }, [setInputNameActive]);
 
-    // Validar formulario
     const validateForm = useCallback((): boolean => {
-        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) === 0) {
+        const parsedAmount = parseFloat(amount);
+        if (!amount || isNaN(parsedAmount) || parsedAmount === 0) {
             amountInputRef.current?.focus();
-            showMessage(MessageType.INFO, "Please enter a valid amount.");
+            showMessage(MessageType.INFO, t("messagesInfo.validAmmount"));
             return false;
         }
-        
         if (!selectedAccount) {
-            showMessage(MessageType.INFO, "Please select an account.");
+            showMessage(MessageType.INFO, t("messagesInfo.selectAccount"));
             return false;
         }
-        
         return true;
-    }, [amount, selectedAccount, showMessage]);
+    }, [amount, selectedAccount, showMessage, t]);
 
-    // Preparar datos de la transacción
-    const prepareTransactionData: () => Transaction = useCallback(() => {
+    const prepareTransactionData = useCallback((): Transaction => {
         const now = new Date();
+        const baseDate = localSelectedDay ? new Date(localSelectedDay) : now;
 
-    // 1. Clonamos la fecha seleccionada
-    const transactionDate = new Date(localSelectedDay || now);
+        const transactionDate = new Date(
+            baseDate.getFullYear(),
+            baseDate.getMonth(),
+            baseDate.getDate(),
+            now.getHours(),
+            now.getMinutes(),
+            now.getSeconds(),
+            now.getMilliseconds()
+        );
 
-    // 2. Si el usuario eligió un día pero queremos mantener la hora actual:
-    // Solo ajustamos la hora si localSelectedDay existe (para no sobreescribir si ya es 'now')
-    if (localSelectedDay) {
-        transactionDate.setHours(now.getHours());
-        transactionDate.setMinutes(now.getMinutes());
-        transactionDate.setSeconds(now.getSeconds());
-        transactionDate.setMilliseconds(now.getMilliseconds());
-    }
+        const isIncome = inputNameActive === InputNameActive.INCOME;
+        const parsedAmount = Math.abs(parseFloat(amount)); // Aseguramos positivo primero
 
-    const isIncome = inputNameActive === InputNameActive.INCOME;
-    const parsedAmount = parseFloat(amount);
+        // CORRECCIÓN: Si NO es ingreso (es gasto), lo volvemos negativo
+        const finalAmount = isIncome ? parsedAmount : -parsedAmount;
+        console.log("Final Amount Prepared:", finalAmount);
 
-    // Usamos una constante para ISO string y evitar milisegundos de diferencia entre campos
-    const currentTimeISO = now.toISOString();
+        const currentTimeISO = now.toISOString();
 
-    return {
-        id: uuidv4(),
-        account_id: selectedAccount,
-        user_id: user?.id || "current-user-id",
-        description: description.trim() || `${selectedIcon.label} - ${isIncome ? 'Income' : 'Expense'}`,
-        amount: parsedAmount,
-        type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
-        category_name: selectedIcon.label,
-        // 'date' es el momento del gasto (Día elegido + Hora actual)
-        date: transactionDate.toISOString(),
-        // 'created_at' es el registro técnico de cuándo se insertó en la DB
-        created_at: currentTimeISO,
-        updated_at: currentTimeISO,
-    };
-}, [localSelectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount, user?.id]);
+        return {
+            id: uuidv4(),
+            account_id: selectedAccount,
+            user_id: user?.id || "current-user-id",
+            description: description.trim() || `${selectedIcon.label} - ${isIncome ? 'Income' : 'Expense'}`,
+            amount: finalAmount, // Usamos el valor con el signo corregido
+            type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
+            category_name: selectedIcon.label,
+            date: transactionDate.toISOString(),
+            created_at: currentTimeISO,
+            updated_at: currentTimeISO,
+        };
+    }, [localSelectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount, user?.id]);
 
-    // Manejar guardado
     const handleSave = useCallback(async () => {
-        if (!selectedAccount || selectedAccount.trim() === "") {
-            showMessage(MessageType.INFO, "Please select an account.");
-            return;
-        }
-        console.log("Selected Account:", selectedAccount);
+        // 1. Validar antes de procesar
+        if (!validateForm()) return;
+
+        // 2. Evitar doble click
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
         try {
             const transactionData = prepareTransactionData();
-                addTransactionStore(transactionData);
-                const transactionType = inputNameActive === InputNameActive.SPEND ? TransactionType.EXPENSE : TransactionType.INCOME;
-                updateAccountBalance(selectedAccount, parseFloat(amount), transactionType as TransactionType);
-                showMessage(MessageType.SUCCESS, `${TransactionType.EXPENSE} added successfully!`);
-                handleClose();
-          
+            addTransactionStore(transactionData);
+
+            const transactionType = inputNameActive === InputNameActive.SPEND
+                ? TransactionType.EXPENSE
+                : TransactionType.INCOME;
+
+            updateAccountBalance(
+                selectedAccount,
+                Math.abs(parseFloat(amount)),
+                transactionType
+            );
+
+            showMessage(MessageType.SUCCESS, t("messagesInfo.transactionAdded"));
+            handleClose();
         } catch (error) {
-            console.error("Error adding transaction:", error);
-            showMessage(MessageType.ERROR, "Error adding transaction. Please try again.");
-        } 
-    }, [validateForm, prepareTransactionData, addTransactionStore, inputNameActive, showMessage, handleClose]);
+            console.error(error);
+            showMessage(MessageType.ERROR, t("messagesInfo.transactionAddError"));
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [validateForm, isSubmitting, prepareTransactionData, addTransactionStore, updateAccountBalance, inputNameActive, selectedAccount, amount, showMessage, handleClose, t]);
 
     return {
-        // State
         amount,
         description,
         selectedIcon,
@@ -176,19 +168,16 @@ export function useTransactionForm() {
         allAccounts,
         anchorEl,
         isSubmitting,
+        iconsKey,
         inputNameActive,
         amountInputRef,
         localSelectedDay,
         popoverOpen,
-        
-        // Setters
         setAmount,
         setDescription,
         setLocalSelectedDay,
         setSelectedAccount,
         setSelectedIcon,
-        
-        // Handlers
         handleIconClick,
         handleClosePopover,
         handleSelectIcon,

@@ -210,7 +210,7 @@ export default function ExpenseHeatmap() {
       entering={FadeInDown.duration(600)} 
       style={[
         styles.container, // Asegúrate de que styles.container tenga paddingHorizontal compatible con CONTAINER_PADDING
-        { backgroundColor: colors.surface, borderColor: colors.border }
+        { backgroundColor: colors.surface, borderColor: colors.border, marginBottom: 80 }
       ]}
       accessible={true}
       accessibilityLabel={t('overviews.expenseHeatmap')}
@@ -378,12 +378,12 @@ export default function ExpenseHeatmap() {
             {categoryData.map((cat, i) => (
               <View key={`cat-${i}`} style={localStyles.catNameRow} accessible={true} accessibilityLabel={cat.category}>
                 <Text
-                  numberOfLines={2}
+                  numberOfLines={1}
                   ellipsizeMode="tail"
                   style={[localStyles.catLabel, { color: colors.text }]}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {cat.category}
+                  {t(`icons.${cat.category}`, cat.category)}
                 </Text>
               </View>
             ))}
@@ -463,7 +463,7 @@ export default function ExpenseHeatmap() {
             <View style={[localStyles.modalHeader, { borderBottomColor: colors.border }]}>
               <View style={localStyles.modalHeaderLeft}>
                 <Text style={[localStyles.modalTitle, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
-                  {selectedCell?.label}
+                  {t(`icons.${selectedCell?.label}`, selectedCell?.label || '')}
                 </Text>
                 <Text style={[localStyles.modalSub, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
                   {selectedCell?.subLabel}
@@ -577,7 +577,7 @@ const localStyles = StyleSheet.create({
 
   // CATEGORIES
   catContainer: { flexDirection: 'row', marginBottom: 20 },
-  catFixedColumn: { borderRightWidth: 1, paddingRight: 8, minWidth: 100 },
+  catFixedColumn: { borderRightWidth: 1, paddingRight: 8, minWidth: 70, maxWidth: 120 },
   catHeaderPlaceholder: { height: 40, justifyContent: 'center', paddingHorizontal: 4 },
   catHeaderLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   catNameRow: { height: MINI_CELL_SIZE + GAP_SIZE, justifyContent: 'center', paddingHorizontal: 4 },

@@ -339,7 +339,6 @@ export default function EditTransactionFormMobile({
                             <IconsSelectorPopover
                                 popoverOpen={isIconSelectorOpen}
                                 handleClosePopover={() => setIsIconSelectorOpen(false)}
-                                iconOptions={iconOptions}
                                 handleSelectIcon={handleSelectIcon}
                                 selectedIcon={selectedIcon}
                                 colors={colors}

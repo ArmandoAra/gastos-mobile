@@ -112,35 +112,24 @@ export default function AnalyticsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
-
       <InfoHeader viewMode={selectedPeriod} />
-
-      {/* Period Selector - Accesible y Escalable */}
-      <PeriodSelector
-        selectedPeriod={selectedPeriod}
-        onPeriodChange={handlePeriodChange}
-        colors={colors}
-        periods={PERIODS}
-      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        { /* Period Selector - Accesible y Escalable */}
+      <PeriodSelector
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={handlePeriodChange}
+        colors={colors}
+        periods={PERIODS}
+        />
         {/* 1. Daily View */}
-        <View style={styles.sectionContainer}>
-          <DailyExpenseViewMobile currentPeriod={selectedPeriod} />
-        </View>
+        <DailyExpenseViewMobile currentPeriod={selectedPeriod} />
 
         {/* 2. Heatmap */}
-        <View style={styles.sectionContainer}>
-          <ExpenseHeatmapMobile />
-        </View>
-
-        {/* 3. Bar Chart */}
-        {/* <View style={[styles.sectionContainer, { marginBottom: 40 }]}>
-          <ExpenseBarChart currentPeriod={selectedPeriod} />
-        </View> */}
+        <ExpenseHeatmapMobile />
 
     </ScrollView>
     </SafeAreaView>
@@ -185,7 +174,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   sectionContainer: {
-    marginBottom: 60,
+    // marginBottom: 60,
     // No forzamos altura, dejamos que el hijo decida
   },
   // Estilos legacy mantenidos por si acaso, aunque no usados directamente en el JSX actual

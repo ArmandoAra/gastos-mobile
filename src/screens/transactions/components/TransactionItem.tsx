@@ -31,6 +31,8 @@ import { useAuthStore } from '../../../stores/authStore';
 import useDataStore from '../../../stores/useDataStore';
 import { useTranslation } from 'react-i18next';
 import EditTransactionFormMobile from '../../../components/forms/EditTransactionForm';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { InputNameActive } from '../../../interfaces/settings.interface';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
@@ -49,6 +51,7 @@ export const TransactionItemMobile = React.memo(({
     colors,
 }: TransactionItemProps) => {
     const { t } = useTranslation();
+    const { setInputNameActive } = useSettingsStore();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isWarningOpen, setIsWarningOpen] = useState(false);
     const { currencySymbol } = useAuthStore();
@@ -197,7 +200,11 @@ export const TransactionItemMobile = React.memo(({
                 >
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={() => setIsEditOpen(true)}
+                        onPress={() => {
+                            console.log("Setting inputNameActive for accessibility edit action");
+                            setInputNameActive(transaction.type === TransactionType.INCOME ? InputNameActive.INCOME : InputNameActive.SPEND);
+                        }
+                        }
                         style={styles.touchableContent}
                         // Accesibilidad
                         accessibilityRole="button"
@@ -231,7 +238,7 @@ export const TransactionItemMobile = React.memo(({
                                         style={[styles.chipText, { color: colors.textSecondary }]}
                                         numberOfLines={1}
                                     >
-                                        {transaction.category_name}
+                                        {t(`icons.${transaction.category_name}`, transaction.category_name)}
                                     </Text>
                                 </View>
                             </View>

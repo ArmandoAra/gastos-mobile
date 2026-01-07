@@ -29,7 +29,7 @@ import { useTransactionForm } from '../../hooks/useTransactionForm';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus'; // Asegúrate de tener este hook
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
-import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
+import { IconKey, IconOption } from '../../constants/icons';
 
 // Temas y Tipos
 import { darkTheme, lightTheme } from '../../theme/colors';
@@ -51,12 +51,11 @@ export default function AddTransactionForm() {
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
-
-    // Hook del Formulario
     const {
         amount,
         description,
         selectedIcon,
+        iconsKey,
         selectedAccount,
         localSelectedDay,
         allAccounts,
@@ -89,8 +88,6 @@ export default function AddTransactionForm() {
 
     // Monitor de Teclado Nativo
     const isKeyboardVisible = useKeyboardStatus();
-
-    // --- EFECTOS ---
 
     // Cerrar calculadora si aparece el teclado nativo
     useEffect(() => {
@@ -194,9 +191,6 @@ export default function AddTransactionForm() {
                             <ScrollView
                                 contentContainerStyle={[
                                     styles.scrollContent,
-                                    // PADDING DINÁMICO: 
-                                    // Si hay teclado o calculadora, añadimos mucho espacio abajo 
-                                    // para poder scrollear hasta el botón de guardar.
                                     { paddingBottom: (isKeyboardVisible || showCalculator) ? 370 : 100 }
                                 ]}
                                 keyboardShouldPersistTaps="handled"
@@ -285,9 +279,6 @@ export default function AddTransactionForm() {
                                     handleClosePopover={handleClosePopover}
                                     handleSelectIcon={handleSelectIcon}
                                     selectedIcon={selectedIcon}
-                                    iconOptions={ICON_OPTIONS[
-                                        !isExpense ? IconKey.income : IconKey.spend
-                                    ] as unknown as IconOption[]}
                                     colors={colors}
                                 />
                             )}

@@ -20,8 +20,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { t } from 'i18next';
 
-const { width } = Dimensions.get('window');
-
 interface WarningMessageProps {
     message: string;
     onClose: () => void;

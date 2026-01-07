@@ -118,21 +118,6 @@ interface DateTextParams {
     day?: number | null;
 }
 
-import {MONTHS} from '../constants/date';
-
-export function makeTextFromDate({ month = null, year = null, day = null }: DateTextParams) {
-    switch (true) {
-        case month !== null && year !== null && day !== null:
-            return `${MONTHS[month]} ${day}, ${year}`;
-        case month !== null && year !== null:
-            return `${MONTHS[month]} ${year}`;
-        case year !== null:
-            return `${year}`;
-        default:
-            return '';
-    }
-}
-
 export function makeTextFromDateToSave({ month = null, year = null, day = null }: DateTextParams) {
     const dayTime = new Date()
 

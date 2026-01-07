@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,14 +15,17 @@ import Animated, {
   ZoomIn,
   ZoomOut,
 } from "react-native-reanimated";
-import { IconOption } from "../../../constants/icons";
+import { ICON_OPTIONS, IconKey, IconOption } from "../../../constants/icons";
 import { ThemeColors } from "../../../types/navigation";
+import { useTranslation } from "react-i18next";
+import { InputNameActive } from "../../../interfaces/settings.interface";
+import { set } from "date-fns";
+import { useSettingsStore } from "../../../stores/settingsStore";
 
 interface IconsSelectorPopoverProps {
   popoverOpen: boolean;
   anchorEl?: any; // Se mantiene por compatibilidad de tipos, aunque no se use en móvil
   handleClosePopover: () => void;
-  iconOptions: IconOption[];
   selectedIcon: IconOption | null;
   handleSelectIcon: (icon: IconOption) => void;
   colors: ThemeColors;
@@ -31,12 +34,25 @@ interface IconsSelectorPopoverProps {
 export default function IconsSelectorPopover({
   popoverOpen,
   handleClosePopover,
-  iconOptions,
   selectedIcon,
   handleSelectIcon,
   colors,
 }: IconsSelectorPopoverProps) {
+  const { t } = useTranslation();
+  const { inputNameActive } = useSettingsStore();
+  const [iconsKey, setIconsKey] = React.useState<IconKey>(IconKey.others);
 
+  useEffect(() => {
+    console.log("IconsSelectorPopover - inputNameActive changed:", inputNameActive);
+    return inputNameActive === InputNameActive.INCOME
+      ? setIconsKey(IconKey.income)
+      : inputNameActive === InputNameActive.SPEND
+        ? setIconsKey(IconKey.spend)
+        : setIconsKey(IconKey.others);
+  }, [inputNameActive]);
+
+
+  const iconOptions = ICON_OPTIONS[iconsKey] as unknown as IconOption[];
   return (
     <Modal
       visible={popoverOpen}
@@ -65,7 +81,7 @@ export default function IconsSelectorPopover({
         >
           {/* Header */}
           <View style={[styles.header, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>SELECT CATEGORY ICON</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{t("common.selectCategory")}</Text>
           </View>
 
           {/* Grid de Iconos */}
@@ -120,7 +136,7 @@ export default function IconsSelectorPopover({
                         ]}
                         numberOfLines={1}
                       >
-                        {item.label}
+                        {t(`icons.${item.label}`, item.label)}
                       </Text>
                     </TouchableOpacity>
                   </View>

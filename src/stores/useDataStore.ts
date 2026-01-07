@@ -118,25 +118,30 @@ const useDataStore = create<State & Actions>()(
                 // === ACCOUNT MANAGEMENT ===
 
                 createAccount: async (accountData: Partial<Account>) => {
-                    // Lógica para crear una cuenta (simulación)
-                    const newAccount: Account = {   
-                        id: uuid.v4(), 
-                        name: accountData?.name || 'New Account',
-                        type: accountData?.type || 'Checking',
-                        balance:  0,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        userId: accountData.userId || '',
-                    };
-                    set(
-                        (state) => ({
+                    set({ fetching: true }); // Indicar carga
+                    try {
+                        const newAccount: Account = {
+                            id: uuid.v4(),
+                            name: accountData?.name || 'New Account',
+                            type: accountData?.type || 'Checking',
+                            balance: 0,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                            userId: accountData.userId || '',
+                        };
+
+                        // AQUÍ podrías llamar a tu API si fuera necesario:
+                        // await api.createAccount(newAccount);
+
+                        set((state) => ({
                             allAccounts: [...state.allAccounts, newAccount],
                             selectedAccount: state.selectedAccount || newAccount.id,
                             error: null,
-                        }),
-                        false,
-                        'createAccount'
-                    );
+                            fetching: false
+                        }));
+                    } catch (e) {
+                        set({ error: 'Error creating account', fetching: false });
+                    }
                 },
 
                 setSelectedAccount: (accountId: string) => {
@@ -181,71 +186,55 @@ const useDataStore = create<State & Actions>()(
                     )
                 },
 
-                updateAccountBalance: (accountId: string, amount: number, transactionType?: TransactionType) => {
-                    function calculateBalance(currentBalance: number, amount: number, type?: TransactionType): number {
-                        const absAmount = Math.abs(amount);
-                        if (type === TransactionType.INCOME) return currentBalance + absAmount;
-                        if (type === TransactionType.EXPENSE) return currentBalance - absAmount;
-                        return currentBalance;
-                    }
+                updateAccountBalance: (accountId, amount, transactionType) => {
+                    const cleanAmount = Math.abs(amount);
 
-                    set(
-                        (state) => ({
-                            allAccounts: state.allAccounts.map(acc =>
-                                acc.id === accountId
-                                    ? { ...acc, balance: calculateBalance(acc.balance, amount, transactionType) }
-                                    : acc
-                            ),
-                            error: null,
-                        }),
-                        false,
-                        'updateAccountBalance'
-                    )
+                    set((state) => ({
+                        allAccounts: state.allAccounts.map(acc => {
+                            if (acc.id !== accountId) return acc;
+
+                            const newBalance = transactionType === 'income'
+                                ? acc.balance + cleanAmount
+                                : acc.balance - cleanAmount;
+
+                            return { ...acc, balance: newBalance };
+                        })
+                    }), false, 'updateAccountBalance');
                 },
 
                 transferAllAccountTransactions: (fromAccountId: string, toAccountId: string) => {
-                    set(
-                        (state) => {
-                            // 1. Identificar las transacciones a mover
-                            const transactionsToMove = state.transactions.filter(
-                                t => t.account_id === fromAccountId
-                            );
+                    set((state) => {
+                        const transactionsToMove = state.transactions.filter(t => t.account_id === fromAccountId);
 
-                            // 2. Calcular el impacto total en el saldo
-                            // Sumamos ingresos y restamos gastos
-                            const totalImpact = transactionsToMove.reduce((acc, t) => {
-                                return t.type === 'income' ? acc + t.amount : acc - t.amount;
-                            }, 0);
+                        // Calcular el saldo neto de las transacciones a mover
+                        const totalImpact = transactionsToMove.reduce((acc, t) => {
+                            return t.type === 'income' ? acc + t.amount : acc - t.amount;
+                        }, 0);
 
-                            return {
-                                // 3. Mover las transacciones
-                                transactions: state.transactions.map(t =>
-                                    t.account_id === fromAccountId
-                                        ? { ...t, account_id: toAccountId }
-                                        : t
-                                ),
-                                // 4. Actualizar los saldos de las cuentas en el store
-                                allAccounts: state.allAccounts.map(acc => {
-                                    if (acc.id === fromAccountId) {
-                                        return { ...acc, balance: 0 }; // La cuenta origen queda en 0
-                                    }
-                                    if (acc.id === toAccountId) {
-                                        return { ...acc, balance: acc.balance + totalImpact }; // La destino absorbe el saldo
-                                    }
-                                    return acc;
-                                }),
-                                error: null,
-                            };
-                        },
-                        false,
-                        'transferAllAccountTransactions'
-                    );
+                        return {
+                            transactions: state.transactions.map(t =>
+                                t.account_id === fromAccountId
+                                    ? { ...t, account_id: toAccountId }
+                                    : t
+                            ),
+                            allAccounts: state.allAccounts.map(acc => {
+                                if (acc.id === fromAccountId) {
+                                    return { ...acc, balance: 0 };
+                                }
+                                if (acc.id === toAccountId) {
+                                    return { ...acc, balance: acc.balance + totalImpact };
+                                }
+                                return acc;
+                            }),
+                            error: null,
+                        };
+                    });
                 },
-
                 getAccountById: (accountId: string) => get().allAccounts.find(acc => acc.id === accountId),
 
                 deleteSomeAmountInAccount: (accountId: string, amount: number, transactionType: TransactionType) => {
-                    const amountToDelete = transactionType === TransactionType.INCOME ? amount : -amount;
+                    const cleanAmount = Math.abs(amount);
+                    const amountToDelete = transactionType === TransactionType.INCOME ? cleanAmount : -cleanAmount;
                     set(
                         (state) => ({
                             allAccounts: state.allAccounts.map(acc =>
@@ -287,7 +276,6 @@ const useDataStore = create<State & Actions>()(
                 syncAccountsWithTransactions: () => {
                     const accounts = get().allAccounts;
                     const transactions = get().transactions;
-                    // 1. Crear un objeto para acumular los saldos (ej: { 'acc1': 0, 'acc2': 0 })
                     const balances: Record<string, number> = {};
                     accounts.forEach(acc => {
                         balances[acc.id] = 0;
@@ -300,7 +288,7 @@ const useDataStore = create<State & Actions>()(
                             if (t.type === TransactionType.INCOME) {
                                 balances[t.account_id] += t.amount;
                             } else {
-                                balances[t.account_id] -= t.amount;
+                                balances[t.account_id] -= Math.abs(t.amount);
                             }
                         }
                     });

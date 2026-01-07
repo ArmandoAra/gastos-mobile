@@ -16,8 +16,6 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 
-const { width } = Dimensions.get('window');
-
 interface WarningMessageProps {
     message: string;
     onClose: () => void;

@@ -279,7 +279,7 @@ export default function DailyExpenseViewMobile({
                     />
                     <StatCard
                         label={t('common.topCat')}
-                        value={stats.topCategory.category || 'N/A'}
+                        value={t(`icons.${stats.topCategory.category}`, stats.topCategory.category) || 'N/A'}
                         sub={`${currencySymbol} ${stats.topCategory.amount.toFixed(0)}`}
                         colorBgAndHeader={colors.accentSecondary}
                         colorText={colors.text}
@@ -294,7 +294,7 @@ export default function DailyExpenseViewMobile({
                 <View style={styles.contentContainer}>
                     <Animated.View entering={FadeInRight.duration(300)}>
                         {filteredTransactions.length === 0 ? (
-                            <EmptyState period={dateInfo.periodLabel} color={colors.textSecondary} />
+                            <EmptyState period={currentPeriod} color={colors.textSecondary} />
                         ) : (
                             <View>
                                 {/* PieChart */}
@@ -381,7 +381,7 @@ export default function DailyExpenseViewMobile({
                                                             numberOfLines={2}
                                                             ellipsizeMode="tail"
                                                         >
-                                                            {item.text}
+                                                            {t(`icons.${item.text}`, item.text)}
                                                         </Text>
                                                     </View>
                                                     <Text
@@ -435,7 +435,7 @@ export default function DailyExpenseViewMobile({
                             {stats.largestTransaction && (
                                 <InsightCard
                                     label={t('overviews.largestTransaction')}
-                                    title={stats.largestTransaction.description}
+                                    title={`${t('common.expense')} - ${t(`icons.${stats.largestTransaction.category_name}`, stats.largestTransaction.category_name)}`}
                                     value={`-${currencySymbol} ${Math.abs(stats.largestTransaction.amount).toFixed(2)}`}
                                     color={colors.warning}
                                     isSmallScreen={isSmallScreen}
@@ -493,7 +493,7 @@ export default function DailyExpenseViewMobile({
                                         adjustsFontSizeToFit
                                         minimumFontScale={0.8}
                                     >
-                                        {modalData?.categoryName}
+                                        {t(`icons.${modalData?.categoryName}`, modalData?.categoryName || '')}
                                     </Text>
                                 </View>
                                 <TouchableOpacity
