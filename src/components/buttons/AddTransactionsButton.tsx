@@ -77,10 +77,6 @@ export default function AddTransactionsButton() {
 
     return (
         <>
-            {/* Modal del Formulario (Gasto/Ingreso) */}
-            {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
-                <AddTransactionForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
-            )}
 
             {/* --- BACKDROP (FONDO OSCURO) --- */}
             {isAddOptionsOpen && (
@@ -148,6 +144,11 @@ export default function AddTransactionsButton() {
                     </TouchableOpacity>
                 </Animated.View>
             )}
+            {/* Modal del Formulario (Gasto/Ingreso) */}
+            {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
+                <AddTransactionForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
+            )}
+
         </>
     );
 }
