@@ -10,11 +10,15 @@ import {
     Platform
 } from 'react-native';
 import Animated, { 
+    ColorSpace,
     ZoomIn, 
     ZoomOut,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../../theme/colors';
+import { ThemeColors } from '../../../types/navigation';
 
 interface WarningMessageProps {
     message: string;
@@ -28,6 +32,8 @@ export default function WarningMessage({
     onSubmit,
 }: WarningMessageProps) {
     const { t } = useTranslation();
+    const { theme } = useSettingsStore();
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
     // Anunciar al lector de pantalla cuando aparece
     useEffect(() => {
@@ -46,22 +52,15 @@ export default function WarningMessage({
         >
             {/* Backdrop */}
             <View style={styles.overlay}>
-                
                 {/* Contenedor Animado */}
                 <Animated.View 
                     entering={ZoomIn.duration(200)}
                     exiting={ZoomOut.duration(200)}
-                    style={styles.animatedContainer}
+                    style={[styles.animatedContainer, { backgroundColor: colors.surface, padding: 8, paddingVertical: 16 }]}
                     // Accesibilidad
                     accessibilityRole="alert"
                     accessibilityLabel={`${t('common.warning')}, ${message}`}
                 >
-                    <LinearGradient
-                        colors={['rgba(9, 26, 28, 0.98)', 'rgba(13, 68, 68, 0.95)']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.cardGradient}
-                    >
                         <View style={styles.decorationCircle} />
 
                         {/* Contenido Texto */}
@@ -133,9 +132,7 @@ export default function WarningMessage({
                                     </Text>
                                 </LinearGradient>
                             </TouchableOpacity>
-                        </View>
-
-                    </LinearGradient>
+                    </View>
                 </Animated.View>
             </View>
         </Modal>

@@ -46,7 +46,7 @@ import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
 import CalculatorSheet from './Inputs/CalculatorSheet';
 
-export default function AddTransactionForm() {
+export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolean; onClose: (isOpen: boolean) => void }) {
     const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
@@ -75,7 +75,7 @@ export default function AddTransactionForm() {
         handleIconClick
     } = useTransactionForm();
 
-    const isOpen = inputNameActive !== InputNameActive.NONE;
+    // const isOpen = inputNameActive !== InputNameActive.NONE;
     const isExpense = inputNameActive === InputNameActive.SPEND;
 
     // Formateo de fecha seguro
@@ -113,6 +113,7 @@ export default function AddTransactionForm() {
 
     const handleCloseForm = () => {
         setShowCalculator(false);
+        onClose(false);
         handleClose();
     };
 
@@ -230,7 +231,10 @@ export default function AddTransactionForm() {
                                 {/* 4. Botón de Guardar */}
                                 <View style={styles.footer}>
                                     <SubmitButton
-                                        handleSave={handleSave}
+                                        handleSave={() => {
+                                            handleSave();
+                                            onClose(false);
+                                        }}
                                         selectedIcon={selectedIcon}
                                         option={isExpense ? addOption.Spend : addOption.Income}
                                         loading={isSubmitting}

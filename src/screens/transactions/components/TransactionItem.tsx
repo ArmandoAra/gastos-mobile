@@ -19,7 +19,7 @@ import Animated, {
 import { runOnJS } from "react-native-worklets"
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import { formatCurrency } from '../../../utils/helpers';
 import WarningMessage from './WarningMessage';
 import EditTransactionForm from '../../../components/forms/EditTransactionForm';
@@ -201,7 +201,7 @@ export const TransactionItemMobile = React.memo(({
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => {
-                            console.log("Setting inputNameActive for accessibility edit action");
+                            setIsEditOpen(true);
                             setInputNameActive(transaction.type === TransactionType.INCOME ? InputNameActive.INCOME : InputNameActive.SPEND);
                         }
                         }
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     },
     chip: {
         paddingHorizontal: 10, // Aumentado de 8 a 10
-        paddingVertical: 4, // Aumentado de 2 a 4
+        paddingVertical: 1, // Aumentado de 2 a 4
         borderRadius: 12,
         maxWidth: 120, // Aumentado de 100 a 120
     },
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     },
     accountBadgeContainer: {
         paddingHorizontal: 10, // Aumentado de 8 a 10
-        paddingVertical: 4, // Aumentado de 2 a 4
+        paddingVertical: 1, // Aumentado de 2 a 4
         borderRadius: 6,
         maxWidth: 100, // Aumentado de 80 a 100
         minHeight: 22, // Altura mínima para el badge

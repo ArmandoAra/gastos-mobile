@@ -305,7 +305,7 @@ export function TransactionsScreen() {
                         data={listData}
                         renderItem={renderItem}
                         keyExtractor={keyExtractor}
-                        style={{ height: 200 }}
+                        style={{ height: 150 }}
                         stickyHeaderIndices={stickyHeaderIndices}
                         contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 8 }}
                         keyboardDismissMode="on-drag"

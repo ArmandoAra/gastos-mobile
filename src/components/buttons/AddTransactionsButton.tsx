@@ -30,6 +30,7 @@ export default function AddTransactionsButton() {
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
     const { allAccounts, setSelectedAccount, selectedAccount } = useDataStore();
+    const [isOpen, setIsOpen] = React.useState(false);
 
     // Shared Value para la rotación (0 a 1)
     const animationProgress = useSharedValue(0);
@@ -78,7 +79,7 @@ export default function AddTransactionsButton() {
         <>
             {/* Modal del Formulario (Gasto/Ingreso) */}
             {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
-                <AddTransactionForm />
+                <AddTransactionForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
             )}
 
             {/* --- BACKDROP (FONDO OSCURO) --- */}
@@ -103,6 +104,7 @@ export default function AddTransactionsButton() {
                             iconName="trending-up"
                             gradientColors={['#10b981', '#34d399']}
                             onPress={() => {
+                                setIsOpen(true);
                                 setInputNameActive(InputNameActive.INCOME);
                                 setIsAddOptionsOpen(false);
                             }}
@@ -115,6 +117,7 @@ export default function AddTransactionsButton() {
                             iconName="trending-down"
                             gradientColors={['#ec4899', '#f43f5e']}
                             onPress={() => {
+                                setIsOpen(true);
                                 setInputNameActive(InputNameActive.SPEND);
                                 setIsAddOptionsOpen(false);
                             }}

@@ -216,7 +216,9 @@
         "deleteConfirm": "¿Estás seguro de que deseas eliminar esta transacción?",
         "searchPlaceholder": "Buscar en este",
         "edit_expense": "Editar gasto",
-        "edit_income": "Editar ingreso"
+        "edit_income": "Editar ingreso",
+        "new_expense": "Nuevo gasto",
+        "new_income": "Nuevo ingreso"
     },
     "currency": {
         "subtitle": "Selecciona tu moneda preferida. (No convierte monedas, solo establece el símbolo predeterminado)",

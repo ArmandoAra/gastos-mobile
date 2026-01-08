@@ -216,7 +216,9 @@
         "deleteConfirm": "Tem certeza de que deseja excluir esta transação?",
         "searchPlaceholder": "Buscar neste",
         "edit_expense": "Editar despesa",
-        "edit_income": "Editar receita"
+        "edit_income": "Editar receita",
+        "new_expense": "Nova despesa",
+        "new_income": "Nova receita"
     },
     "currency": {
         "subtitle": "Selecione sua moeda preferida. (Não converte moedas, apenas define o símbolo padrão)",

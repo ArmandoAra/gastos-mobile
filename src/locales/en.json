@@ -216,7 +216,9 @@
         "deleteConfirm": "Are you sure you want to delete this transaction?",
         "searchPlaceholder": "Search in this",
         "edit_expense": "Edit expense",
-        "edit_income": "Edit income"
+        "edit_income": "Edit income",
+        "new_expense": "New expense",
+        "new_income": "New income"
     },
     "currency": {
         "subtitle": "Select your preferred currency. (Does not convert currencies, only sets the default symbol)",
