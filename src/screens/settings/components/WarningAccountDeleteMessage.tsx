@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, AccessibilityInfo } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, AccessibilityInfo, KeyboardAvoidingView } from 'react-native';
 import Animated, { 
     FadeIn, 
     FadeOut, 
@@ -7,8 +7,6 @@ import Animated, {
     ZoomOut 
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// Componentes
 import { ThemeColors } from '../../../types/navigation';
 import useDataStore from '../../../stores/useDataStore';
 import AccountSelector from '../../../components/forms/Inputs/AccoutSelector';
@@ -20,16 +18,18 @@ interface WarningProps {
     colors: ThemeColors;
 }
 
-// Subcomponente de error con Live Region para accesibilidad
 const InfoText = ({ errorText }: { errorText: string }) => (
     <Animated.View 
         entering={FadeIn.delay(200)} 
         exiting={FadeOut}
         style={styles.infoTextContainer}
         accessibilityRole="alert"
-        accessibilityLiveRegion="polite"
+        accessibilityLiveRegion="assertive"
     >
-        <Text style={styles.infoText}>
+        <Text
+            style={styles.infoText}
+            maxFontSizeMultiplier={1.5}
+        >
             {errorText}
         </Text>
     </Animated.View>
@@ -50,11 +50,13 @@ export default function WarningAccountDeleteMessage({
     const [toNewAccount, setToNewAccount] = useState<string>('');
     const [showInfo, setShowInfo] = useState<boolean>(false);
 
-    const accountName = allAccounts.find(acc => acc.id === accountToDelete)?.name;
+    const account = allAccounts.find(acc => acc.id === accountToDelete);
+    const accountName = account?.name || '';
 
     const onDeleteAnyWay = () => {
         if (allAccounts.length <= 1) {
-            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Cannot delete the only account");
+            const msg = t('accounts.cannotDeleteOnlyAccount', 'Cannot delete the only account');
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(msg);
             return;
         }
         deleteAccountStore(accountToDelete);
@@ -64,8 +66,8 @@ export default function WarningAccountDeleteMessage({
     const onTransferAndDelete = async () => {
         if (toNewAccount === '' || toNewAccount === accountToDelete) {
             setShowInfo(true);
-            // Anuncio para lector de pantalla
-            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Please select a different account to transfer data");
+            const errorMsg = t('accounts.selectDifferentAccount', "Please select a different account to transfer data");
+            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(errorMsg);
             return;
         }
 
@@ -82,32 +84,45 @@ export default function WarningAccountDeleteMessage({
     const isTransferDisabled = toNewAccount === accountToDelete || toNewAccount === '';
 
     return (
-        <View style={styles.container} pointerEvents="box-none">
-            {/* Usamos ScrollView por si el contenido crece mucho con texto grande */}
+        // 1. KeyboardAvoidingView para que el teclado no tape el modal
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+            pointerEvents="box-none"
+        >
+            {/* 2. ScrollView con flexGrow para centrado inteligente */}
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent]}
                 showsVerticalScrollIndicator={false}
+                bounces={false}
+                keyboardShouldPersistTaps="handled"
             >
                 <Animated.View 
                     entering={ZoomIn} 
                     exiting={ZoomOut.duration(200)}
                     style={[styles.toast, { backgroundColor: colors.surface, borderColor: colors.expense }]}
                     accessibilityViewIsModal={true}
-                    accessibilityRole="alert"
+                    accessibilityRole="alert" // Cambiado a alert para semántica correcta
                 >
                     <View style={styles.content}>
-                        {/* Bloque de Texto Agrupado para lectura fluida */}
-                        <View accessible={true}>
+                        <View accessible={true} accessibilityLabel={`${t('commonWarnings.warning')}. ${t('accounts.accountName')}: ${accountName}`}>
                             <Text
                                 style={[styles.title, { color: colors.error }]}
                                 accessibilityRole="header"
+                                maxFontSizeMultiplier={1.5}
                             >
                                 {t('commonWarnings.warning')}
                             </Text>
-                            <Text style={[styles.accountName, { color: colors.error }]}>
+                            <Text
+                                style={[styles.accountName, { color: colors.text }]}
+                                maxFontSizeMultiplier={1.5}
+                            >
                                 {t('accounts.accountName')}: {accountName}
                             </Text>
-                            <Text style={[styles.message, { color: colors.textSecondary }]}>
+                            <Text
+                                style={[styles.message, { color: colors.textSecondary }]}
+                                maxFontSizeMultiplier={1.8}
+                            >
                                 {t('accounts.deleteWarning')}
                             </Text>
                         </View>
@@ -122,7 +137,9 @@ export default function WarningAccountDeleteMessage({
                             />
                         </View>
 
-                        {showInfo && <InfoText errorText="Please select an account to transfer the transactions to." />}
+                        {showInfo && (
+                            <InfoText errorText={t('accounts.errorSelectAccount', "Please select an account to transfer.")} />
+                        )}
 
                         <View style={styles.actions}>
                             <TouchableOpacity
@@ -131,14 +148,16 @@ export default function WarningAccountDeleteMessage({
                                 style={styles.buttonWrapper}
                                 accessibilityRole="button"
                                 accessibilityLabel={t('accounts.transferAndDelete')}
-                                accessibilityHint="Transfers all transactions to selected account and deletes this one"
                                 accessibilityState={{ disabled: isTransferDisabled }}
                             >
                                 <LinearGradient
-                                    colors={isTransferDisabled ? [colors.textSecondary, colors.textSecondary] : ['#14b8a6', '#10b981']}
+                                    colors={isTransferDisabled ? [colors.border, colors.border] : ['#14b8a6', '#10b981']}
                                     style={styles.button}
                                 >
-                                    <Text style={[styles.buttonText, { color: colors.surface }]}>
+                                    <Text
+                                        style={[styles.buttonText, { color: isTransferDisabled ? colors.textSecondary : colors.surface }]}
+                                        maxFontSizeMultiplier={1.2}
+                                    >
                                         {t('accounts.transferAndDelete')}
                                     </Text>
                                 </LinearGradient>
@@ -149,13 +168,15 @@ export default function WarningAccountDeleteMessage({
                                 style={styles.buttonWrapper}
                                 accessibilityRole="button"
                                 accessibilityLabel={t('accounts.justDelete')}
-                                accessibilityHint="Permanently deletes account and its transactions"
                             >
                                 <LinearGradient
                                     colors={['#ef4444', '#f87171']}
                                     style={styles.button}
                                 >
-                                    <Text style={[styles.buttonText, { color: colors.surface }]}>
+                                    <Text
+                                        style={[styles.buttonText, { color: colors.surface }]}
+                                        maxFontSizeMultiplier={1.2}
+                                    >
                                         {t('accounts.justDelete')}
                                     </Text>
                                 </LinearGradient>
@@ -175,50 +196,56 @@ export default function WarningAccountDeleteMessage({
                     </View>
                 </Animated.View>
             </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'center', // Centrado vertical
-        alignItems: 'center',
-
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.4)', // Backdrop visual para dar contexto de modal
         zIndex: 999,
-        // Eliminamos el top fijo para permitir centrado dinámico
+        justifyContent: 'center', // Alineación por defecto
     },
     scrollContent: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        maxWidth: 500, // Limite para tablets
+        flexGrow: 1, 
+        justifyContent: 'center', // Mantiene el modal centrado si es pequeño
+        padding: 24,
+        width: '100%',
     },
     toast: {
         width: "100%",
-        borderRadius: 20,
-        borderWidth: 1, // Borde más visible (antes 0.5)
-        paddingHorizontal: 5,
+        maxWidth: 500,
+        alignSelf: 'center',
+        borderRadius: 24,
+        borderWidth: 2,
         overflow: 'hidden',
-        // Sombra para elevación
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-        elevation: 10,
+        // Sombras
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.3,
+                shadowRadius: 20,
+            },
+            android: {
+                elevation: 12,
+            },
+        }),
     },
     content: {
         padding: 24,
-        alignItems: 'center',
+        alignItems: 'stretch'
     },
     title: {
-        fontSize: 24, // Texto grande
-        fontWeight: 'bold',
-        marginBottom: 8,
+        fontSize: 26,
+        fontWeight: '900',
+        marginBottom: 10,
         textAlign: 'center',
     },
     accountName: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 18,
+        fontWeight: 'bold',
         marginBottom: 12,
         textAlign: 'center',
     },
@@ -226,7 +253,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         marginBottom: 24,
-        lineHeight: 22, // Mejor legibilidad
+        lineHeight: 22,
     },
     selectorWrapper: {
         width: '100%',
@@ -235,53 +262,53 @@ const styles = StyleSheet.create({
     infoTextContainer: {
         width: '100%',
         marginBottom: 15,
-        padding: 10,
-        backgroundColor: 'rgba(255, 69, 58, 0.1)', // Fondo rojo muy suave
-        borderRadius: 8,
+        padding: 12,
+        backgroundColor: 'rgba(255, 69, 58, 0.1)',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 69, 58, 0.2)',
     },
     infoText: {
         color: '#ff453a',
         fontSize: 14,
         textAlign: 'center',
-        fontWeight: '500',
+        fontWeight: '600',
     },
     actions: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         width: '100%',
-        maxHeight: 70,
         gap: 12,
-        flexWrap: 'wrap', // CLAVE: Permite que los botones se apilen si el texto es grande
+        flexWrap: 'wrap',
     },
     buttonWrapper: {
         flex: 1,
-        minWidth: 140, // Ancho mínimo antes de hacer wrap
+        minWidth: 140,
     },
     button: {
-        paddingVertical: 14,
-        paddingHorizontal: 8,
-        height: '100%',
-        borderRadius: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 50, 
+        minHeight: 60, 
     },
     buttonText: {
-        fontWeight: '700',
+        fontWeight: '800',
         fontSize: 14,
         textAlign: 'center',
+        textTransform: 'uppercase',
     },
     closeBtn: {
         width: "100%",
-        minHeight: 56, // Altura táctil
-        borderRadius: 12,
+        height: 56,
+        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 20,
-        padding: 10,
+        marginTop: 16,
     },
     closeBtnText: {
         fontSize: 16,
-        fontWeight: '600'
+        fontWeight: '700',
     }
 });

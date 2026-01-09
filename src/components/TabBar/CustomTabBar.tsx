@@ -44,7 +44,9 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
           backgroundColor: colors.background,
           borderWidth: 1,
           borderColor: colors.border,
-          marginBottom: Platform.OS === 'ios' ? insets.bottom : 20,
+          paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom,
+          height: 60 + insets.bottom, // Ajusta la altura para que no se vea aplastada
+          marginBottom: Platform.OS === 'ios' ? insets.bottom : 0,
           shadowColor: colors.shadow,
         }
       ]}>

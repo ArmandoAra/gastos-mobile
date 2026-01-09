@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, StatusBar, Platform, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { 
   MD3LightTheme,
   MD3DarkTheme,
   Provider as PaperProvider,
-  MD3Theme
 } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as NavigationBar from 'expo-navigation-bar';
 
 // --- Imports Locales (Ajusta las rutas según tu proyecto) ---
 import './src/i18n';
@@ -43,21 +43,6 @@ import { useTranslation } from 'react-i18next';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
-
-const RenderModernHeader = (props: any, currentColors: ThemeColors) => {
-  const { options, route } = props;
-  const isHome = route.name === 'Transactions';
-
-  return (
-    <ModernHeader
-      title={options.title}
-      showAvatar={isHome}
-      showNotification={isHome}
-      showBack={false}
-      colors={currentColors}
-    />
-  );
-};
 
 // ============================================
 // MAIN TAB NAVIGATOR
@@ -140,6 +125,7 @@ const AppStack = () => {
         name="MainTabs"
         component={MainTabs}
       />
+
       {/* Aquí podrías agregar pantallas secundarias que tapen la tab bar */}
     </Stack.Navigator>
   );
@@ -188,6 +174,19 @@ const RootNavigator = () => {
 // ============================================
 const App = () => {
   const themeMode = useSettingsStore(state => state.theme);
+
+
+  useEffect(() => {
+    // Configura la barra de navegación de Android (los 3 botones o la raya de gestos)
+    if (Platform.OS === 'android') {
+      // La hacemos transparente para que no se vea una franja negra/gris fea
+      NavigationBar.setBackgroundColorAsync('transparent');
+      // Establecemos que el contenido sea "Edge-to-Edge"
+      NavigationBar.setPositionAsync('absolute');
+      // Ajustamos el color de los iconos (atrás, home) según el tema
+      NavigationBar.setButtonStyleAsync(themeMode === 'dark' ? 'light' : 'dark');
+    }
+  }, [themeMode]);
 
   const paperTheme = React.useMemo(() => {
     const isDark = themeMode === 'dark';

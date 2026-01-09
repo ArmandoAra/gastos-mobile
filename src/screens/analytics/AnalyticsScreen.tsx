@@ -34,18 +34,16 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import useDateStore from '../../stores/useDateStore';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import PeriodSelector from './components/subcomponents/PeriodSelector';
 
 // Nota: Quitadas importaciones de Skia/Victory no usadas directamente en este archivo
 // para limpiar el componente padre.
 
-const { width } = Dimensions.get('window');
-
-// Colores para el gráfico de torta (Mantenido por si se re-implementa el PieChart)
-const CATEGORY_COLORS = ['#EF5350', '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#26C6DA'];
 
 export default function AnalyticsScreen() {
+  const insets = useSafeAreaInsets();
+
   const { transactions } = useDataStore();
   const { t } = useTranslation();
   const { localSelectedDay } = useDateStore();
@@ -86,19 +84,6 @@ export default function AnalyticsScreen() {
     });
   }, [selectedPeriod, transactions]);
 
-  const expenses = filteredTransactions.filter(t => t.type === 'expense');
-  const income = filteredTransactions.filter(t => t.type === 'income');
-
-  // Stats básicos para accesibilidad o headers futuros
-  const stats = useMemo(() => {
-    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-    const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
-    return {
-      totalExpenses,
-      totalIncome,
-      balance: totalIncome - totalExpenses
-    };
-  }, [expenses, income]);
 
   const handlePeriodChange = (p: string) => {
     const newPeriod = p as ViewPeriod;
@@ -130,6 +115,8 @@ export default function AnalyticsScreen() {
 
         {/* 2. Heatmap */}
         <ExpenseHeatmapMobile />
+
+        <View style={{ height: insets.bottom + 40 }} />
 
     </ScrollView>
     </SafeAreaView>

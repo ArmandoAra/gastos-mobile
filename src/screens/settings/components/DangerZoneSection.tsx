@@ -407,6 +407,7 @@ const styles = StyleSheet.create({
     },
     modalScrollContent: {
         padding: 24,
+        paddingBottom: 60,
     },
     modalHeader: {
         alignItems: 'center',
@@ -472,6 +473,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: 50,
+        maxHeight: 70
     },
     modalDeleteBtnText: {
         color: '#FFF',
