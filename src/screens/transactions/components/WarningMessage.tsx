@@ -66,14 +66,14 @@ export default function WarningMessage({
                         {/* Contenido Texto */}
                         <View style={styles.contentContainer}>
                             <Text
-                                style={styles.title}
+                            style={[styles.title, { color: colors.error }]}
                                 maxFontSizeMultiplier={1.5}
                                 accessibilityRole="header"
                             >
                                 {t('common.warning', 'Warning')}
                             </Text>
                             <Text
-                                style={styles.message}
+                            style={[styles.message, { color: colors.text }]}
                                 maxFontSizeMultiplier={1.4}
                             >
                                 {message}
@@ -81,8 +81,7 @@ export default function WarningMessage({
                         </View>
 
                         {/* Botones */}
-                        <View style={styles.buttonRow}>
-                            {/* Botón NO */}
+                    <View style={styles.buttonRow}>
                             <TouchableOpacity 
                                 onPress={onClose}
                                 style={styles.buttonWrapper}

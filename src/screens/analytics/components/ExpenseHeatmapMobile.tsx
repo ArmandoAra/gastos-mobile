@@ -23,34 +23,26 @@ import { styles } from './styles';
 type ViewMode = 'month' | 'year';
 type HeatmapType = 'daily' | 'category';
 
-// --- CONFIGURACIÓN DE DIMENSIONES CORREGIDA ---
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const isTablet = SCREEN_WIDTH >= 568;
+const isTablet = SCREEN_WIDTH >= 768;
 
-// Asumimos un padding horizontal total en el contenedor padre (ej: 20 a cada lado + margins)
-// Ajusta este valor (60) según los paddings reales de tu pantalla 'styles.container'
-const CONTAINER_HORIZONTAL_PADDING = 32; // Ejemplo: 16 padding left + 16 padding right
-const MARGINS = 28; // Márgenes extra de seguridad
-const TOTAL_AVAILABLE_WIDTH = SCREEN_WIDTH - (CONTAINER_HORIZONTAL_PADDING + MARGINS);
-
-const GAP_SIZE = 6; // Un poco más de espacio para estética
-// FÓRMULA CLAVE: (AnchoTotal - (6 huecos)) / 7 columnas
-const CELL_SIZE = isTablet
-  ? 48
-  : Math.floor((TOTAL_AVAILABLE_WIDTH - (GAP_SIZE * 2)) / 7);
-
+// --- TAMAÑO FIJO PARA CELDAS ---
+// Usamos un tamaño fijo que garantiza buena legibilidad y área táctil (44pt mínimo)
+const CELL_SIZE = isTablet ? 56 : 50; // Tamaño fijo y generoso
+const GAP_SIZE = 6;
 const MINI_CELL_SIZE = 24;
+
+// Calculamos el ancho total que ocupará una semana completa (7 columnas)
+const WEEK_WIDTH = (CELL_SIZE * 7) + (GAP_SIZE * 6);
 
 export default function ExpenseHeatmap() {
   const { transactions } = useDataStore();
   const { localSelectedDay } = useDateStore();
 
-  // 1. Theme & Store
   const { theme } = useSettingsStore();
   const colors = theme === 'dark' ? darkTheme : lightTheme;
   const { currencySymbol } = useAuthStore();
 
-  // 2. Internal State
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [heatmapType, setHeatmapType] = useState<HeatmapType>('daily');
   const [selectedCell, setSelectedCell] = useState<{
@@ -60,7 +52,6 @@ export default function ExpenseHeatmap() {
     transactions?: Transaction[];
   } | null>(null);
 
-  // 3. Derived Data
   const year = localSelectedDay.getFullYear();
   const monthIndex = localSelectedDay.getMonth();
 
@@ -104,8 +95,6 @@ export default function ExpenseHeatmap() {
   }, [maxValue, colors]);
 
   // --- DATA GENERATION ---
-
-  // A. Daily Grid
   const gridData = useMemo(() => {
     if (heatmapType !== 'daily') return null;
 
@@ -195,7 +184,6 @@ export default function ExpenseHeatmap() {
     }
   }, []);
 
-  // Render de transacción en modal
   const renderTransaction = useCallback((t: Transaction, i: number) => (
     <View
       key={i} 
@@ -251,7 +239,7 @@ export default function ExpenseHeatmap() {
               adjustsFontSizeToFit
               minimumFontScale={0.7}
             >
-              {currencySymbol}{totalDisplay.toFixed(0)}
+              -{currencySymbol}{totalDisplay.toFixed(0)}
             </Text>
           </View>
         </View>
@@ -307,88 +295,142 @@ export default function ExpenseHeatmap() {
 
       {/* --- RENDER CONTENT --- */}
       
-      {/* 1. CALENDAR / GRID VIEW */}
+      {/* 1. CALENDAR / GRID VIEW CON SCROLL HORIZONTAL */}
       {heatmapType === 'daily' && gridData && (
         <View style={localStyles.gridContainer}>
           {viewMode === 'month' && (
-            <View style={localStyles.weekDaysRow} accessible={false}>
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                <Text
-                  key={i} 
-                  style={[localStyles.weekDayText, { color: colors.textSecondary, width: CELL_SIZE }]}
-                  importantForAccessibility="no"
-                >
-                  {d}
-                </Text>
-              ))}
-            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={localStyles.scrollContent}
+              accessible={false}
+            >
+              <View style={{ minWidth: WEEK_WIDTH }}>
+                {/* Fila de días de la semana */}
+                <View style={localStyles.weekDaysRow}>
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <View
+                      key={i} 
+                      style={[localStyles.weekDayCell, { width: CELL_SIZE }]}
+                    >
+                      <Text
+                        style={[localStyles.weekDayText, { color: colors.textSecondary }]}
+                        importantForAccessibility="no"
+                      >
+                        {d}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Grid de días */}
+                <View style={localStyles.gridWrap}>
+                  {gridData.map((cell: any, index: number) => {
+                    if (cell === null) return (
+                      <View
+                        key={`blank-${index}`} 
+                        style={[localStyles.cell, { width: CELL_SIZE, height: CELL_SIZE }]}
+                        importantForAccessibility="no"
+                      />
+                    );
+
+                    const txCount = cell.transactions?.length || 0;
+
+                    return (
+                      <TouchableOpacity
+                        key={`day-${cell.day}-${index}`}
+                        activeOpacity={0.7}
+                        onPress={() => handleCellPress({
+                          value: cell.amount,
+                          label: `${format(localSelectedDay, 'MMM')} ${cell.day}`,
+                          subLabel: 'Daily Total',
+                          transactions: cell.transactions
+                        })}
+                        style={[
+                          localStyles.cell,
+                          {
+                            width: CELL_SIZE,
+                            height: CELL_SIZE,
+                            backgroundColor: getHeatColor(cell.amount),
+                            borderColor: colors.border,
+                            borderWidth: cell.amount === 0 ? 1 : 0
+                          }
+                        ]}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Day ${cell.day}, ${currencySymbol} ${cell.amount.toFixed(0)}, ${txCount} transactions`}
+                        accessibilityHint="Tap to view details"
+                      >
+                        <Text
+                          style={[
+                            localStyles.cellText,
+                            { 
+                              color: cell.amount > (maxValue * 0.4) ? '#FFF' : colors.textSecondary
+                            }
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {cell.day}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </ScrollView>
           )}
 
-          <View
-            style={[localStyles.gridWrap, viewMode === 'year' && localStyles.gridWrapYear]}
-            accessible={false}
-          >
-            {gridData.map((cell: any, index: number) => {
-              if (cell === null) return (
-                <View
-                  key={`blank-${index}`} 
-                  style={{ width: CELL_SIZE, height: CELL_SIZE }}
-                  importantForAccessibility="no" 
-                />
-              );
-              
-              const isYearMode = viewMode === 'year';
-              const displayLabel = isYearMode ? cell.label : cell.day;
-              const txCount = cell.transactions?.length || 0;
-              
-              return (
-                <TouchableOpacity
-                  key={`${isYearMode ? cell.label : cell.day}-${index}`}
-                  activeOpacity={0.7}
-                  onPress={() => handleCellPress({
-                    value: cell.amount,
-                    label: isYearMode ? `${cell.label} ${year}` : `${format(localSelectedDay, 'MMM')} ${cell.day}`,
-                    subLabel: isYearMode ? 'Monthly Total' : 'Daily Total',
-                    transactions: cell.transactions
-                  })}
-                  style={[
-                    localStyles.cell,
-                    {
-                      width: isYearMode ? '30%' : CELL_SIZE,
-                      height: isYearMode ? 60 : CELL_SIZE,
-                      backgroundColor: getHeatColor(cell.amount),
-                      borderColor: colors.border,
-                      borderWidth: cell.amount === 0 ? 1 : 0
-                    }
-                  ]}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${displayLabel}, ${currencySymbol} ${cell.amount.toFixed(0)}, ${txCount} transactions`}
-                  accessibilityHint="Tap to view details"
-                >
-                  <Text style={[
-                    localStyles.cellText, 
-                    { 
-                      color: cell.amount > (maxValue * 0.4) ? '#FFF' : colors.textSecondary,
-                      fontSize: isYearMode ? 14 : 10
-                    }
-                  ]}>
-                    {displayLabel}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          {/* VISTA AÑO - Sin scroll, normal */}
+          {viewMode === 'year' && (
+            <View style={[localStyles.gridWrapYear]} accessible={false}>
+              {gridData.map((cell: any, index: number) => {
+                const txCount = cell.transactions?.length || 0;
+                return (
+                  <TouchableOpacity
+                    key={`month-${cell.label}-${index}`}
+                    activeOpacity={0.7}
+                    onPress={() => handleCellPress({
+                      value: cell.amount,
+                      label: `${cell.label} ${year}`,
+                      subLabel: 'Monthly Total',
+                      transactions: cell.transactions
+                    })}
+                    style={[
+                      localStyles.yearCell,
+                      {
+                        backgroundColor: getHeatColor(cell.amount),
+                        borderColor: colors.border,
+                        borderWidth: cell.amount === 0 ? 1 : 0
+                      }
+                    ]}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${cell.label}, ${currencySymbol} ${cell.amount.toFixed(0)}, ${txCount} transactions`}
+                    accessibilityHint="Tap to view details"
+                  >
+                    <Text
+                      style={[
+                        localStyles.yearCellText,
+                        {
+                          color: cell.amount > (maxValue * 0.4) ? '#FFF' : colors.textSecondary
+                        }
+                      ]}
+                    >
+                      {cell.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
       )}
 
       {/* 2. CATEGORY MATRIX VIEW */}
       {heatmapType === 'category' && categoryData && (
         <View style={localStyles.catContainer}>
-
           {/* COLUMNA IZQUIERDA (FIJA) */}
           <View style={[localStyles.catFixedColumn, { backgroundColor: colors.surface, borderRightColor: colors.border }]}>
-            {/* Cabecera */}
             <View style={localStyles.catHeaderPlaceholder}>
               <Text
                 style={[localStyles.catHeaderLabel, { color: colors.textSecondary }]}
@@ -400,7 +442,6 @@ export default function ExpenseHeatmap() {
               </Text>
             </View>
 
-            {/* Lista de nombres de categorías */}
             {categoryData.map((cat, i) => (
               <View
                 key={`cat-${i}`}
@@ -426,7 +467,6 @@ export default function ExpenseHeatmap() {
             accessible={false}
           >
             <View>
-              {/* Fila de Cabeceras (Fechas/Meses) */}
               <View style={localStyles.catDateHeaderRow} accessible={false}>
                 {categoryData.length > 0 && categoryData[0].data.map((d: any, i: number) => (
                   <View key={`header-${i}`} style={localStyles.catHeaderCell}>
@@ -437,7 +477,6 @@ export default function ExpenseHeatmap() {
                 ))}
               </View>
 
-              {/* Filas de Celdas de Datos */}
               {categoryData.map((cat, i) => (
                 <View key={`row-${i}`} style={localStyles.catDataRow} accessible={false}>
                   {cat.data.map((cell: any, j: number) => {
@@ -638,27 +677,37 @@ const localStyles = StyleSheet.create({
     lineHeight: 18,
   },
   gridContainer: {
-    width: '100%',
     marginBottom: 20,
+  },
+  scrollContent: {
+    paddingHorizontal: 4,
   },
   weekDaysRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: GAP_SIZE,
     marginBottom: 8,
   },
+  weekDayCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   weekDayText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   gridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: GAP_SIZE,
+    width: WEEK_WIDTH,
   },
   gridWrapYear: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 8,
   },
   cell: {
     borderRadius: 8,
@@ -667,8 +716,22 @@ const localStyles = StyleSheet.create({
     minHeight: 44,
   },
   cellText: {
+    fontSize: 14,
     fontWeight: '600',
-    lineHeight: 14,
+    lineHeight: 18,
+  },
+  yearCell: {
+    width: '30%',
+    height: 70,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 70,
+  },
+  yearCellText: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 20,
   },
   catContainer: {
     flexDirection: 'row',
@@ -749,89 +812,87 @@ const localStyles = StyleSheet.create({
   scaleDot: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: 10,
   },
   modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 20,
+    alignItems: 'center',
+    padding: 16,
   },
   modalCard: {
-    borderRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    maxHeight: '80%',
   },
-  modalHeader: {
+  modalHeader: {  
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingBottom: 16,
+    alignItems: 'center', 
     borderBottomWidth: 1,
-    marginBottom: 16,
-    gap: 12,
-    minHeight: 60,
+    paddingBottom: 8,
+    marginBottom: 12,
   },
   modalHeaderLeft: {
     flex: 1,
-    gap: 4,
+    marginRight: 12,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    lineHeight: 26,
+    lineHeight: 24,
   },
   modalSub: {
     fontSize: 14,
+    marginTop: 2,
     lineHeight: 18,
   },
   modalAmount: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'right',
-    minWidth: 100,
-    lineHeight: 30,
+    lineHeight: 22,
   },
   txScrollView: {
+    flexGrow: 0,
     maxHeight: 300,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   txRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingVertical: 12,
-    gap: 12,
-    minHeight: 50,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#CCC',
   },
-  txName: {
-    fontSize: 15,
+  txName: { 
+    fontSize: 14, 
     flex: 1,
-    lineHeight: 20,
+    marginRight: 8,
+    lineHeight: 18,
   },
   txVal: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    textAlign: 'right',
-    minWidth: 80,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   noTx: {
     fontSize: 14,
     textAlign: 'center',
-    paddingVertical: 20,
+    marginTop: 20,
     lineHeight: 18,
   },
   closeBtn: {
-    paddingVertical: 14,
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     borderRadius: 12,
+    minWidth: 100,
     alignItems: 'center',
-    minHeight: 48,
   },
   closeText: {
     fontSize: 16,

@@ -175,19 +175,6 @@ const RootNavigator = () => {
 const App = () => {
   const themeMode = useSettingsStore(state => state.theme);
 
-
-  useEffect(() => {
-    // Configura la barra de navegación de Android (los 3 botones o la raya de gestos)
-    if (Platform.OS === 'android') {
-      // La hacemos transparente para que no se vea una franja negra/gris fea
-      NavigationBar.setBackgroundColorAsync('transparent');
-      // Establecemos que el contenido sea "Edge-to-Edge"
-      NavigationBar.setPositionAsync('absolute');
-      // Ajustamos el color de los iconos (atrás, home) según el tema
-      NavigationBar.setButtonStyleAsync(themeMode === 'dark' ? 'light' : 'dark');
-    }
-  }, [themeMode]);
-
   const paperTheme = React.useMemo(() => {
     const isDark = themeMode === 'dark';
     const customColors = isDark ? darkTheme : lightTheme;
