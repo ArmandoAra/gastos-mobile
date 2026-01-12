@@ -29,7 +29,10 @@ export default function AddTransactionsButton() {
     const { t } = useTranslation();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
-    const { allAccounts, setSelectedAccount, selectedAccount } = useDataStore();
+    const { allAccounts = [],
+        setSelectedAccount,
+        selectedAccount
+    } = useDataStore();
     const [isOpen, setIsOpen] = React.useState(false);
 
     // Shared Value para la rotación (0 a 1)
@@ -42,6 +45,7 @@ export default function AddTransactionsButton() {
 
     // Lógica de selección de cuenta por defecto
     useEffect(() => {
+        // if (allAccounts === undefined) return;
         if (allAccounts.length === 0) {
             if (selectedAccount !== null && selectedAccount !== '') setSelectedAccount('');
             return;

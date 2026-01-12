@@ -50,7 +50,7 @@ export function TransactionsScreen() {
     const [searchQuery, setSearchQuery] = useState('');
 
     const {
-        transactions,
+        transactions = [],
         deleteTransaction,
         updateTransaction,
         deleteSomeAmountInAccount,

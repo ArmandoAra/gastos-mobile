@@ -36,6 +36,7 @@ const zustandStorage: StateStorage = {
 // ============================================
 
 type PersistedState = {
+    balance: number | undefined
     selectedAccount: string
     allAccounts: Account[]
     transactions: Transaction[] 
@@ -99,6 +100,7 @@ const initialState: State = {
     selectedAccount: '',
     allAccounts: [],
     transactions: [],
+    balance: 0,
     selectedExpenseOrIncome: null,
     fetching: false,
     _hasHydrated: false,
