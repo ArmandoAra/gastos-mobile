@@ -56,8 +56,6 @@ export const PinScreen = () => {
         const success = await loginWithPin(pin);
 
         if (!success) {
-            // Accesibilidad: Es mejor anunciar el error que solo mostrar un Alert, 
-            // pero mantenemos Alert por consistencia con tu código base.
             Alert.alert(t('commonWarnings.warning'), t('auth.invalidPin', 'PIN Incorrecto'));
             setPin('');
             setIsProcessing(false);
@@ -101,8 +99,10 @@ export const PinScreen = () => {
                         keyboardType="numeric"
                         secureTextEntry
                         maxLength={6}
+                        returnKeyType='done'
+                        onSubmitEditing={handleLogin}
+                        editable={!isProcessing}
                         autoFocus={true} // Útil para PIN screen, pero cuidado en navegación compleja
-                        // ACCESIBILIDAD
                         accessibilityLabel={t('auth.pinInputLabel', 'Campo numérico para PIN')}
                         accessibilityHint={t('auth.pinInputHint', 'Ingresa tu código de 4 a 6 dígitos')}
                     />
@@ -146,10 +146,7 @@ export const PinScreen = () => {
                             >
                                 /
                             </Text>
-                            {/* 
 
-[Image of face recognition icon]
- */}
                             <MaterialIcons
                                 name="face"
                                 size={getScaledSize(24)} // Icono escala con el texto del sistema

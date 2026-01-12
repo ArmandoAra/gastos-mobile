@@ -295,7 +295,7 @@
         "go_to_today": "Ir a hoy",
         "previous_month": "Mes anterior"
     },
-    "expenseCategories": {
+    "categories": {
         "food": "Comida",
         "transportation": "Transporte",
         "utilities": "Servicios",
@@ -304,8 +304,7 @@
         "shopping": "Compras",
         "education": "Educación",
         "travel": "Viajes",
-        "personalCare": "Cuidado personal",
-        "others": "Otros"
+        "personalCare": "Cuidado personal"
     },
     "accessibility": {
         "save_hint": "Actualizar la transaccion y cerrar el formulario",

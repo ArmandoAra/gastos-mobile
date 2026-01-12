@@ -62,8 +62,8 @@ export function TransactionsScreen() {
         let result = transactions;
         if (!result || result.length === 0) return [];
 
-        result = result.filter(t => {
-            const tDate = parseISO(t.date);
+        result = result.filter(transaction => {
+            const tDate = parseISO(transaction.date);
             if (viewMode === 'day') return isSameDay(tDate, localSelectedDay);
             if (viewMode === 'month') return isSameMonth(tDate, localSelectedDay) && isSameYear(tDate, localSelectedDay);
             if (viewMode === 'year') return isSameYear(tDate, localSelectedDay);
@@ -76,9 +76,9 @@ export function TransactionsScreen() {
 
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            result = result.filter(t =>
-                (t.description || '').toLowerCase().includes(query) ||
-                (t.category_name || '').toLowerCase().includes(query)
+            result = result.filter(transaction =>
+                (transaction.description || '').toLowerCase().includes(query) ||
+                ((`${t(`categories.${transaction.category_name}`)}` || '')).toLowerCase().includes(query)
             );
         }
 
@@ -367,7 +367,7 @@ const localStyles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1, // Toma el espacio restante
-        minWidth: 200, // Si es menor a 200px, baja a la siguiente línea (wrap)
+        minWidth: 100, // Si es menor a 200px, baja a la siguiente línea (wrap)
         minHeight: 44, // Altura táctil accesible
         paddingHorizontal: 12,
         borderRadius: 12,

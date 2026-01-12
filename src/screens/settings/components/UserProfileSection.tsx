@@ -85,7 +85,7 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
 
         try {
             // Asumiendo que updateUser devuelve una promesa
-            await updateUser({ name: tempName, email: tempEmail, currency: tempCurrency });
+            updateUser({ name: tempName, email: tempEmail, currency: tempCurrency });
 
             setUser({ name: tempName, email: tempEmail, currency: tempCurrency });
             setCurrencySymbol(currencySymbol);
@@ -317,7 +317,7 @@ export default function UserProfileSection({ colors }: { colors: ThemeColors }) 
                                         {t('profile.currency')}
                                     </Text>
                                     <Text style={[styles.value, { color: colors.text }]} importantForAccessibility="no">
-                                        {currencyOptions.find(c => c.code === user.currency)?.name || user.currency}
+                                        {t(`currency.${currencyOptions.find(c => c.code === user.currency)?.code}`) || user.currency}
                                     </Text>
                             </View>
 

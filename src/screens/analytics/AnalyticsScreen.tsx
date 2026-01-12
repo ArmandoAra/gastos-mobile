@@ -28,7 +28,6 @@ import useDataStore from '../../stores/useDataStore';
 import ExpenseHeatmapMobile from './components/ExpenseHeatmapMobile';
 import DailyExpenseViewMobile from './components/DailyExpenseView';
 import InfoHeader from '../../components/headers/InfoHeader';
-import ExpenseBarChart from './components/ExpenseBarChart';
 import { ViewPeriod } from '../../interfaces/date.interface';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
@@ -36,6 +35,7 @@ import useDateStore from '../../stores/useDateStore';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import PeriodSelector from './components/subcomponents/PeriodSelector';
+import ExpenseHeatmap from './components/ExpenseHeatmapMobile';
 
 // Nota: Quitadas importaciones de Skia/Victory no usadas directamente en este archivo
 // para limpiar el componente padre.
@@ -114,7 +114,7 @@ export default function AnalyticsScreen() {
         <DailyExpenseViewMobile currentPeriod={selectedPeriod} />
 
         {/* 2. Heatmap */}
-        <ExpenseHeatmapMobile />
+        <ExpenseHeatmap />
 
         <View style={{ height: insets.bottom + 40 }} />
 
