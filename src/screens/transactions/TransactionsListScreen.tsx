@@ -32,6 +32,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import InfoHeader from "../../components/headers/InfoHeader";
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
 
 type ViewMode = 'day' | 'month' | 'year';
 
@@ -40,149 +41,21 @@ type ListItem =
     | { type: 'transaction'; data: Transaction };
 
 export function TransactionsScreen() {
-    const { theme, language } = useSettingsStore();
-    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-    const { t } = useTranslation();
-
-    const { localSelectedDay } = useDateStore();
-    const [viewMode, setViewMode] = useState<ViewMode>('month');
-    const [filter, setFilter] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
-
     const {
-        transactions = [],
-        deleteTransaction,
-        updateTransaction,
-        deleteSomeAmountInAccount,
-        updateAccountBalance,
-    } = useDataStore();
-
-    // --- 1. FILTRADO (Memoizado) ---
-    const filteredTransactions = useMemo(() => {
-        let result = transactions;
-        if (!result || result.length === 0) return [];
-
-        result = result.filter(transaction => {
-            const tDate = parseISO(transaction.date);
-            if (viewMode === 'day') return isSameDay(tDate, localSelectedDay);
-            if (viewMode === 'month') return isSameMonth(tDate, localSelectedDay) && isSameYear(tDate, localSelectedDay);
-            if (viewMode === 'year') return isSameYear(tDate, localSelectedDay);
-            return true;
-        });
-
-        if (filter !== 'all') {
-            result = result.filter(t => t.type === filter);
-        }
-
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(transaction =>
-                (transaction.description || '').toLowerCase().includes(query) ||
-                ((`${t(`categories.${transaction.category_name}`)}` || '')).toLowerCase().includes(query)
-            );
-        }
-
-        return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [filter, searchQuery, transactions, localSelectedDay, viewMode]);
-
-    // --- 2. PREPARAR DATOS PARA FLASHLIST (Aplanado) ---
-    const listData = useMemo(() => {
-        const groups: Record<string, Transaction[]> = {};
-
-        filteredTransactions.forEach(t => {
-            const date = parseISO(t.date);
-            const groupKey = viewMode === 'year'
-                ? format(date, 'yyyy-MM')
-                : format(date, 'yyyy-MM-dd');
-
-            if (!groups[groupKey]) groups[groupKey] = [];
-            groups[groupKey].push(t);
-        });
-
-        const flatList: ListItem[] = [];
-        Object.entries(groups).forEach(([dateKey, items]) => {
-            const total = items.reduce((sum, t) =>
-                t.type === 'expense' ? sum - Math.abs(t.amount) : sum + Math.abs(t.amount), 0
-            );
-
-            flatList.push({
-                type: 'header',
-                date: dateKey,
-                total,
-                id: `header-${dateKey}`
-            });
-
-            items.forEach(t => {
-                flatList.push({ type: 'transaction', data: t });
-            });
-        });
-
-        return flatList;
-    }, [filteredTransactions, viewMode]);
-
-    // --- MANEJADORES ---
-    const handleDelete = useCallback(async (id: string, account_id?: string, amount?: number, transactionType?: TransactionType) => {
-        try {
-            deleteTransaction(id);
-            if (account_id && amount && transactionType) {
-                deleteSomeAmountInAccount(account_id, Math.abs(amount), transactionType);
-            }
-            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('common.deleted'));
-        } catch (error) {
-            console.error('Error deleting transaction:', error);
-        }
-    }, [deleteTransaction, deleteSomeAmountInAccount, t]);
-
-    const handleSave = useCallback(async (
-        updatedTransaction: Transaction,
-        fromAccount: string | null = null,
-        toAccount: string | null = null
-    ) => {
-        if (!updatedTransaction) return;
-
-        // 1. Buscamos la transacción original para conocer el estado previo
-        const oldTx = transactions.find(t => t.id === updatedTransaction.id);
-        if (!oldTx) return;
-
-        try {
-            updateTransaction(updatedTransaction);
-            if (fromAccount !== toAccount) {
-                if (fromAccount) deleteSomeAmountInAccount(fromAccount, oldTx.amount, updatedTransaction.type);
-                if (toAccount) updateAccountBalance(toAccount, updatedTransaction.amount, updatedTransaction.type);
-            }
-
-            else {
-                // Calculamos los valores reales con signo (+ para ingreso, - para gasto)
-                const oldReal = oldTx.type === TransactionType.EXPENSE ? -Math.abs(oldTx.amount) : Math.abs(oldTx.amount);
-                const newReal = updatedTransaction.type === TransactionType.EXPENSE ? -Math.abs(updatedTransaction.amount) : Math.abs(updatedTransaction.amount);
-
-                // Delta = Nuevo - Viejo. 
-                // Si el resultado es positivo, la cuenta debe subir. Si es negativo, bajar.
-                const delta = newReal - oldReal;
-
-                if (delta !== 0) {
-                    const adjustmentType = delta > 0 ? TransactionType.INCOME : TransactionType.EXPENSE;
-                    updateAccountBalance(updatedTransaction.account_id, Math.abs(delta), adjustmentType);
-                }
-            }
-
-            // 2. Actualizamos el registro técnico de la transacción
-            updateTransaction(updatedTransaction);
-
-            return updatedTransaction;
-
-        } catch (error) {
-            console.error('❌ Error updating transaction:', error);
-            return null;
-        }
-    }, [transactions, updateTransaction, updateAccountBalance, deleteSomeAmountInAccount]);
-
-    const getGroupTitle = (dateKey: string) => {
-        const date = parseISO(dateKey);
-        // Nota: Asegúrate de manejar el locale dinámicamente si soportas múltiples idiomas en date-fns
-        if (viewMode === 'year') return format(date, 'MMMM', { locale: language === 'es' ? es : language === 'pt' ? pt : enGB });
-        return format(date, 'EEEE, d MMMM', { locale: language === 'es' ? es : language === 'pt' ? pt : enGB });
-    };
+        viewMode,
+        setViewMode,
+        filter,
+        setFilter,
+        searchQuery,
+        setSearchQuery,
+        colors,
+        t,
+        listData,
+        stickyHeaderIndices,
+        handleDelete,
+        handleSave,
+        getGroupTitle
+    } = useTransactionsLogic();
 
     // --- RENDERIZADO DE ITEMS ---
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
@@ -228,12 +101,6 @@ export function TransactionsScreen() {
     const keyExtractor = useCallback((item: ListItem) => {
         return item.type === 'header' ? item.id : item.data.id;
     }, []);
-
-    const stickyHeaderIndices = useMemo(() => {
-        return listData
-            .map((item, index) => (item.type === 'header' ? index : null))
-            .filter((item) => item !== null) as number[];
-    }, [listData]);
 
     return (
         <SafeAreaView style={[localStyles.container, { backgroundColor: colors.surface }]}>

@@ -18,7 +18,6 @@ interface UserProfile {
     name: string;
     email?: string;
     currency: string;
-
 }
 
 interface AuthState {
@@ -88,7 +87,7 @@ export const useAuthStore = create<AuthState>()(
               }
               return false;
           },
-            changePin: async (oldPin, newPin) => {
+            changePin: async (oldPin, newPin): Promise<{ success: boolean; message: string }> => {
                 const storedHash = get().pinHash;
                 if (!storedHash) return { success: false, message: 'No PIN is set.' };
 

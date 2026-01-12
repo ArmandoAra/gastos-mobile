@@ -7,24 +7,15 @@ import {
   TouchableOpacity, 
   Modal, 
   Dimensions,
-  Platform,
-  AccessibilityInfo
 } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
-import { format, getDaysInMonth, startOfMonth, getDay } from 'date-fns';
+import { format } from 'date-fns';
 import { Transaction } from '../../../interfaces/data.interface';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { darkTheme, lightTheme } from '../../../theme/colors';
-import { useAuthStore } from '../../../stores/authStore';
-import useDateStore from '../../../stores/useDateStore';
-import useDataStore from '../../../stores/useDataStore';
 import { styles } from './styles';
-import { monthsShort, weekDaysShort } from '../../../constants/date';
+import { weekDaysShort } from '../../../constants/date';
 import { es, pt, enGB } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
+import { useExpenseHeatmapLogic } from '../hooks/useExpenseHeatmapLogic';
 
-type ViewMode = 'month' | 'year';
-type HeatmapType = 'daily' | 'category';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const isTablet = SCREEN_WIDTH >= 768;
@@ -39,146 +30,30 @@ const GRID_WIDTH = (CELL_SIZE * 7) + (GAP_SIZE * 6);
 
 const MINI_CELL_SIZE = 24;
 
-interface SelectedCellProps {
-  value: number;
-  label: string;
-  subLabel?: string;
-  transactions?: Transaction[];
-}
-
 export default function ExpenseHeatmap() {
-  const { transactions } = useDataStore();
-  const { localSelectedDay } = useDateStore();
-  const { t } = useTranslation();
+  const {
+    t,
+    colors,
+    currencySymbol,
+    language,
+    localSelectedDay,
+    year,
 
-  const { theme, language } = useSettingsStore();
-  const colors = theme === 'dark' ? darkTheme : lightTheme;
-  const { currencySymbol } = useAuthStore();
+    viewMode,
+    heatmapType,
+    selectedCell,
+    maxValue,
+    totalDisplay,
 
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [heatmapType, setHeatmapType] = useState<HeatmapType>('daily');
-  const [selectedCell, setSelectedCell] = useState<SelectedCellProps | null>(null);
+    gridData,
+    categoryData,
 
-  const year = localSelectedDay.getFullYear();
-  const monthIndex = localSelectedDay.getMonth();
-
-  const expenseTransactions = useMemo(() => 
-    transactions.filter(t => {
-      const d = new Date(t.date);
-      const matchesYear = d.getFullYear() === year;
-      if (viewMode === 'year') return t.type === 'expense' && matchesYear;
-      return t.type === 'expense' && matchesYear && d.getMonth() === monthIndex;
-    }), 
-  [transactions, viewMode, year, monthIndex]);
-
-  const maxValue = useMemo(() => {
-    if (expenseTransactions.length === 0) return 1;
-    
-    if (heatmapType === 'daily') {
-      const groups: Record<string, number> = {};
-      expenseTransactions.forEach(t => {
-        const key = viewMode === 'month' 
-          ? new Date(t.date).getDate() 
-          : new Date(t.date).getMonth();
-        groups[key] = (groups[key] || 0) + Math.abs(t.amount);
-      });
-      return Math.max(...Object.values(groups), 1);
-    } else {
-      return Math.max(...expenseTransactions.map(t => Math.abs(t.amount)), 1); 
-    }
-  }, [expenseTransactions, heatmapType, viewMode]);
-
-  const getHeatColor = useCallback((amount: number) => {
-    if (amount === 0) return colors.surfaceSecondary;
-    const intensity = Math.min(amount / maxValue, 1);
-    
-    if (intensity < 0.25) return colors.income + '40';
-    if (intensity < 0.50) return '#facc15';
-    if (intensity < 0.75) return '#fb923c';
-    return '#ef4444';
-  }, [maxValue, colors]);
-
-  const gridData = useMemo(() => {
-    if (heatmapType !== 'daily') return null;
-
-    if (viewMode === 'month') {
-      const daysInMonth = getDaysInMonth(localSelectedDay);
-      const startDay = getDay(startOfMonth(localSelectedDay)); 
-
-      const blanks = Array(startDay).fill(null);
-      const days = Array.from({ length: daysInMonth }, (_, i) => {
-        const day = i + 1;
-        const txs = expenseTransactions.filter(t => new Date(t.date).getDate() === day);
-        const amount = txs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        return { day, amount, transactions: txs };
-      });
-      return [...blanks, ...days];
-    } else {
-      return Array.from({ length: 12 }, (_, i) => {
-        const txs = expenseTransactions.filter(t => new Date(t.date).getMonth() === i);
-        const amount = txs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        return { monthIndex: i, amount, transactions: txs, label: monthsShort[language][i] };
-      });
-    }
-  }, [viewMode, heatmapType, localSelectedDay, expenseTransactions, year, language]);
-
-  const categoryData = useMemo(() => {
-    if (heatmapType !== 'category') return null;
-    
-    const categories = Array.from(new Set(expenseTransactions.map(t => t.category_name)));
-    const periods = viewMode === 'year' 
-      ? Array.from({ length: 12 }, (_, i) => ({ label: format(new Date(year, i, 1), 'MMM'), index: i }))
-      : Array.from({ length: getDaysInMonth(localSelectedDay) }, (_, i) => ({ label: `${i + 1}`, index: i + 1 }));
-
-    return categories.map(cat => {
-      const data = periods.map(p => {
-        const txs = expenseTransactions.filter(t => {
-          const d = new Date(t.date);
-          const isCat = t.category_name === cat;
-          const isPeriod = viewMode === 'year'
-            ? d.getMonth() === p.index
-            : d.getDate() === p.index;
-
-          return isCat && isPeriod;
-        });
-
-        const labelData = (viewMode === 'year') ? monthsShort[language][p.index] : p.label;
-        return { label: labelData, amount: txs.reduce((s, t) => s + Math.abs(t.amount), 0), transactions: txs };
-      });
-      return { category: cat, data };
-    });
-  }, [viewMode, heatmapType, expenseTransactions, localSelectedDay, year, language]);
-
-  const totalDisplay = useMemo(() =>
-    expenseTransactions.reduce((s, t) => s + Math.abs(t.amount), 0),
-    [expenseTransactions]
-  );
-
-  // --- HANDLERS ---
-  const handleViewModeChange = useCallback((mode: ViewMode) => {
-    setViewMode(mode);
-    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(`View mode changed to ${mode}`);
-  }, []);
-
-  const handleHeatmapTypeChange = useCallback((type: HeatmapType) => {
-    setHeatmapType(type);
-    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(`Heatmap type changed to ${type === 'daily' ? 'grid' : 'categories'}`);
-  }, []);
-
-  const handleCellPress = useCallback((cellData: SelectedCellProps) => {
-    setSelectedCell(cellData);
-    if (Platform.OS !== 'web') {
-      const txCount = cellData.transactions?.length || 0;
-      AccessibilityInfo.announceForAccessibility(
-        `${cellData.label}, ${cellData.subLabel}, ${currencySymbol} ${cellData.value.toFixed(2)}, ${txCount} transactions`
-      );
-    }
-  }, [currencySymbol]);
-
-  const handleCloseModal = useCallback(() => {
-    setSelectedCell(null);
-    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility('Details closed');
-  }, []);
+    getHeatColor,
+    handleViewModeChange,
+    handleHeatmapTypeChange,
+    handleCellPress,
+    handleCloseModal
+  } = useExpenseHeatmapLogic();
 
   const renderTransaction = useCallback((t: Transaction, i: number) => (
     <View

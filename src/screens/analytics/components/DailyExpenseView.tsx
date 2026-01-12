@@ -30,10 +30,8 @@ import { StatCard } from './subcomponents/StatsCard';
 import { InsightCard } from './subcomponents/InsightCard';
 import { EmptyState } from './subcomponents/EmptyState';
 import { useTranslation } from 'react-i18next';
-
-interface DailyExpenseViewProps {
-    currentPeriod: ViewPeriod;
-}
+import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogic';
+import PeriodSelector from './subcomponents/PeriodSelector';
 
 interface CategoryModalData {
     categoryName: string;
@@ -45,150 +43,25 @@ interface CategoryModalData {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const isSmallScreen = SCREEN_WIDTH < 420;
 
-export default function DailyExpenseViewMobile({
-    currentPeriod
-}: DailyExpenseViewProps) {
-    const { theme, language } = useSettingsStore();
-    const colors = theme === 'dark' ? darkTheme : lightTheme;
-    const { t } = useTranslation();
+export default function DailyExpenseViewMobile() {
+    const {
+        t,
+        colors,
+        currencySymbol,
+        isSmallScreen,
+        filteredTransactions,
+        dateInfo,
+        stats,
+        pieData,
+        modalVisible,
+        modalData,
+        selectedCategory,
+        currentPeriod,
+        setCurrentPeriod,
 
-    // Estado para selección visual y modal
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [modalData, setModalData] = useState<CategoryModalData | null>(null);
-
-    const { localSelectedDay } = useDateStore();
-    const { transactions } = useDataStore();
-    const { currencySymbol } = useAuthStore();
-
-    const year = localSelectedDay.getFullYear();
-    const month = localSelectedDay.getMonth() + 1;
-    const day = localSelectedDay.getDate();
-
-    // Filtrar transacciones según período
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
-            const txDate = new Date(t.date);
-
-            switch (currentPeriod) {
-                case 'day':
-                    return txDate.getFullYear() === year &&
-                        txDate.getMonth() === month - 1 &&
-                        txDate.getDate() === day;
-                case 'week': {
-                    const startOfWeek = new Date(localSelectedDay);
-                    startOfWeek.setDate(localSelectedDay.getDate() - localSelectedDay.getDay());
-                    startOfWeek.setHours(0, 0, 0, 0);
-                    const endOfWeek = new Date(startOfWeek);
-                    endOfWeek.setDate(startOfWeek.getDate() + 6);
-                    endOfWeek.setHours(23, 59, 59, 999);
-                    return txDate >= startOfWeek && txDate <= endOfWeek;
-                }
-                case 'month':
-                    return txDate.getFullYear() === year &&
-                        txDate.getMonth() === month - 1;
-                case 'year':
-                    return txDate.getFullYear() === year;
-                default:
-                    return true;
-            }
-        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [transactions, localSelectedDay, currentPeriod, year, month, day]);
-
-    // Info de fecha
-    const dateInfo = useMemo(() => {
-        const dayIndex = localSelectedDay.getDay();
-        return {
-            dayOfWeek: weekDaysFull[language][dayIndex],
-            monthName: months[language][localSelectedDay.getMonth()],
-            isWeekend: dayIndex === 0 || dayIndex === 6,
-            periodLabel: currentPeriod.charAt(0).toUpperCase() + currentPeriod.slice(1)
-        };
-    }, [localSelectedDay, currentPeriod]);
-
-    // Estadísticas
-    const stats = useMemo(() => {
-        const expenses = filteredTransactions.filter(t => t.type === 'expense');
-        const income = filteredTransactions.filter(t => t.type === 'income');
-        const totalExpenses = expenses.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        const totalIncome = income.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        const balance = totalIncome - totalExpenses;
-
-        const categoryTotals: Record<string, number> = {};
-        expenses.forEach(t => {
-            const amount = Math.abs(t.amount);
-            categoryTotals[t.category_name] = (categoryTotals[t.category_name] || 0) + amount;
-        });
-
-        const topCategory = Object.entries(categoryTotals).reduce(
-            (max, [cat, amount]) => amount > max.amount ? { category: cat, amount } : max,
-            { category: '', amount: 0 }
-        );
-
-        const largestTransaction = expenses.length > 0
-            ? expenses.reduce((max, t) => Math.abs(t.amount) > Math.abs(max.amount) ? t : max)
-            : null;
-
-        return {
-            totalExpenses,
-            totalIncome,
-            balance,
-            expenseCount: expenses.length,
-            incomeCount: income.length,
-            topCategory,
-            largestTransaction,
-            categoryTotals,
-            expensesList: expenses
-        };
-    }, [filteredTransactions]);
-
-    // --- MANEJO DE SELECCIÓN ---
-    const handleCategorySelect = useCallback((categoryName: string, totalValue: number, color: string) => {
-        setSelectedCategory(categoryName);
-
-        const categoryTransactions = stats.expensesList.filter(
-            t => t.category_name === categoryName
-        );
-
-        setModalData({
-            categoryName,
-            totalAmount: totalValue,
-            color,
-            transactions: categoryTransactions
-        });
-
-        setModalVisible(true);
-
-        // Anuncio de accesibilidad
-        if (Platform.OS !== 'web') {
-            AccessibilityInfo.announceForAccessibility(
-                `${categoryName}, ${t('overviews.totalSpent')} ${currencySymbol} ${totalValue.toFixed(2)}, ${categoryTransactions.length} ${t('overviews.tsx')}`
-            );
-        }
-    }, [stats.expensesList, currencySymbol, t]);
-
-    const handleCloseModal = useCallback(() => {
-        setModalVisible(false);
-        setSelectedCategory(null);
-
-        if (Platform.OS !== 'web') {
-            AccessibilityInfo.announceForAccessibility(t('common.closed', 'Modal closed'));
-        }
-    }, [t]);
-
-    // Datos para PieChart
-    const pieData = useMemo(() => {
-        return Object.entries(stats.categoryTotals).map(([name, value], index) => {
-            const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
-            return {
-                value,
-                color: color,
-                text: name,
-                focused: selectedCategory === name,
-                onPress: () => handleCategorySelect(name, value, color)
-            };
-        });
-    }, [stats.categoryTotals, selectedCategory, handleCategorySelect]);
+        handleCategorySelect,
+        handleCloseModal
+    } = useDailyExpenseLogic();
 
     const pieRadius = isSmallScreen ? 120 : isTablet ? 140 : 85;
     const pieInnerRadius = isSmallScreen ? 50 : isTablet ? 80 : 60;
@@ -231,6 +104,11 @@ export default function DailyExpenseViewMobile({
             accessible={true}
             accessibilityLabel={t('overviews.dailyExpenseView', 'Daily expense overview')}
         >
+            <PeriodSelector
+                selectedPeriod={currentPeriod}
+                onPeriodChange={setCurrentPeriod}
+                colors={colors}
+            />
             <Animated.View
                 entering={FadeIn.duration(600)}
                 style={[

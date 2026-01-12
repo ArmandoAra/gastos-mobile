@@ -174,10 +174,10 @@ const styles = StyleSheet.create({
         minWidth: 58,
         minHeight: 58,
         padding: 12, // Padding interno asegura que el icono grande no toque bordes
-        borderRadius: 18,
+        borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1.5,
+        borderWidth: 0.8,
     },
 
     // --- COLUMNA MONTO ---

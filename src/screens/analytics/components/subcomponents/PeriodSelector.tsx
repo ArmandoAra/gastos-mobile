@@ -13,24 +13,22 @@ import { ViewPeriod } from '../../../../interfaces/date.interface';
 import { ThemeColors } from '../../../../types/navigation';
 
 interface PeriodSelectorProps {
-  selectedPeriod: ViewPeriod | string;
-  onPeriodChange: (period: ViewPeriod | string) => void;
+  selectedPeriod: ViewPeriod;
+  onPeriodChange: (period: ViewPeriod) => void;
   colors: ThemeColors;
-  periods?: string[]; 
+  periods?: ViewPeriod[];
 }
+const periods: ViewPeriod[] = ['day', 'week', 'month', 'year'];
 
 export default function PeriodSelector({
   selectedPeriod,
   onPeriodChange,
   colors,
-  periods = ['day', 'week', 'month', 'year']
 }: PeriodSelectorProps) {
   const { t } = useTranslation();
 
-  const handlePress = (p: string) => {
+  const handlePress = (p: ViewPeriod) => {
     onPeriodChange(p);
-    
-    // Anuncio para lectores de pantalla (VoiceOver/TalkBack)
     if (Platform.OS !== 'web') {
       const label = t(`transactions.${p}`, p);
       AccessibilityInfo.announceForAccessibility(`${label} ${t('accessibility.selected', 'selected')}`);

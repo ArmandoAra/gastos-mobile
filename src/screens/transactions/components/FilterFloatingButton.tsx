@@ -1,4 +1,4 @@
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import { 
     View, 
     Text, 
@@ -7,32 +7,21 @@ import {
     Modal, 
     Platform 
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import Animated, { FadeIn, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
-
-// Tipos definidos en tu app
-type ViewMode = 'day' | 'month' | 'year';
+import { ViewMode } from '../../../interfaces/date.interface';
+import { filterTransactionsTypes, filterViewModes } from '../constants/filters';
 
 interface FilterFloatingButtonProps {
     viewMode: ViewMode;
     setViewMode: (mode: ViewMode) => void;
-    filter: string; // 'all' | 'income' | 'expense'
+    filter: string;
     setFilter: (filter: string) => void;
     colors: ThemeColors;
 }
-
-const COLORS = {
-    glassBg: 'rgba(30, 41, 59, 0.9)', 
-    modalBg: '#0f172a',
-    border: 'rgba(255, 255, 255, 0.1)',
-    text: '#ffffff',
-    textMuted: '#94a3b8',
-    activeGradient: ['#f97316', '#dc2626'] as [string, string], // Naranja a Rojo
-};
 
 export default function FilterFloatingButton({ 
     viewMode, 
@@ -42,7 +31,6 @@ export default function FilterFloatingButton({
     colors,
 }: FilterFloatingButtonProps) {
     const { t } = useTranslation();
-    
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -82,7 +70,7 @@ export default function FilterFloatingButton({
                          {Platform.OS === 'ios' ? (
                             <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
                         ) : (
-                            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' }} />
+                                <View style={{ flex: 1, backgroundColor: colors.background }} />
                         )}
                     </TouchableOpacity>
 
@@ -102,7 +90,7 @@ export default function FilterFloatingButton({
                         {/* SECCIÓN 1: VIEW MODE */}
                         <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('transactions.period')}</Text>
                         <View style={styles.selectorContainer}>
-                            {(['day', 'month', 'year'] as ViewMode[]).map((mode) => {
+                            {filterViewModes.map((mode) => {
                                 const isActive = viewMode === mode;
                                 return (
                                     <TouchableOpacity
@@ -139,7 +127,7 @@ export default function FilterFloatingButton({
                         {/* SECCIÓN 2: TIPO DE TRANSACCIÓN */}
                         <Text style={[styles.sectionLabel, { marginTop: 20 }, { color: colors.text }]}>{t('transactions.sortBy')}</Text>
                         <View style={styles.selectorContainer}>
-                            {['all', 'income', 'expense'].map((f) => {
+                            {filterTransactionsTypes.map((f) => {
                                 const isActive = filter === f;
                                 return (
                                     <TouchableOpacity
@@ -198,8 +186,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)'
     },
-
-    // Modal
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
@@ -232,13 +218,11 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 12,
         fontWeight: '700',
-        color: COLORS.textMuted,
+        color: '#94a3b8',
         textTransform: 'uppercase',
         marginBottom: 10,
         letterSpacing: 1,
     },
-    
-    // Selectores
     selectorContainer: {
         flexDirection: 'row',
         gap: 8,

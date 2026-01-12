@@ -43,46 +43,11 @@ import ExpenseHeatmap from './components/ExpenseHeatmapMobile';
 
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
-
-  const { transactions } = useDataStore();
   const { t } = useTranslation();
-  const { localSelectedDay } = useDateStore();
   const { theme } = useSettingsStore();
   const colors = theme === 'dark' ? darkTheme : lightTheme;
 
   const [selectedPeriod, setSelectedPeriod] =  useState<ViewPeriod>('month');
-
-  // ============================================
-  // LÓGICA DE DATOS
-  // ============================================
-  const filteredTransactions = useMemo(() => {
-    const now = new Date(); // OJO: ¿Debería ser localSelectedDay? Usando lógica original por ahora.
-    let start, end;
-
-    switch (selectedPeriod) {
-      case 'week':
-        start = startOfWeek(now, { locale: es });
-        end = endOfWeek(now, { locale: es });
-        break;
-      case 'month':
-        start = startOfMonth(now);
-        end = endOfMonth(now);
-        break;
-      case 'year':
-        start = startOfYear(now);
-        end = endOfYear(now);
-        break;
-      default: // day
-      // Nota: Para 'day' la lógica original usaba month como fallback o necesita ajuste específico
-        start = startOfMonth(now);
-        end = endOfMonth(now);
-    }
-
-    return transactions.filter(t => {
-      const date = parseISO(t.date);
-      return date >= start && date <= end;
-    });
-  }, [selectedPeriod, transactions]);
 
 
   const handlePeriodChange = (p: string) => {
@@ -93,7 +58,7 @@ export default function AnalyticsScreen() {
     }
   };
 
-  const PERIODS = ['day', 'week', 'month', 'year'];
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -104,14 +69,9 @@ export default function AnalyticsScreen() {
         showsVerticalScrollIndicator={false}
       >
         { /* Period Selector - Accesible y Escalable */}
-      <PeriodSelector
-        selectedPeriod={selectedPeriod}
-        onPeriodChange={handlePeriodChange}
-        colors={colors}
-        periods={PERIODS}
-        />
+
         {/* 1. Daily View */}
-        <DailyExpenseViewMobile currentPeriod={selectedPeriod} />
+        <DailyExpenseViewMobile />
 
         {/* 2. Heatmap */}
         <ExpenseHeatmap />
