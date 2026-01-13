@@ -28,6 +28,7 @@
         "no": "No",
         "save": "Guardar",
         "saving": "Guardando...",
+        "create": "Crear",
         "confirm": "Confirmar",
         "cancel": "Cancelar",
         "delete": "Eliminar",
@@ -62,7 +63,9 @@
         "addExpense": "Gasto",
         "addIncome": "Ingreso",
         "selectCategory": "Seleccionar categoría",
-        "noIcons": "No hay íconos disponibles"
+        "noIcons": "No hay íconos disponibles",
+        "selectIcon": "Seleccionar ícono",
+        "color": "Seleccionar color"
     },
     "commonWarnings": {
         "warning": "Advertencia",
@@ -296,15 +299,10 @@
         "previous_month": "Mes anterior"
     },
     "categories": {
-        "food": "Comida",
-        "transportation": "Transporte",
-        "utilities": "Servicios",
-        "entertainment": "Entretenimiento",
-        "health": "Salud",
-        "shopping": "Compras",
-        "education": "Educación",
-        "travel": "Viajes",
-        "personalCare": "Cuidado personal"
+        "createNew": "Crear nueva categoría",
+        "editCategory": "Editar categoría",
+        "deleteCategory": "Eliminar categoría",
+        "deleteWarning": "Eliminar una categoría "
     },
     "accessibility": {
         "save_hint": "Actualizar la transaccion y cerrar el formulario",

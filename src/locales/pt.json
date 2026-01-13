@@ -27,6 +27,7 @@
         "yes": "Sim",
         "no": "Não",
         "save": "Salvar",
+        "create": "Criar",
         "saving": "Salvando...",
         "confirm": "Confirmar",
         "cancel": "Cancelar",
@@ -62,7 +63,9 @@
         "addExpense": "Despesa",
         "addIncome": "Renda",
         "selectCategory": "Selecionar categoria",
-        "noIcons": "Nenhum ícone disponível"
+        "noIcons": "Nenhum ícone disponível",
+        "selectIcon": "Selecionar ícone",
+        "color": "Selecionar cor"
     },
     "commonWarnings": {
         "warning": "Aviso",
@@ -320,7 +323,13 @@
         "exportFailed": "Erro ao exportar dados",
         "importFailed": "Erro ao importar dados"
     },
-    "overviews": {
+    "categories": {
+        "createNew": "Criar nova categoria",
+        "editCategory": "Editar categoria",
+        "deleteCategory": "Excluir categoria",
+        "deleteWarning": "Excluir uma categoria",
+    },
+        "overviews": {
         "categoryBreakdown": "Divisão por categoria",
         "insights": "Insights",
         "expenseHeatmap": "Mapa de calor",

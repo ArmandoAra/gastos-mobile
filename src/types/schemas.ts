@@ -61,6 +61,7 @@ export interface Transaction {
     amount: number;
     type: TransactionType;
     category_name: string;
+    slug_category_name: string[];
     date: string;
     quantity?: number;
     transaction_group_id?: string;

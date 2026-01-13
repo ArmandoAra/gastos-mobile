@@ -38,7 +38,7 @@ import { styles } from './stylesForm';
 
 // Componentes Hijos
 import SubmitButton, { addOption } from "../buttons/submitButton";
-import IconsSelectorPopover from "./Inputs/IconsSelector";
+import IconsSelectorPopover from "./Inputs/CategorySelector";
 import CategoryAndAmountInput from "./Inputs/CategoryAndAmountInput";
 import DescriptionInput from "./Inputs/DescriptionInput";
 import AccountSelector from "./Inputs/AccoutSelector";
@@ -54,7 +54,7 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
     const {
         amount,
         description,
-        selectedIcon,
+        selectedCategory,
         iconsKey,
         selectedAccount,
         localSelectedDay,
@@ -64,15 +64,16 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
         inputNameActive,
         amountInputRef,
         popoverOpen,
+        allCategories,
         setAmount,
         setDescription,
         setLocalSelectedDay,
         setSelectedAccount,
         handleClosePopover,
-        handleSelectIcon,
+        handleSelectCategory,
         handleSave,
         handleClose,
-        handleIconClick
+        handleCategoryClick
     } = useTransactionForm();
 
     // const isOpen = inputNameActive !== InputNameActive.NONE;
@@ -199,11 +200,11 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
                             >
                                 {/* 1. Categoría y Monto */}
                                 <CategoryAndAmountInput
-                                    selectedIcon={selectedIcon}
+                                    selectedCategory={selectedCategory}
                                     amount={amount}
                                     setAmount={setAmount}
                                     amountInputRef={amountInputRef}
-                                    handleIconClick={handleIconClick}
+                                    handleCategoryClick={handleCategoryClick}
                                     colors={colors}
                                     onOpenCalculator={handleOpenCalculator} // Pasamos la función para abrir calc
                                 />
@@ -235,11 +236,12 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
                                             handleSave();
                                             onClose(false);
                                         }}
-                                        selectedIcon={selectedIcon}
+                                        selectedCategory={selectedCategory}
                                         option={isExpense ? addOption.Spend : addOption.Income}
                                         loading={isSubmitting}
                                         // Validación simple para deshabilitar
                                         disabled={!amount || parseFloat(amount) === 0 || !selectedAccount}
+                                        colors={colors}
                                     />
                                 </View>
                             </ScrollView>
@@ -281,9 +283,10 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
                                     popoverOpen={popoverOpen}
                                     anchorEl={anchorEl}
                                     handleClosePopover={handleClosePopover}
-                                    handleSelectIcon={handleSelectIcon}
-                                    selectedIcon={selectedIcon}
+                                    handleSelectCategory={handleSelectCategory}
+                                    selectedCategory={selectedCategory}
                                     colors={colors}
+                                    allCategories={allCategories}
                                 />
                             )}
 

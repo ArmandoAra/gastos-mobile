@@ -17,42 +17,44 @@ import Animated, {
 } from "react-native-reanimated";
 import { ICON_OPTIONS, IconKey, IconOption } from "../../../constants/icons";
 import { ThemeColors } from "../../../types/navigation";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { InputNameActive } from "../../../interfaces/settings.interface";
-import { set } from "date-fns";
 import { useSettingsStore } from "../../../stores/settingsStore";
+import { defaultCategories } from '../../../constants/categories';
+import { Category, TransactionType } from "../../../interfaces/data.interface";
+import { setBorderColorAsync } from "expo-navigation-bar";
+import CategoryFormInput from "./CategoryFormInput";
 
-interface IconsSelectorPopoverProps {
+interface CategorySelectorPopoverProps {
   popoverOpen: boolean;
   anchorEl?: any; // Se mantiene por compatibilidad de tipos, aunque no se use en móvil
   handleClosePopover: () => void;
-  selectedIcon: IconOption | null;
-  handleSelectIcon: (icon: IconOption) => void;
+  selectedCategory: Category | null;
+  handleSelectCategory: (category: Category) => void;
   colors: ThemeColors;
+  allCategories: Category[];
 }
 
-export default function IconsSelectorPopover({
+export default function CategorySelectorPopover({
   popoverOpen,
   handleClosePopover,
-  selectedIcon,
-  handleSelectIcon,
+  selectedCategory,
+  handleSelectCategory,
   colors,
-}: IconsSelectorPopoverProps) {
+  allCategories,
+}: CategorySelectorPopoverProps) {
   const { t } = useTranslation();
   const { inputNameActive } = useSettingsStore();
-  const [iconsKey, setIconsKey] = React.useState<IconKey>(IconKey.others);
+  const [iconsKey, setIconsKey] = React.useState<TransactionType>(TransactionType.EXPENSE);
+  const [addingNewCategory, setAddingNewCategory] = React.useState<boolean>(false);
 
   useEffect(() => {
-    console.log("IconsSelectorPopover - inputNameActive changed:", inputNameActive);
     return inputNameActive === InputNameActive.INCOME
-      ? setIconsKey(IconKey.income)
-      : inputNameActive === InputNameActive.SPEND
-        ? setIconsKey(IconKey.spend)
-        : setIconsKey(IconKey.others);
+      ? setIconsKey(TransactionType.INCOME)
+      : setIconsKey(TransactionType.EXPENSE)
+       
   }, [inputNameActive]);
 
-
-  const iconOptions = ICON_OPTIONS[iconsKey] as unknown as IconOption[];
   return (
     <Modal
       visible={popoverOpen}
@@ -83,18 +85,20 @@ export default function IconsSelectorPopover({
           <View style={[styles.header, { backgroundColor: colors.surface }]}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>{t("common.selectCategory")}</Text>
           </View>
+{
+  addingNewCategory ? (
+              <CategoryFormInput 
+                type={iconsKey}
+              />
 
-          {/* Grid de Iconos */}
-          <View style={styles.gridContainer}>
+  ) : <View style={styles.gridContainer}>
             <FlatList
-              data={iconOptions}
+              data={allCategories}
               keyExtractor={(item) => item.id}
               numColumns={3}
               showsVerticalScrollIndicator={false}
               columnWrapperStyle={styles.columnWrapper}
               contentContainerStyle={styles.listContent}
-              
-              // Componente por si la lista está vacía (Debugging)
               ListEmptyComponent={
                 <View style={{ padding: 20, alignItems: 'center' }}>
                   <Text style={{ color: colors.text }}>No icons found</Text>
@@ -102,31 +106,28 @@ export default function IconsSelectorPopover({
               }
 
               renderItem={({ item }) => {
-                const isSelected = selectedIcon?.id === item.id;
-                
-                // Extraemos el componente para renderizarlo como JSX
-                const IconComponent = item.icon;
+                const isSelected = selectedCategory?.id === item.id;
+
+
+                const { icon: IconComponent } = ICON_OPTIONS.filter((icon) => icon.label === item.icon)[0]
+                const categoryName = item.userId ? item.name : t(`icons.${item.icon}`);
 
                 return (
-                  // 3. USO DE VIEW NORMAL PARA LOS ITEMS (Sin animación de entrada para evitar bugs visuales)
                   <View style={styles.gridItemWrapper}>
                     <TouchableOpacity
-                      onPress={() => handleSelectIcon(item)}
-                      activeOpacity={0.7} // Feedback táctil mejorado
+                      onPress={() => handleSelectCategory(item)}
+                      activeOpacity={0.7}
                       style={[
                         styles.iconItem,
                         isSelected && { ...styles.iconItemSelected, borderColor: colors.accent },
                       ]}
                     >
-                      <LinearGradient
-                        colors={item.gradientColors}
-                        style={styles.avatar}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
+                      <View
+                        style={[styles.avatar, { backgroundColor: item.color, borderColor: colors.border }]}
                       >
-                        {/* Renderizado Seguro del Icono */}
+
                         {IconComponent && <IconComponent size={24} color={colors.text} />}
-                      </LinearGradient>
+                      </View>
 
                       <Text
                         style={[
@@ -135,8 +136,11 @@ export default function IconsSelectorPopover({
                           isSelected && { ...styles.iconLabelSelected, color: colors.accent },
                         ]}
                         numberOfLines={1}
-                      >
-                        {t(`icons.${item.label}`, item.label)}
+                      >{
+                        // TODO: Separar las categorias y no ponerlas todas juntas para que traduzca solo las que estan por defecto
+                        // Mostrar el nombre del la categoria si el icono no fue creado por el usuario, de lo contrario mostrar el nombre personalizado
+                       categoryName
+                      }
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -144,6 +148,8 @@ export default function IconsSelectorPopover({
               }}
             />
           </View>
+}
+          
         </Animated.View>
       </Animated.View>
     </Modal>

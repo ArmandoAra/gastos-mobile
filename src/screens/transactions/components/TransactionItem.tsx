@@ -16,14 +16,14 @@ import Animated, {
     withSpring, 
     withTiming,
 } from 'react-native-reanimated';
-import { runOnJS } from "react-native-worklets"
+import { scheduleOnRN } from "react-native-worklets"
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { format, set } from 'date-fns';
 import { formatCurrency } from '../../../utils/helpers';
 import WarningMessage from './WarningMessage';
 import EditTransactionForm from '../../../components/forms/EditTransactionForm';
-import { Transaction, TransactionType } from '../../../interfaces/data.interface';
+import { Category, Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { CategoryLabel } from '../../../api/interfaces';
 import { ThemeColors } from '../../../types/navigation';
@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import EditTransactionFormMobile from '../../../components/forms/EditTransactionForm';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { InputNameActive } from '../../../interfaces/settings.interface';
+import { defaultCategories } from '../../../constants/categories';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
@@ -63,16 +64,21 @@ export const TransactionItemMobile = React.memo(({
     const opacity = useSharedValue(1);
     const marginBottom = useSharedValue(8);
 
+    const defaultCategoriesOptions: Category[] = defaultCategories.filter((cat => cat.type === transaction.type));
+    const userCategoriesOptions: Category[] = []; // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
+    const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
+
     // Datos Memoizados
     const categoryData = useMemo(() => {
-        const categoryKey = transaction.type as keyof typeof ICON_OPTIONS;
-        const categoryIcons = ICON_OPTIONS[categoryKey] || [];
-        const found = categoryIcons.find(
-            icon => icon.label === transaction.category_name as CategoryLabel
+        const categoryKey = transaction.type === TransactionType.INCOME ? 'income' : 'expense';
+        const categoryOptions = allCategories.filter(cat => cat.type === categoryKey)
+        const found = categoryOptions.find(
+            icon => icon.name === transaction.category_name as CategoryLabel
         );
         return {
-            IconComponent: found?.icon,
-            color: found?.gradientColors ? found.gradientColors[0] : '#B0BEC5',
+            IconComponent: ICON_OPTIONS.find(icon => icon.label === found?.icon)?.icon,
+            color: found?.color ?? '#B0BEC5',
+            categoryOptions,
         };
     }, [transaction.type, transaction.category_name]);
 
@@ -80,7 +86,7 @@ export const TransactionItemMobile = React.memo(({
         return getAccountNameById(transaction.account_id);
     }, [transaction.account_id, getAccountNameById]);
 
-    const { IconComponent, color } = categoryData;
+    const { IconComponent, color, categoryOptions } = categoryData;
     const isExpense = transaction.type === TransactionType.EXPENSE;
     const formattedDate = format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm');
     const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
@@ -104,12 +110,12 @@ export const TransactionItemMobile = React.memo(({
         marginBottom.value = withTiming(0, { duration: 300 });
         opacity.value = withTiming(0, { duration: 300 }, (finished) => {
             if (finished) {
-                runOnJS(onDelete)(
+                scheduleOnRN(() => onDelete(
                     transaction.id, 
                     transaction.account_id, 
                     transaction.amount, 
                     transaction.type as TransactionType
-                );
+                ));
             }
         });
     };
@@ -127,7 +133,7 @@ export const TransactionItemMobile = React.memo(({
         })
         .onEnd(() => {
             if (Math.abs(translateX.value) > SWIPE_THRESHOLD) {
-                runOnJS(setIsWarningOpen)(true);
+                scheduleOnRN(() => setIsWarningOpen(true));
             } else {
                 translateX.value = withSpring(0);
             }
@@ -291,7 +297,7 @@ export const TransactionItemMobile = React.memo(({
                 onClose={() => setIsEditOpen(false)}
                 onSave={onSave}
                 transaction={transaction}
-                iconOptions={ICON_OPTIONS[transaction.type === TransactionType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE]} 
+                categoryOptions={categoryOptions}
             />
 
         </Animated.View>

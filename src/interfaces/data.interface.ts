@@ -1,3 +1,5 @@
+import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from "../api/interfaces";
+import { COLOR_PICKER_PALETTE } from "../constants/categories";
 
 export interface User {
     id: string;
@@ -44,6 +46,7 @@ export interface Transaction {
     amount: number;
     type: TransactionType;
     category_name: string;
+    slug_category_name: string[];
     date: string;
     quantity?: number;
     transaction_group_id?: string;
@@ -56,8 +59,10 @@ export interface Transaction {
 export interface Category {
     id: string;
     name: string;
-    icon: string; // Nombre del icono asociado
-    userId: string; // Foreign key
+    icon: CategoryLabel;
+    color: typeof COLOR_PICKER_PALETTE[number];
+    type: TransactionType;
+    userId: string;
 }
 
 export interface TransactionTemplate {

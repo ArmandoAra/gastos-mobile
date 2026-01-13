@@ -2,10 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage, devtools, StateStorage } from 'zustand/middleware'
 import { createMMKV } from 'react-native-mmkv' // 1. Importar MMKV
 import { Account, Transaction, TransactionType } from '../interfaces/data.interface'
-import { createAccount } from '../../../Gastos/frontend/app/actions/db/Accounts_API';
 import * as uuid from 'uuid';
-import { se } from 'date-fns/locale';
-import { transferTransactionsAccount } from '../../../Gastos/frontend/app/actions/db/Gastos_API';
 
 // ============================================
 // CONFIGURACIÓN MMKV

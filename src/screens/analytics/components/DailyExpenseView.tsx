@@ -18,30 +18,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PieChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
-import { CATEGORY_COLORS, months, weekDaysFull } from '../../../constants/date';
-import { ViewPeriod } from '../../../interfaces/date.interface';
-import useDateStore from '../../../stores/useDateStore';
-import useDataStore from '../../../stores/useDataStore';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { darkTheme, lightTheme } from '../../../theme/colors';
-import { useAuthStore } from '../../../stores/authStore';
 import { isTablet, styles } from './styles';
 import { StatCard } from './subcomponents/StatsCard';
 import { InsightCard } from './subcomponents/InsightCard';
 import { EmptyState } from './subcomponents/EmptyState';
-import { useTranslation } from 'react-i18next';
 import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogic';
 import PeriodSelector from './subcomponents/PeriodSelector';
-
-interface CategoryModalData {
-    categoryName: string;
-    totalAmount: number;
-    color: string;
-    transactions: any[];
-}
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const isSmallScreen = SCREEN_WIDTH < 420;
 
 export default function DailyExpenseViewMobile() {
     const {

@@ -14,6 +14,8 @@ import Animated, {
     withSpring,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { Category } from '../../interfaces/data.interface';
+import { ThemeColors } from '../../types/navigation';
 
 // Definición de Enum y Props
 export enum addOption {
@@ -23,18 +25,20 @@ export enum addOption {
 
 interface SubmitButtonProps {
     handleSave: () => void;
-    selectedIcon: { id: string; gradientColors: [string, string] } | null;
+    selectedCategory: Category;
     option?: addOption;
     loading?: boolean;
     disabled?: boolean;
+    colors: ThemeColors;
 }
-
+// Refactorizar
 export default function SubmitButton({
     handleSave,
-    selectedIcon,
+    selectedCategory,
     disabled = false,
     option,
-    loading = false
+    loading = false,
+    colors,
 }: SubmitButtonProps) {
     const { t } = useTranslation();
 
@@ -59,12 +63,6 @@ export default function SubmitButton({
         }
     };
 
-    // 2. Lógica de Colores (Estado Deshabilitado)
-    const activeColors = selectedIcon?.gradientColors || ['#667eea', '#764ba2'];
-    // Gris neutro para estado deshabilitado
-    const disabledColors = ['#E0E0E0', '#BDBDBD'];
-
-    const currentColors = disabled ? disabledColors : activeColors;
     const textColor = disabled ? '#888888' : '#FFFFFF';
 
     return (
@@ -82,24 +80,21 @@ export default function SubmitButton({
                 accessibilityState={{ disabled: disabled, busy: loading }}
                 accessibilityHint={disabled ? t('accessibility.fill_required', 'Complete all fields to save') : undefined}
             >
-                <LinearGradient
-                    colors={currentColors as [string, string]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.gradient}
+                <View
+                    style={[styles.gradient, { backgroundColor: selectedCategory?.color || '#4CAF50' }]}
                 >
                     {loading ? (
                         <ActivityIndicator size="small" color={textColor} />
                     ) : (
                             <Text
-                                style={[styles.text, { color: textColor }]}
+                                style={[styles.text, { color: colors.surface }]}
                                 maxFontSizeMultiplier={1.5} // Evita que el texto crezca excesivamente rompiendo todo
                                 numberOfLines={1}
                             >
                                 {t('common.save', 'Save')}
                         </Text>
                     )}
-                </LinearGradient>
+                </View>
             </TouchableOpacity>
         </Animated.View>
     );

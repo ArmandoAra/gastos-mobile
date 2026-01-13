@@ -29,7 +29,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
 import { useTransactionForm } from '../../hooks/useTransactionForm';
 import useMessage from '../../stores/useMessage';
-import { Transaction } from '../../interfaces/data.interface';
+import { Category, Transaction } from '../../interfaces/data.interface';
 import { MessageType } from '../../interfaces/message.interface';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
@@ -42,17 +42,22 @@ import DescriptionInput from './Inputs/DescriptionInput';
 import AccountSelector from './Inputs/AccoutSelector';
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
-import IconsSelectorPopover from './Inputs/IconsSelector';
+import IconsSelectorPopover from './Inputs/CategorySelector';
 import CalculatorSheet from './Inputs/CalculatorSheet';
 import useDataStore from '../../stores/useDataStore';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
 import { set } from 'date-fns';
 import SubmitButton, { addOption } from '../buttons/submitButton';
+import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
+import { InputNameActive } from '../../interfaces/settings.interface';
+import { defaultCategories } from '../../constants/categories';
+import CategorySelectorPopover from './Inputs/CategorySelector';
+import { de } from 'date-fns/locale';
 
 interface EditTransactionFormProps {
     open: boolean;
     transaction: Transaction | null;
-    iconOptions: IconOption[];
+    categoryOptions: Category[];
     onClose: (isOpen: boolean) => void;
     onSave: (
         updatedTransaction: Transaction,
@@ -64,7 +69,7 @@ interface EditTransactionFormProps {
 export default function EditTransactionFormMobile({
     open,
     transaction,
-    iconOptions,
+    categoryOptions,
     onClose,
     onSave,
 }: EditTransactionFormProps) {
@@ -91,8 +96,13 @@ export default function EditTransactionFormMobile({
     // Estados Locales
     const [newAccount, setNewAccount] = useState<string>(selectedAccount || '');
     const [isLoading, setIsLoading] = useState(false);
-    const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
-    const [selectedIcon, setSelectedIcon] = useState<IconOption | null>(null);
+    const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(false);
+
+    const defaultCategoriesOptions: Category[] = defaultCategories.filter((cat => cat.type === transaction?.type));
+    const userCategoriesOptions: Category[] = []; // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
+    const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
+
+    const [selectedCategory, setSelectedCategory] = useState<Category>(allCategories[0]);
 
     // Monitorizamos el estado del teclado nativo
     const isKeyboardVisible = useKeyboardStatus();
@@ -109,11 +119,9 @@ export default function EditTransactionFormMobile({
             setLocalSelectedDay(new Date(transaction.date));
             setNewAccount(transaction.account_id);
 
-            const icon = ICON_OPTIONS[
-                transaction.type === "income" ? IconKey.income : IconKey.spend
-            ].find(icon => icon.label === transaction.category_name);
+            const category = allCategories.find(cat => cat.name === transaction.category_name);
 
-            setSelectedIcon(icon as IconOption);
+            setSelectedCategory(category || allCategories[0]);
 
             if (Platform.OS !== 'web') {
                 AccessibilityInfo.announceForAccessibility(t('accessibility.edit_form_opened', 'Edit transaction form opened'));
@@ -140,13 +148,13 @@ export default function EditTransactionFormMobile({
         }, 100);
     };
 
-    const handleSelectIcon = (icon: IconOption) => {
-        setSelectedIcon(icon);
-        setIsIconSelectorOpen(false);
+    const handleSelectCategory = (category: Category) => {
+        setSelectedCategory(category);
+        setIsCategorySelectorOpen(false);
     };
 
     const handleUpdate = async () => {
-        if (!transaction || !selectedIcon) return;
+        if (!transaction || !selectedCategory) return;
 
         // Validamos evaluando la expresión matemática
         let finalAmountVal = 0;
@@ -175,6 +183,12 @@ export default function EditTransactionFormMobile({
             if (finalDate.toDateString() === originalDate.toDateString()) {
                 finalDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
             }
+            const defaultCategoriesSlug: string[] = [
+                CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish],
+                CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese],
+            ];
+
+            const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
 
             const updatedTransaction: Transaction = {
                 ...transaction,
@@ -183,10 +197,13 @@ export default function EditTransactionFormMobile({
                     : Math.abs(finalAmountVal),
                 description: description.trim(),
                 date: finalDate.toISOString(),
-                category_name: selectedIcon.label,
+                category_name: selectedCategory.name,
+                slug_category_name: isNewCategory ? [selectedCategory.name as string] : defaultCategoriesSlug,
                 account_id: newAccount,
                 updated_at: new Date().toISOString()
             };
+
+            console.log('Updated Transaction:', updatedTransaction);
 
             await onSave(updatedTransaction, transaction.account_id, newAccount);
             showMessage(MessageType.UPDATED, t('messages.transaction_updated', 'Transaction updated'));
@@ -267,10 +284,10 @@ export default function EditTransactionFormMobile({
                             showsVerticalScrollIndicator={false}
                         >
                             <CategoryAndAmountInput
-                                selectedIcon={selectedIcon}
+                                selectedCategory={selectedCategory}
                                 amount={amount}
                                 amountInputRef={amountInputRef}
-                                handleIconClick={() => setIsIconSelectorOpen(true)}
+                                handleCategoryClick={() => setIsCategorySelectorOpen(true)}
                                 setAmount={setAmount}
                                 colors={colors}
                                 onOpenCalculator={handleOpenCalculator}
@@ -297,10 +314,11 @@ export default function EditTransactionFormMobile({
                             <View style={styles.actionButtons}>
                                 <SubmitButton
                                     handleSave={handleUpdate}
-                                    selectedIcon={selectedIcon}
+                                    selectedCategory={selectedCategory}
                                     option={isExpense ? addOption.Spend : addOption.Income}
                                     // Validación simple para deshabilitar
                                     disabled={!amount || parseFloat(amount) === 0 || !selectedAccount}
+                                    colors={colors}
                                 />
                             </View>
                         </ScrollView>
@@ -334,13 +352,13 @@ export default function EditTransactionFormMobile({
                             </Animated.View>
                         )}
 
-                        {/* Popover Iconos */}
-                        {isIconSelectorOpen && (
-                            <IconsSelectorPopover
-                                popoverOpen={isIconSelectorOpen}
-                                handleClosePopover={() => setIsIconSelectorOpen(false)}
-                                handleSelectIcon={handleSelectIcon}
-                                selectedIcon={selectedIcon}
+                        {/* Popover Categorías */}
+                        {isCategorySelectorOpen && (
+                            <CategorySelectorPopover
+                                popoverOpen={isCategorySelectorOpen}
+                                handleClosePopover={() => setIsCategorySelectorOpen(false)}
+                                handleSelectCategory={handleSelectCategory}
+                                selectedCategory={selectedCategory}
                                 colors={colors}
                             />
                         )}

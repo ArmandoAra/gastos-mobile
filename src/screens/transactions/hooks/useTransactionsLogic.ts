@@ -12,6 +12,7 @@ import { Transaction, TransactionType } from "../../../interfaces/data.interface
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { ThemeColors } from "../../../types/navigation";
 import { ViewPeriod } from "../../../interfaces/date.interface";
+import { PortugueseToEnglishCategory, SpanishToEnglishCategory } from "../../../constants/categories";
 
 type ViewMode = 'day' | 'month' | 'year';
 
@@ -54,6 +55,7 @@ export const useTransactionsLogic = () => {
             return true;
         });
 
+
         // Filtro por tipo (Income/Expense)
         if (filter !== 'all') {
             result = result.filter(t => t.type === filter);
@@ -62,12 +64,37 @@ export const useTransactionsLogic = () => {
         // Filtro por búsqueda
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            result = result.filter(transaction =>
-                (transaction.description || '').toLowerCase().includes(query) ||
-                ((`${t(`categories.${transaction.category_name}`)}` || '')).toLowerCase().includes(query)
-            );
+
+            // Normalizamos la búsqueda para que coincida con las llaves de los diccionarios (Ej: "comida" -> "Comida")
+            const capitalizedQuery = query.charAt(0).toUpperCase() + query.slice(1);
+
+            result = result.filter(transaction => {
+                const description = (transaction.description || '').toLowerCase();
+                const category = (transaction.category_name || '').toLowerCase();
+                const slugCategories = transaction.slug_category_name || [];
+                console.log("Slug Categories:", slugCategories);
+
+                // Verificamos si el query coincide con alguna de las slug_category_name
+                // if (slugCategories.some(slug => slug.includes(query))) {
+                //     return true;
+                // }
+
+                // Buscamos la traducción en los diccionarios (si existe) y la pasamos a minúsculas
+                const translationES = SpanishToEnglishCategory[capitalizedQuery]?.toLowerCase();
+                const translationPT = PortugueseToEnglishCategory[capitalizedQuery]?.toLowerCase();
+
+                return (
+                    description.includes(query) ||
+                    category.includes(query) ||
+                    slugCategories.some(slug => slug.includes(query)) ||
+
+                    (translationES && category.includes(translationES)) ||
+                    (translationPT && category.includes(translationPT))
+                );
+            });
         }
 
+        // Ordenar por fecha (descendente)
         return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [filter, searchQuery, transactions, localSelectedDay, viewMode, t]);
 

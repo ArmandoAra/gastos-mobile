@@ -8,9 +8,10 @@ import useDataStore from '../../../stores/useDataStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { ViewPeriod } from '../../../interfaces/date.interface';
-import { CATEGORY_COLORS, months, weekDaysFull } from '../../../constants/date';
+import { months, weekDaysFull } from '../../../constants/date';
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { Transaction } from '../../../interfaces/data.interface';
+import { CATEGORY_COLORS } from '../../../constants/categories';
 
 export interface CategoryModalData {
     categoryName: string;

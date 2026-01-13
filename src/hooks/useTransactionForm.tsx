@@ -14,6 +14,11 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "../stores/authStore";
 import { useTranslation } from "react-i18next";
+import { Category } from "../interfaces/data.interface";
+import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../api/interfaces";
+import { defaultCategories } from '../constants/categories';
+import { filterCategoriesByType } from "../utils/categories";
+import useCategoriesStore from "../stores/useCategoriesStore";
 
 const INITIAL_FORM_STATE = {
     amount: "",
@@ -30,25 +35,30 @@ export function useTransactionForm() {
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
     const { localSelectedDay, setLocalSelectedDay } = useDateStore();
+    const { userCategories } = useCategoriesStore();
     const [anchorEl, setAnchorEl] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
+
+    const defaultCategoriesOptions: Category[] = filterCategoriesByType(defaultCategories, inputNameActive);
+    const userCategoriesOptions: Category[] = filterCategoriesByType(userCategories, inputNameActive); // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
+    const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
 
     // Determinar icono
     const iconsKey = useMemo(() => {
         return inputNameActive === InputNameActive.INCOME ? IconKey.income : IconKey.spend;
     }, [inputNameActive]);
 
-    const [selectedIcon, setSelectedIcon] = useState<IconOption>(() => ICON_OPTIONS[iconsKey][0]);
+    const [selectedCategory, setSelectedCategory] = useState<Category>(allCategories[0]);
 
-    const handleIconClick = useCallback((event: any) => {
+    const handleCategoryClick = useCallback((event: any) => {
         setAnchorEl(event.currentTarget);
     }, []);
 
     const popoverOpen = Boolean(anchorEl);
 
     useEffect(() => {
-        setSelectedIcon(ICON_OPTIONS[iconsKey][0]);
+        setSelectedCategory(allCategories[0]);
     }, [iconsKey]);
 
     useEffect(() => {
@@ -68,8 +78,8 @@ export function useTransactionForm() {
         setAnchorEl(null);
     }, []);
 
-    const handleSelectIcon = useCallback((icon: IconOption) => {
-        setSelectedIcon(icon);
+    const handleSelectCategory = useCallback((category: Category) => {
+        setSelectedCategory(category);
         handleClosePopover();
     }, [handleClosePopover]);
 
@@ -110,23 +120,29 @@ export function useTransactionForm() {
 
         // CORRECCIÓN: Si NO es ingreso (es gasto), lo volvemos negativo
         const finalAmount = isIncome ? parsedAmount : -parsedAmount;
-        console.log("Final Amount Prepared:", finalAmount);
-
         const currentTimeISO = now.toISOString();
+
+        const defaultCategoriesSlug: string[] = [
+            CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish],
+            CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese],
+        ];
+
+        const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
 
         return {
             id: uuidv4(),
             account_id: selectedAccount,
             user_id: user?.id || "current-user-id",
-            description: description.trim() || `${selectedIcon.label} - ${isIncome ? 'Income' : 'Expense'}`,
+            description: description.trim() || `${selectedCategory.name} - ${isIncome ? 'Income' : 'Expense'}`,
             amount: finalAmount, // Usamos el valor con el signo corregido
             type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
-            category_name: selectedIcon.label,
+            category_name: selectedCategory.name,
+            slug_category_name: isNewCategory ? [selectedCategory.name as string] : defaultCategoriesSlug,
             date: transactionDate.toISOString(),
             created_at: currentTimeISO,
             updated_at: currentTimeISO,
         };
-    }, [localSelectedDay, inputNameActive, amount, description, selectedIcon, selectedAccount, user?.id]);
+    }, [localSelectedDay, inputNameActive, amount, description, selectedCategory, selectedAccount, user?.id]);
 
     const handleSave = useCallback(async () => {
         // 1. Validar antes de procesar
@@ -163,7 +179,7 @@ export function useTransactionForm() {
     return {
         amount,
         description,
-        selectedIcon,
+        selectedCategory,
         selectedAccount,
         allAccounts,
         anchorEl,
@@ -173,14 +189,15 @@ export function useTransactionForm() {
         amountInputRef,
         localSelectedDay,
         popoverOpen,
+        allCategories,
         setAmount,
         setDescription,
         setLocalSelectedDay,
         setSelectedAccount,
-        setSelectedIcon,
-        handleIconClick,
+        setSelectedCategory,
+        handleCategoryClick,
         handleClosePopover,
-        handleSelectIcon,
+        handleSelectCategory,
         handleSave,
         handleClose,
     };

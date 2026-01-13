@@ -10,7 +10,6 @@ import {
     Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
     useAnimatedStyle, 
     useSharedValue, 
@@ -18,26 +17,28 @@ import Animated, {
     FadeInLeft,
     FadeInRight
 } from 'react-native-reanimated';
-import { IconOption } from '../../../constants/icons';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
+import { Category } from '../../../interfaces/data.interface';
+import { ICON_OPTIONS } from '../../../constants/icons';
+import { Icon } from 'react-native-paper';
 
 interface CategoryAndAmountInputProps {
-    selectedIcon: IconOption | null;
+    selectedCategory: Category | null;
     amount: string;
     setAmount: (value: string) => void;
     amountInputRef?: RefObject<TextInput | null>;
-    handleIconClick: (event: any) => void;
+    handleCategoryClick: (event: any) => void;
     colors: ThemeColors;
     onOpenCalculator: () => void;
 }
 
 export default function CategoryAndAmountInput({
-    selectedIcon,
-    amount,
+    selectedCategory,
+    amount = '',
     setAmount,
     amountInputRef,
-    handleIconClick,
+    handleCategoryClick,
     colors,
     onOpenCalculator
 }: CategoryAndAmountInputProps) {
@@ -50,6 +51,8 @@ export default function CategoryAndAmountInput({
     const animatedIconStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }]
     }));
+
+    const { icon: IconCategory, color } = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon) || {};
 
     return (
         <View style={styles.container}>
@@ -65,30 +68,24 @@ export default function CategoryAndAmountInput({
                 
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={handleIconClick}
+                    onPress={handleCategoryClick}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
                     accessibilityRole="button"
                     accessibilityLabel={t('accessibility.select_category', 'Select Category')}
-                    accessibilityHint={selectedIcon ? `${t('common.current')}: ${selectedIcon.label}` : t('common.none_selected')}
+                    accessibilityHint={selectedCategory ? `${t('common.current')}: ${selectedCategory.name}` : t('common.none_selected')}
                 >
                     <Animated.View entering={FadeInLeft} style={styles.iconContainer}>
                         <Animated.View style={animatedIconStyle}>
-                            <LinearGradient
-                                colors={selectedIcon?.gradientColors || ['#ccc', '#999']}
-                                style={[styles.gradient, { borderColor: colors.border }]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
+                            <View
+                                style={[styles.gradient, { borderColor: colors.border, backgroundColor: selectedCategory?.color || colors.primary }]}
                             >
-                                {selectedIcon ? (
-                                    React.createElement(selectedIcon.icon, {
-                                        size: 28, // Tamaño base, escalará con el sistema si es SVG/Font
-                                        color: colors.text
-                                    })
+                                {selectedCategory && IconCategory ? (
+                                    <IconCategory size={28} color={colors.surface} />
                                 ) : (
                                     <MaterialIcons name="category" size={28} color={colors.textSecondary} />
                                 )}
-                            </LinearGradient>
+                            </View>
                         </Animated.View>
                     </Animated.View>
                 </TouchableOpacity>
@@ -144,6 +141,8 @@ export default function CategoryAndAmountInput({
                             color={colors.surface}
                         />
                     </TouchableOpacity>
+
+
                 </Animated.View>
             </View>
         </View>
