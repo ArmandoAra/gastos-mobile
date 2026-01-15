@@ -11,7 +11,6 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeColors, MainTabParamList } from '../../types/navigation';
 import { SettingsIcon, AnalyticsIcon, SummarizeIcon } from '../../constants/icons';
-import { useSettingsStore } from '../../stores/settingsStore';
 
 const { width } = Dimensions.get('window');
 
@@ -43,7 +42,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
         {
           backgroundColor: colors.background,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderTopColor: colors.border,
           paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom,
           height: 60 + insets.bottom, // Ajusta la altura para que no se vea aplastada
           marginBottom: Platform.OS === 'ios' ? insets.bottom : 0,
@@ -111,7 +110,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
                   {IconComponent && (
                     <IconComponent 
                       color={isFocused ? colors.surface : colors.text}
-                      size={28}
+                      size={22}
                     />
                   )}
                 </Animated.View>
@@ -136,11 +135,13 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
+    paddingTop: 10,
+
     justifyContent: 'space-around',
     alignItems: 'center',
-    width: width * 0.92,
+    // width: width * 0.92,
     height: 60,
-    borderRadius: 35,
+    // borderRadius: 35,
     paddingHorizontal: 10,
   },
   tabItem: {
@@ -150,8 +151,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   iconContainer: {
-    width: 38,
-    height: 38,
+    width: 42,
+    height: 42,
     borderRadius: 50,
     borderWidth: 0.5,
     justifyContent: 'center',

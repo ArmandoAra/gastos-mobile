@@ -188,7 +188,11 @@ export default function CategorySelectorPopover({
                         style={[styles.avatar, { backgroundColor: item.color, borderColor: colors.border }]}
                       >
 
-                        {IconComponent && <IconComponent size={24} color={colors.text} />}
+                        {IconComponent && <IconComponent size={24} color={colors.text} style={{
+                          backgroundColor: colors.surfaceSecondary,
+                          borderRadius: 50,
+                          padding: 5,
+                        }} />}
                       </View>
 
                       <Text
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: "rgba(255,255,255,0.2)",
   },
   iconLabel: {

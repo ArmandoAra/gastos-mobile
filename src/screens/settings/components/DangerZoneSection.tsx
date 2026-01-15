@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import useMessage from '../../../stores/useMessage';
 import { MessageType } from '../../../interfaces/message.interface';
 import { t } from 'i18next';
+import useCategoriesStore from '../../../stores/useCategoriesStore';
 
 interface DangerZoneSectionProps {
     colors: ThemeColors;
@@ -33,6 +34,7 @@ interface DangerZoneSectionProps {
 export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
     const { t } = useTranslation();
     const { clearTransactions, deleteAllAccounts, createAccount } = useDataStore();
+    const { deleteAllCategories } = useCategoriesStore();
     const { logout, deleteUser, user } = useAuthStore();
     const { showMessage } = useMessage();
 
@@ -55,6 +57,7 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
         if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Deleting all data, please wait");
 
         await new Promise(resolve => setTimeout(resolve, 2000));
+        deleteAllCategories();
         clearTransactions();
         deleteAllAccounts();
         createAccount({ userId: user?.id });
@@ -70,6 +73,7 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
         if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Deleting account, please wait");
         
         try {
+            deleteAllCategories();
             clearTransactions();
             deleteAllAccounts();
             deleteUser();

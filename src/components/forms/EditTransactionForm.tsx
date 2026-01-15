@@ -48,12 +48,13 @@ import useDataStore from '../../stores/useDataStore';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
 import { set } from 'date-fns';
 import SubmitButton, { addOption } from '../buttons/submitButton';
-import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
+import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
 import { InputNameActive } from '../../interfaces/settings.interface';
 import { defaultCategories } from '../../constants/categories';
 import CategorySelectorPopover from './Inputs/CategorySelector';
 import { de } from 'date-fns/locale';
 import InfoPopUp from '../messages/InfoPopUp';
+import { useAuthStore } from '../../stores/authStore';
 
 interface EditTransactionFormProps {
     open: boolean;
@@ -91,6 +92,8 @@ export default function EditTransactionFormMobile({
         setSelectedAccount,
     } = useTransactionForm();
 
+    const { user } = useAuthStore();
+
     const { showMessage } = useMessage();
     const { allAccounts } = useDataStore();
 
@@ -118,11 +121,18 @@ export default function EditTransactionFormMobile({
             setLocalSelectedDay(new Date(transaction.date));
             setNewAccount(transaction.account_id);
 
-            console.log("Transaction ", transaction)
+            const categoryName = transaction.slug_category_name[0] as CategoryLabel;
 
-            const category = allCategories.find(cat => cat.name === transaction.category_icon_name);
+            const customCategory = userCategoriesOptions.find(
+                cat => cat.name === categoryName && cat.userId === user?.id
+            );
 
-            setSelectedCategory(category || allCategories[0]);
+            const defaultCategory = defaultCategories.find(
+                cat => cat.name === categoryName && cat.userId === 'default'
+            );
+
+            const found = customCategory || defaultCategory;
+            setSelectedCategory(found || allCategories[0]);
 
             if (Platform.OS !== 'web') {
                 AccessibilityInfo.announceForAccessibility(t('accessibility.edit_form_opened', 'Edit transaction form opened'));
@@ -138,7 +148,7 @@ export default function EditTransactionFormMobile({
     }, [isKeyboardVisible]);
 
     const handleOpenCalculator = () => {
-        if (showCalculator) { return setShowCalculator(false) }; // Prevenir múltiples aperturas
+        if (showCalculator) { return setShowCalculator(false) };
         Keyboard.dismiss();
         // Pequeño delay para permitir que el teclado baje
         setTimeout(() => {

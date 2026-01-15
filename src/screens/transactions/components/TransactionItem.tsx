@@ -52,6 +52,7 @@ export const TransactionItemMobile = React.memo(({
     colors,
 }: TransactionItemProps) => {
     const { t } = useTranslation();
+    const { user } = useAuthStore();
     const { setInputNameActive } = useSettingsStore();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isWarningOpen, setIsWarningOpen] = useState(false);
@@ -65,26 +66,41 @@ export const TransactionItemMobile = React.memo(({
     const opacity = useSharedValue(1);
     const marginBottom = useSharedValue(8);
 
-    const allCategories = [...defaultCategories, ...userCategoriesOptions];
-
     // Datos Memoizados
-    const categoryData = useMemo(() => {
-        console.log("use categories", userCategoriesOptions)
-        // const categoryOptions = allCategories.filter(cat => cat.type === categoryKey)
-        const found = allCategories.find(
-            icon => icon.name === transaction.category_icon_name as CategoryLabel
+    const categoryIconData = useMemo(() => {
+        // 1. Obtenemos el nombre que buscamos
+        const categoryName = transaction.slug_category_name[0] as CategoryLabel;
+
+        // 2. BUSQUEDA CON PRIORIDAD:
+        // Intentamos encontrar primero una categoría que coincida en nombre Y sea del usuario
+        const customCategory = userCategoriesOptions.find(
+            cat => cat.name === categoryName && cat.userId === user?.id
         );
+
+        // Si no hay custom, buscamos la por defecto (userId 'default' o cualquiera que coincida en nombre)
+        const defaultCategory = defaultCategories.find(
+            cat => cat.name === categoryName && cat.userId === 'default'
+        );
+
+        // La categoría final es la custom (si existe) o la default
+        const found = customCategory || defaultCategory;
+
+        // 3. Obtener el componente visual del Icono
+        // Buscamos en ICON_OPTIONS usando el 'icon' (label) que viene dentro de la categoría encontrada
+        const iconDefinition = ICON_OPTIONS.find(opt => opt.label === found?.icon);
+
         return {
-            IconComponent: ICON_OPTIONS.find(icon => icon.label === found?.icon)?.icon,
-            color: found?.color ?? '#B0BEC5',
+            IconComponent: iconDefinition?.icon,
+            color: found?.color || '#B0BEC5',
         };
-    }, [transaction.type, transaction.category_icon_name]);
+
+    }, [transaction.type, transaction.slug_category_name, userCategoriesOptions, defaultCategories, user?.id]);
 
     const accountName = useMemo(() => {
         return getAccountNameById(transaction.account_id);
     }, [transaction.account_id, getAccountNameById]);
 
-    const { IconComponent, color } = categoryData;
+    const { IconComponent, color } = categoryIconData;
     const isExpense = transaction.type === TransactionType.EXPENSE;
     const formattedDate = format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm');
     const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
@@ -230,9 +246,14 @@ export const TransactionItemMobile = React.memo(({
                         {/* 1. Avatar */}
                         <View style={[styles.avatar, { backgroundColor: color }]}>
                             {IconComponent ? (
-                                <IconComponent size={24} color={colors.text} />
+                                <IconComponent size={28} color={colors.text} style={{
+                                    backgroundColor: colors.surface,
+                                    borderRadius: 50,
+                                    padding: 4,
+
+                                }} />
                             ) : (
-                                    <MaterialIcons name="shopping-bag" size={24} color={colors.text} />
+                                    <MaterialIcons name="shopping-bag" size={22} color={colors.text} />
                             )}
                         </View>
 
@@ -346,12 +367,13 @@ const styles = StyleSheet.create({
         minHeight: 80,
     },
     avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 48,
+        height: 48,
+        borderRadius: 50,
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
+        elevation: 5,
     },
     textContainer: {
         flex: 1,

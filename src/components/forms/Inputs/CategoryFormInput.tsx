@@ -149,9 +149,17 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
                                         end={{ x: 1, y: 1 }}
                                     >
                                         {SelectedIconComponent ? (
-                                            <SelectedIconComponent size={32} color="#FFF" />
+                                            <SelectedIconComponent size={32} color={colors.text} style={{
+                                                backgroundColor: colors.surfaceSecondary,
+                                                borderRadius: 50,
+                                                padding: 5,
+                                            }} />
                                         ) : (
-                                            <MaterialIcons name="add-photo-alternate" size={32} color="rgba(255,255,255,0.7)" />
+                                                <MaterialIcons name="add-photo-alternate" size={32} color={colors.text} style={{
+                                                    backgroundColor: colors.surfaceSecondary,
+                                                    borderRadius: 50,
+                                                    padding: 5,
+                                                }} />
                                         )}
                                     </LinearGradient>
                                 </Animated.View>
@@ -232,7 +240,7 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
                                 accessibilityRole="radio"
                                 accessibilityState={{ selected: selectedColor === color }}
                             >
-                                {selectedColor === color && <MaterialIcons name="check" size={16} color="#FFF" />}
+                                {selectedColor === color && <MaterialIcons name="circle" size={24} color={colors.surfaceSecondary} />}
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
@@ -260,13 +268,17 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
                                     style={[
                                         styles.iconItem,
                                         { backgroundColor: colors.surface, borderColor: colors.border },
-                                        isSelected && { borderColor: selectedColor, backgroundColor: selectedColor + '15' }
+                                        isSelected && { backgroundColor: selectedColor }
                                     ]}
                                     accessibilityLabel={`${t('common.icon')} ${item.name}`}
                                     accessibilityRole="button"
                                     accessibilityState={{ selected: isSelected }}
                                 >
-                                    {IconComp && <IconComp size={24} color={isSelected ? selectedColor : colors.text} />}
+                                    {IconComp && <IconComp size={24} color={colors.text} style={{
+                                        backgroundColor: colors.surfaceSecondary,
+                                        borderRadius: 50,
+                                        padding: 5,
+                                    }} />}
                                 </TouchableOpacity>
                             );
                         })}

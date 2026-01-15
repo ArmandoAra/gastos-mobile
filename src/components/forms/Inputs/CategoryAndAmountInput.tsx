@@ -87,7 +87,11 @@ export default function CategoryAndAmountInput({
                                 style={[styles.gradient, { borderColor: colors.border, backgroundColor: selectedCategory?.color || colors.primary }]}
                             >
                                 {selectedCategory && IconCategory ? (
-                                    <IconCategory size={28} color={colors.surface} />
+                                    <IconCategory size={24} color={colors.text} style={{
+                                        backgroundColor: colors.surfaceSecondary,
+                                        borderRadius: 50,
+                                        padding: 5,
+                                    }} />
                                 ) : (
                                     <MaterialIcons name="category" size={28} color={colors.textSecondary} />
                                 )}
@@ -171,18 +175,19 @@ const styles = StyleSheet.create({
     },
     iconContainer: {
         // Wrapper para sombras si se desea en el futuro
-        minWidth: 58,
-        minHeight: 58,
+        minWidth: 48,
+        minHeight: 48,
     },
     gradient: {
         // Dimensiones flexibles con mínimos para accesibilidad
-        minWidth: 58,
-        minHeight: 58,
+        minWidth: 48,
+        minHeight: 48,
         padding: 12, // Padding interno asegura que el icono grande no toque bordes
-        borderRadius: 30,
+        borderRadius: 50,
+        borderWidth: 0.5,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 0.8,
+        elevation: 5,
     },
 
     // --- COLUMNA MONTO ---
@@ -209,7 +214,7 @@ const styles = StyleSheet.create({
     calcButton: {
         width: 46,
         height: 46,
-        borderRadius: 14,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
