@@ -240,6 +240,7 @@
     "navigation": {
         "home": "Inicio",
         "transactions": "Transacciones",
+        "budget": "Presupuesto",
         "accounts": "Cuentas",
         "settings": "Configuración"
     },

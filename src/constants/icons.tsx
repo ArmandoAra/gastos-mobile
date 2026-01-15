@@ -22,6 +22,7 @@ const createIcon = (name: keyof typeof MaterialIcons.glyphMap) => (props: IconPr
 export const SummarizeIcon = createIcon('summarize');
 export const AnalyticsIcon = createIcon('analytics');
 export const SettingsIcon = createIcon('settings');
+export const BudgetIcon = createIcon('account-balance-wallet');
 
 // =====================================================================
 // 2. DEFINICIÓN DE TODOS LOS COMPONENTES DE ICONOS

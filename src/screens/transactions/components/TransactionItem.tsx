@@ -33,7 +33,7 @@ import EditTransactionFormMobile from '../../../components/forms/EditTransaction
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { InputNameActive } from '../../../interfaces/settings.interface';
 import { defaultCategories } from '../../../constants/categories';
-import { useTransactionForm } from '../../../hooks/useTransactionForm';
+import { useTransactionForm } from '../constants/hooks/useTransactionForm';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;

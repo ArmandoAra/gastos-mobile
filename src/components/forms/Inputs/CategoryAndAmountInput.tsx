@@ -25,7 +25,6 @@ import { Icon } from 'react-native-paper';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
 import { de } from 'date-fns/locale';
 import { defaultCategories } from '../../../constants/categories';
-import { useTransactionForm } from '../../../hooks/useTransactionForm';
 
 interface CategoryAndAmountInputProps {
     selectedCategory: Category | null;
@@ -158,6 +157,8 @@ export default function CategoryAndAmountInput({
         </View>
     );
 }
+
+
 
 const styles = StyleSheet.create({
     container: {

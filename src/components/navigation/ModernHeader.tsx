@@ -26,42 +26,13 @@ interface ModernHeaderProps {
 
 export const ModernHeader: React.FC<ModernHeaderProps> = ({
   title,
-  subtitle,
-  showBack,
+  showBack = false,
   showAvatar = false,
   showNotification = false,
   rightAction,
   colors
 }) => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-
-  // Lógica de Saludo basada en la hora
-  const getGreeting = () => {
-    const hours = new Date().getHours();
-    if (hours < 12) return 'Good Morning ☀️';
-    if (hours < 18) return 'Good Afternoon 🌤️';
-    return 'Good Evening 🌙';
-  };
-
-  const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  };
-
-  const currentIconPage = useMemo(() => {
-    switch (title) {
-      case 'Transactions':
-        return require('../../../assets/icons/transactions.png');
-      case 'Analytics':
-        return require('../../../assets/icons/analytics.png');
-      case 'Settings':
-        return require('../../../assets/icons/settings.png');
-      default:
-        return null;
-    }
-  }, [title]);
 
   return (
     <View style={[
@@ -77,15 +48,9 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
       <View style={styles.contentRow}>
         
         {/* --- IZQUIERDA: Back Button o Avatar --- */}
-        <View style={styles.leftContainer}>
 
-          
-          <View style={[styles.textContainer, (showBack || showAvatar) ? { marginLeft: 12 } : {}]}>
-            {subtitle || (showAvatar && !title) ? (
-               <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                  {subtitle || getGreeting()}
-               </Text>
-            ) : null}
+
+        <View style={styles.leftContainer}>
             
             <Text style={[styles.title, { color: colors.text }]}>
               {title || 'Settings'}
@@ -93,7 +58,6 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
           </View>
         </View>
 
-      </View>
     </View>
   );
 };

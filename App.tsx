@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, StatusBar, Platform, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, StatusBar, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { 
   MD3LightTheme,
   MD3DarkTheme,
@@ -9,7 +9,6 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as NavigationBar from 'expo-navigation-bar';
 
 // --- Imports Locales (Ajusta las rutas según tu proyecto) ---
 import './src/i18n';
@@ -37,6 +36,7 @@ import { CustomTabBar } from './src/components/TabBar/CustomTabBar';
 import { ModernHeader } from './src/components/navigation/ModernHeader';
 import AnalyticsScreen from './src/screens/analytics/AnalyticsScreen';
 import { useTranslation } from 'react-i18next';
+import { BudgetScreen } from './src/screens/budget/BudgetScreen';
 
 
 // --- Creación de Navigators Tipados ---
@@ -65,7 +65,7 @@ const MainTabs = () => {
         header: ({ options, route }) => {
           // Lógica para decidir qué mostrar según la pantalla
           const isHome = route.name === 'Transactions'; // O 'Home' si tienes una dashboard
-          if (route.name === "Settings") {
+          if (route.name === "Settings" || route.name === "Budget") {
             // En Settings no mostramos header
             return (
               <ModernHeader
@@ -96,6 +96,14 @@ const MainTabs = () => {
         options={{
           title: t('navigation.analytics'),
           headerTitle: t('navigation.analytics')
+        }}
+      />
+      <Tab.Screen
+        name="Budget"
+        component={BudgetScreen}
+        options={{
+          title: t('navigation.budget'),
+          headerTitle: t('navigation.budget')
         }}
       />
       <Tab.Screen

@@ -48,10 +48,6 @@ export interface Transaction {
     category_icon_name: string;
     slug_category_name: string[];
     date: string;
-    quantity?: number;
-    transaction_group_id?: string;
-    static_category_id?: string;
-    user_category_id?: string;
     created_at: string;
     updated_at: string;
 }
@@ -65,25 +61,34 @@ export interface Category {
     userId: string;
 }
 
-export interface TransactionTemplate {
-    id: string;
-    description: string;
-    amount: number;
-    type: TransactionType;
-    createdAt: Date; // Timestamp de creación
-    updatedAt: Date; // Timestamp de última actualización
-    categoryId: string; // Foreign key
-    userId: string; // Foreign key
-}
 
-
-export interface TransactionGroup {
+// Van a ir dentro de un presupuesto de gastos
+export interface Item {
     id: string;
     name: string;
-    initDate: Date; // ISO string format
-    endDate: Date; // ISO string format
-    createdAt: Date; // Timestamp de creación
-    updatedAt: Date; // Timestamp de última actualización
-    userId: string; // Foreign key
-    monthFinanceId: string; // Foreign key
+    price: number;
+    quantity: number;
+    expenseBudgetId: string; // Foreign key
 }
+
+// Pagina de presupuesto de gastos, cada presupuesto tiene varios items, y se le puede asignar una categoria
+// Debe poder convertirse en Transaction solo si el usuario lo desea
+export interface ExpenseBudget {
+    id: string;
+    account_id: string;
+    user_id: string;
+    name: string;
+    slug_category_name: string[];
+    category_icon_name: string;
+    items: Item[];
+    spentAmount: number; //Es la suma de los items
+    budgetedAmount: number; //Es el monto total del presupuesto
+    period?: 'weekly' | 'monthly' | 'yearly' | 'one-time'; // La fecha  endDate debe ser obligatoriamente para periodos recurrentes
+    date: string;
+    endDate?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// Requiere en los inputs de:
+// nombre, categoria, budgetedAmount, period (opcional), endDate (opcional), items (opcional)

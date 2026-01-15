@@ -10,7 +10,7 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeColors, MainTabParamList } from '../../types/navigation';
-import { SettingsIcon, AnalyticsIcon, SummarizeIcon } from '../../constants/icons';
+import { SettingsIcon, AnalyticsIcon, SummarizeIcon, BudgetIcon } from '../../constants/icons';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +25,8 @@ const getIconComponent = (routeName: string) => {
       return SummarizeIcon;
     case 'Analytics':
       return AnalyticsIcon;
+    case 'Budget':
+      return BudgetIcon;
     case 'Settings':
       return SettingsIcon;
     default:

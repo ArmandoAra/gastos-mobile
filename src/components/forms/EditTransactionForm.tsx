@@ -27,7 +27,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 // --- IMPORTS ---
 import { ICON_OPTIONS, IconKey, IconOption } from '../../constants/icons';
-import { useTransactionForm } from '../../hooks/useTransactionForm';
 import useMessage from '../../stores/useMessage';
 import { Category, Transaction } from '../../interfaces/data.interface';
 import { MessageType } from '../../interfaces/message.interface';
@@ -42,19 +41,16 @@ import DescriptionInput from './Inputs/DescriptionInput';
 import AccountSelector from './Inputs/AccoutSelector';
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
-import IconsSelectorPopover from './Inputs/CategorySelector';
 import CalculatorSheet from './Inputs/CalculatorSheet';
 import useDataStore from '../../stores/useDataStore';
-import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
-import { set } from 'date-fns';
 import SubmitButton, { addOption } from '../buttons/submitButton';
 import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
-import { InputNameActive } from '../../interfaces/settings.interface';
 import { defaultCategories } from '../../constants/categories';
 import CategorySelectorPopover from './Inputs/CategorySelector';
-import { de } from 'date-fns/locale';
 import InfoPopUp from '../messages/InfoPopUp';
 import { useAuthStore } from '../../stores/authStore';
+import { useKeyboardStatus } from '../../screens/transactions/constants/hooks/useKeyboardStatus';
+import { useTransactionForm } from '../../screens/transactions/constants/hooks/useTransactionForm';
 
 interface EditTransactionFormProps {
     open: boolean;

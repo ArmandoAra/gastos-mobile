@@ -4,6 +4,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type MainTabParamList = {
     Transactions: undefined;
     Analytics: undefined;
+    Budget: undefined;
     Settings: undefined;
 };
 

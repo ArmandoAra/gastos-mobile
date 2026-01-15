@@ -25,8 +25,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 // Hooks y Stores
-import { useTransactionForm } from '../../hooks/useTransactionForm';
-import { useKeyboardStatus } from '../../hooks/useKeyboardStatus'; // Asegúrate de tener este hook
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
 import { IconKey, IconOption } from '../../constants/icons';
@@ -46,6 +44,9 @@ import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
 import CalculatorSheet from './Inputs/CalculatorSheet';
 import InfoPopUp from '../messages/InfoPopUp';
+import { useKeyboardStatus } from '../../screens/transactions/constants/hooks/useKeyboardStatus';
+import { useTransactionForm } from '../../screens/transactions/constants/hooks/useTransactionForm';
+import CategorySelectorPopover from './Inputs/CategorySelector';
 
 export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolean; onClose: (isOpen: boolean) => void }) {
     const { theme } = useSettingsStore();
@@ -282,7 +283,7 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
 
                             {/* Popover de Iconos */}
                             {popoverOpen && (
-                                <IconsSelectorPopover
+                                <CategorySelectorPopover
                                     popoverOpen={popoverOpen}
                                     anchorEl={anchorEl}
                                     handleClosePopover={handleClosePopover}

@@ -1,24 +1,25 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { TextInput, View } from "react-native";
-import { MessageType } from "../interfaces/message.interface";
-import useMessage from "../stores/useMessage";
-import useDateStore from "../stores/useDateStore";
-import { InputNameActive } from "../interfaces/settings.interface";
-import { useSettingsStore } from "../stores/settingsStore";
-import useDataStore from "../stores/useDataStore";
-import { IconKey, IconOption, ICON_OPTIONS } from "../constants/icons";
-import { Transaction, TransactionType } from "../types/schemas";
+import { TextInput } from "react-native";
+import { MessageType } from "../../../../interfaces/message.interface";
+import useMessage from "../../../../stores/useMessage";
+import useDateStore from "../../../../stores/useDateStore";
+import { InputNameActive } from "../../../../interfaces/settings.interface";
+import { useSettingsStore } from "../../../../stores/settingsStore";
+import useDataStore from "../../../../stores/useDataStore";
+import { IconKey } from "../../../../constants/icons";
+import { Transaction, TransactionType } from "../../../../types/schemas";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "../../../../stores/authStore";
 import { useTranslation } from "react-i18next";
-import { Category } from "../interfaces/data.interface";
-import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../api/interfaces";
-import { defaultCategories } from '../constants/categories';
-import { filterCategoriesByType } from "../utils/categories";
-import useCategoriesStore from "../stores/useCategoriesStore";
+import { Category } from "../../../../interfaces/data.interface";
+import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../api/interfaces";
+import { defaultCategories } from '../../../../constants/categories';
+import { filterCategoriesByType } from "../../../../utils/categories";
+import useCategoriesStore from "../../../../stores/useCategoriesStore";
+
 
 const INITIAL_FORM_STATE = {
     amount: "",
@@ -133,13 +134,11 @@ export function useTransactionForm() {
             id: uuidv4(),
             account_id: selectedAccount,
             user_id: user?.id || "current-user-id",
-            description: description.trim() || `${selectedCategory.name} - ${isIncome ? 'Income' : 'Expense'}`,
-            amount: finalAmount, // Usamos el valor con el signo corregido
+            description: description.trim() || `${selectedCategory.name}`,
+            amount: finalAmount,
             type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
             category_icon_name: selectedCategory.icon,
-
             slug_category_name: isNewCategory ? [selectedCategory.name as string, ...defaultCategoriesSlug] : defaultCategoriesSlug,
-
             date: transactionDate.toISOString(),
             created_at: currentTimeISO,
             updated_at: currentTimeISO,

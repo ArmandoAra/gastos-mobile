@@ -245,6 +245,7 @@
     "navigation": {
         "home": "Home",
         "transactions": "Transactions",
+        "budget": "Budget",
         "accounts": "Accounts",
         "settings": "Settings"
     },
