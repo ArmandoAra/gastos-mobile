@@ -65,7 +65,8 @@
         "selectCategory": "Selecionar categoria",
         "noIcons": "Nenhum ícone disponível",
         "selectIcon": "Selecionar ícone",
-        "color": "Selecionar cor"
+        "color": "Selecionar cor",
+        "my": "Minhas"
     },
     "commonWarnings": {
         "warning": "Aviso",
@@ -328,6 +329,8 @@
         "editCategory": "Editar categoria",
         "deleteCategory": "Excluir categoria",
         "deleteWarning": "Excluir uma categoria",
+        "createdSuccess": "Categoria criada com sucesso",
+        "inputNameHint": "Insira o nome da categoria"
     },
         "overviews": {
         "categoryBreakdown": "Divisão por categoria",

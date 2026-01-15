@@ -123,8 +123,8 @@ export function useTransactionForm() {
         const currentTimeISO = now.toISOString();
 
         const defaultCategoriesSlug: string[] = [
-            CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish],
-            CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese],
+            CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish] || "",
+            CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese] || "",
         ];
 
         const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
@@ -136,8 +136,10 @@ export function useTransactionForm() {
             description: description.trim() || `${selectedCategory.name} - ${isIncome ? 'Income' : 'Expense'}`,
             amount: finalAmount, // Usamos el valor con el signo corregido
             type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
-            category_name: selectedCategory.name,
-            slug_category_name: isNewCategory ? [selectedCategory.name as string] : defaultCategoriesSlug,
+            category_icon_name: selectedCategory.icon,
+
+            slug_category_name: isNewCategory ? [selectedCategory.name as string, ...defaultCategoriesSlug] : defaultCategoriesSlug,
+
             date: transactionDate.toISOString(),
             created_at: currentTimeISO,
             updated_at: currentTimeISO,
@@ -189,7 +191,8 @@ export function useTransactionForm() {
         amountInputRef,
         localSelectedDay,
         popoverOpen,
-        allCategories,
+        defaultCategoriesOptions,
+        userCategoriesOptions,
         setAmount,
         setDescription,
         setLocalSelectedDay,

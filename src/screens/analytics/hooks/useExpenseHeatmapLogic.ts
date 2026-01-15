@@ -114,7 +114,7 @@ export const useExpenseHeatmapLogic = () => {
     const categoryData = useMemo(() => {
         if (heatmapType !== 'category') return null;
         
-        const categories = Array.from(new Set(expenseTransactions.map(t => t.category_name)));
+        const categories = Array.from(new Set(expenseTransactions.map(t => t.category_icon_name)));
         const periods = viewMode === 'year' 
             ? Array.from({ length: 12 }, (_, i) => ({ label: format(new Date(year, i, 1), 'MMM'), index: i }))
             : Array.from({ length: getDaysInMonth(localSelectedDay) }, (_, i) => ({ label: `${i + 1}`, index: i + 1 }));
@@ -123,7 +123,7 @@ export const useExpenseHeatmapLogic = () => {
             const data = periods.map(p => {
                 const txs = expenseTransactions.filter(t => {
                     const d = new Date(t.date);
-                    const isCat = t.category_name === cat;
+                    const isCat = t.category_icon_name === cat;
                     const isPeriod = viewMode === 'year'
                         ? d.getMonth() === p.index
                         : d.getDate() === p.index;

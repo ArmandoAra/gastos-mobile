@@ -7,23 +7,28 @@ import {
   Modal,
   FlatList,
   Dimensions,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   FadeIn,
   FadeOut,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
   ZoomIn,
   ZoomOut,
 } from "react-native-reanimated";
 import { ICON_OPTIONS, IconKey, IconOption } from "../../../constants/icons";
 import { ThemeColors } from "../../../types/navigation";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { InputNameActive } from "../../../interfaces/settings.interface";
 import { useSettingsStore } from "../../../stores/settingsStore";
-import { defaultCategories } from '../../../constants/categories';
 import { Category, TransactionType } from "../../../interfaces/data.interface";
-import { setBorderColorAsync } from "expo-navigation-bar";
 import CategoryFormInput from "./CategoryFormInput";
+import MaterialIcons from "@expo/vector-icons/build/MaterialIcons";
+import { MyCustomCategories } from "./myCustomCategories";
 
 interface CategorySelectorPopoverProps {
   popoverOpen: boolean;
@@ -32,7 +37,8 @@ interface CategorySelectorPopoverProps {
   selectedCategory: Category | null;
   handleSelectCategory: (category: Category) => void;
   colors: ThemeColors;
-  allCategories: Category[];
+  defaultCategories: Category[];
+  userCategories: Category[];
 }
 
 export default function CategorySelectorPopover({
@@ -41,12 +47,14 @@ export default function CategorySelectorPopover({
   selectedCategory,
   handleSelectCategory,
   colors,
-  allCategories,
+  defaultCategories,
+  userCategories,
 }: CategorySelectorPopoverProps) {
   const { t } = useTranslation();
   const { inputNameActive } = useSettingsStore();
   const [iconsKey, setIconsKey] = React.useState<TransactionType>(TransactionType.EXPENSE);
   const [addingNewCategory, setAddingNewCategory] = React.useState<boolean>(false);
+  const [selectingMyCategories, setSelectingMyCategories] = React.useState<boolean>(false);
 
   useEffect(() => {
     return inputNameActive === InputNameActive.INCOME
@@ -54,6 +62,38 @@ export default function CategorySelectorPopover({
       : setIconsKey(TransactionType.EXPENSE)
        
   }, [inputNameActive]);
+
+  const handleToggleOptions = () => {
+    setAddingNewCategory(!addingNewCategory);
+  }
+
+  // Shared Value para la rotación (0 a 1)
+  const animationProgress = useSharedValue(0);
+
+  // Sincronizar animación con estado
+  useEffect(() => {
+    animationProgress.value = withTiming(addingNewCategory ? 1 : 0, { duration: 250 });
+  }, [addingNewCategory]);
+
+
+  const fabAnimatedStyle = useAnimatedStyle(() => {
+    const rotate = animationProgress.value * 45; // 0 a 45 grados
+    const backgroundColor = interpolateColor(
+      animationProgress.value,
+      [0, 1],
+      [colors.text, colors.surface] // De oscuro a claro (o según tu tema)
+    );
+
+    return {
+      transform: [{ rotate: `${rotate}deg` }],
+      backgroundColor: backgroundColor
+    };
+  });
+
+
+  const handleToggleCategoriesSelection = () => {
+    setSelectingMyCategories(!selectingMyCategories);
+  }
 
   return (
     <Modal
@@ -83,17 +123,42 @@ export default function CategorySelectorPopover({
         >
           {/* Header */}
           <View style={[styles.header, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>{t("common.selectCategory")}</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{t("transactions.categories")}</Text>
+
+            <View style={{ position: 'absolute', left: 25, top: 20 }}>
+              <MyCustomCategories colors={colors}
+                value={selectingMyCategories}
+                onAction={handleToggleCategoriesSelection}
+              />
+            </View>
+            <View style={{ position: 'absolute', right: 25, bottom: 10, width: 32, height: 32, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.text, borderRadius: 25 }}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={handleToggleOptions}
+              >
+                <Animated.View style={[styles.addUserCategory, fabAnimatedStyle, { borderColor: colors.border }]}>
+                  <MaterialIcons
+                    name="add"
+                    size={28}
+                    color={colors.accent}
+                  />
+                </Animated.View>
+              </TouchableOpacity>
+            </View>
           </View>
 {
   addingNewCategory ? (
+
               <CategoryFormInput 
                 type={iconsKey}
+                closeInput={handleToggleOptions}
               />
 
   ) : <View style={styles.gridContainer}>
             <FlatList
-              data={allCategories}
+                  data={
+                    selectingMyCategories ? userCategories : defaultCategories
+                  }
               keyExtractor={(item) => item.id}
               numColumns={3}
               showsVerticalScrollIndicator={false}
@@ -107,10 +172,7 @@ export default function CategorySelectorPopover({
 
               renderItem={({ item }) => {
                 const isSelected = selectedCategory?.id === item.id;
-
-
                 const { icon: IconComponent } = ICON_OPTIONS.filter((icon) => icon.label === item.icon)[0]
-                const categoryName = item.userId ? item.name : t(`icons.${item.icon}`);
 
                 return (
                   <View style={styles.gridItemWrapper}>
@@ -136,11 +198,8 @@ export default function CategorySelectorPopover({
                           isSelected && { ...styles.iconLabelSelected, color: colors.accent },
                         ]}
                         numberOfLines={1}
-                      >{
-                        // TODO: Separar las categorias y no ponerlas todas juntas para que traduzca solo las que estan por defecto
-                        // Mostrar el nombre del la categoria si el icono no fue creado por el usuario, de lo contrario mostrar el nombre personalizado
-                       categoryName
-                      }
+                      >
+                        {selectingMyCategories ? item.name : t(`icons.${item.name}`)}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -164,12 +223,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   popoverContent: {
+    flex: 1,
+    width: "95%",
     maxHeight: "60%", // Altura máxima del modal
     borderRadius: 20,
     borderWidth: 0.5,
     overflow: "hidden",
   },
   header: {
+    flexDirection: "row",
+    width: "100%",
+    height: 80,
+    justifyContent: "center",
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
@@ -234,4 +299,11 @@ const styles = StyleSheet.create({
     color: "#667eea",
     fontWeight: "700",
   },
+  addUserCategory: {
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+  },
+
 });

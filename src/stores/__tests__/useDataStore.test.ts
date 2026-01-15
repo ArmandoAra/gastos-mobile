@@ -64,7 +64,7 @@ describe('useDataStore (Zustand)', () => {
       type: TransactionType.INCOME,
       user_id: 'u1',
       date: (new Date()).toISOString(),
-      category_name: 'Salary',
+        category_icon_name: 'Salary',
       description: 'Pago',
       created_at: (new Date()).toISOString(),
       updated_at: (new Date()).toISOString(),
@@ -77,7 +77,7 @@ describe('useDataStore (Zustand)', () => {
       type: TransactionType.EXPENSE,
       user_id: 'u1',
       date: (new Date()).toISOString(),
-      category_name: 'Food',
+        category_icon_name: 'Food',
       description: 'Cena',
       created_at: (new Date()).toISOString(),
       updated_at: (new Date()).toISOString(),
@@ -147,7 +147,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             type: TransactionType.INCOME,
             user_id: 'user-1',
             date: ( new Date()).toISOString(),
-            category_name: 'Salary',
+            category_icon_name: 'Salary',
             description: 'Nómina',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -185,7 +185,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             type: TransactionType.EXPENSE,
             user_id: 'user-1',
             date: ( new Date()).toISOString(),
-            category_name: 'Food',
+            category_icon_name: 'Food',
             description: 'Supermercado',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -216,7 +216,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             type: TransactionType.INCOME,
             user_id: 'u1',
             date: ( new Date()).toISOString(),
-            category_name: 'Job',
+            category_icon_name: 'Job',
             description: 'Freelance',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -256,7 +256,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             type: TransactionType.EXPENSE,
             user_id: 'u1',
             date: ( new Date()).toISOString(),
-            category_name: 'Taxi',
+            category_icon_name: 'Taxi',
             description: 'Uber',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -288,9 +288,9 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             await result.current.createAccount({ name: 'Mix Account', userId: 'u1' });
         });
 
-        const t1 = { id: '1', account_id: 'acc-mix', amount: 1000, type: TransactionType.INCOME, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_name: 'A', description: 'A' };
-        const t2 = { id: '2', account_id: 'acc-mix', amount: 200, type: TransactionType.EXPENSE, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_name: 'B', description: 'B' };
-        const t3 = { id: '3', account_id: 'acc-mix', amount: 50, type: TransactionType.EXPENSE, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_name: 'C', description: 'C' };
+        const t1 = { id: '1', account_id: 'acc-mix', amount: 1000, type: TransactionType.INCOME, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_icon_name: 'A', description: 'A' };
+        const t2 = { id: '2', account_id: 'acc-mix', amount: 200, type: TransactionType.EXPENSE, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_icon_name: 'B', description: 'B' };
+        const t3 = { id: '3', account_id: 'acc-mix', amount: 50, type: TransactionType.EXPENSE, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_icon_name: 'C', description: 'C' };
 
         // 1000 (Ingreso) - 200 (Gasto) - 50 (Gasto) = 750
         act(() => {
@@ -323,7 +323,7 @@ describe('Operaciones Críticas de Cuentas y Transferencias', () => {
         // 2. Agregar dinero a la cuenta Origen (1000)
         const tx1 = { 
             id: 'tx-1', account_id: 'acc-origin', amount: 1000, type: TransactionType.INCOME, 
-            user_id: 'u1', date: (new Date()).toISOString(), created_at: '', updated_at: '', category_name: '', description: '' 
+            user_id: 'u1', date: (new Date()).toISOString(), created_at: '', updated_at: '', category_icon_name: '', description: '' 
         };
         
         act(() => {
@@ -366,7 +366,7 @@ describe('Operaciones Críticas de Cuentas y Transferencias', () => {
         });
 
         // Agregar transacciones a la cuenta A
-        const txA = { id: 'tx-A', account_id: 'acc-A', amount: 100, type: TransactionType.EXPENSE, user_id: 'u1', date: '', created_at: '', updated_at: '', category_name: '', description: '' };
+        const txA = { id: 'tx-A', account_id: 'acc-A', amount: 100, type: TransactionType.EXPENSE, user_id: 'u1', date: '', created_at: '', updated_at: '', category_icon_name: '', description: '' };
         
         act(() => {
             result.current.setTransactions([txA]);

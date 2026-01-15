@@ -15,14 +15,13 @@ import Animated, {
     useAnimatedStyle, 
     withSpring, 
     withTiming,
+    runOnJS,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from "react-native-worklets"
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format, set } from 'date-fns';
+import { format } from 'date-fns';
 import { formatCurrency } from '../../../utils/helpers';
 import WarningMessage from './WarningMessage';
-import EditTransactionForm from '../../../components/forms/EditTransactionForm';
 import { Category, Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { CategoryLabel } from '../../../api/interfaces';
@@ -34,6 +33,7 @@ import EditTransactionFormMobile from '../../../components/forms/EditTransaction
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { InputNameActive } from '../../../interfaces/settings.interface';
 import { defaultCategories } from '../../../constants/categories';
+import { useTransactionForm } from '../../../hooks/useTransactionForm';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
@@ -57,6 +57,7 @@ export const TransactionItemMobile = React.memo(({
     const [isWarningOpen, setIsWarningOpen] = useState(false);
     const { currencySymbol } = useAuthStore();
     const { getAccountNameById } = useDataStore();
+    const { userCategoriesOptions } = useTransactionForm();
 
     // Valores Animados - altura ahora es dinámica
     const translateX = useSharedValue(0);
@@ -64,29 +65,26 @@ export const TransactionItemMobile = React.memo(({
     const opacity = useSharedValue(1);
     const marginBottom = useSharedValue(8);
 
-    const defaultCategoriesOptions: Category[] = defaultCategories.filter((cat => cat.type === transaction.type));
-    const userCategoriesOptions: Category[] = []; // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
-    const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
+    const allCategories = [...defaultCategories, ...userCategoriesOptions];
 
     // Datos Memoizados
     const categoryData = useMemo(() => {
-        const categoryKey = transaction.type === TransactionType.INCOME ? 'income' : 'expense';
-        const categoryOptions = allCategories.filter(cat => cat.type === categoryKey)
-        const found = categoryOptions.find(
-            icon => icon.name === transaction.category_name as CategoryLabel
+        console.log("use categories", userCategoriesOptions)
+        // const categoryOptions = allCategories.filter(cat => cat.type === categoryKey)
+        const found = allCategories.find(
+            icon => icon.name === transaction.category_icon_name as CategoryLabel
         );
         return {
             IconComponent: ICON_OPTIONS.find(icon => icon.label === found?.icon)?.icon,
             color: found?.color ?? '#B0BEC5',
-            categoryOptions,
         };
-    }, [transaction.type, transaction.category_name]);
+    }, [transaction.type, transaction.category_icon_name]);
 
     const accountName = useMemo(() => {
         return getAccountNameById(transaction.account_id);
     }, [transaction.account_id, getAccountNameById]);
 
-    const { IconComponent, color, categoryOptions } = categoryData;
+    const { IconComponent, color } = categoryData;
     const isExpense = transaction.type === TransactionType.EXPENSE;
     const formattedDate = format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm');
     const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
@@ -99,8 +97,18 @@ export const TransactionItemMobile = React.memo(({
         }
     }, []);
 
+    // ✅ CREAR CALLBACK ESTABLE PARA DELETE
+    const handleDelete = useCallback(() => {
+        onDelete(
+            transaction.id,
+            transaction.account_id,
+            transaction.amount,
+            transaction.type as TransactionType
+        );
+    }, [transaction.id, transaction.account_id, transaction.amount, transaction.type, onDelete]);
+
     // Lógica de Borrado
-    const performDelete = () => {
+    const performDelete = useCallback(() => {
         setIsWarningOpen(false);
         if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('common.deleted'));
 
@@ -110,20 +118,21 @@ export const TransactionItemMobile = React.memo(({
         marginBottom.value = withTiming(0, { duration: 300 });
         opacity.value = withTiming(0, { duration: 300 }, (finished) => {
             if (finished) {
-                scheduleOnRN(() => onDelete(
-                    transaction.id, 
-                    transaction.account_id, 
-                    transaction.amount, 
-                    transaction.type as TransactionType
-                ));
+                // ✅ USAR runOnJS
+                runOnJS(handleDelete)();
             }
         });
-    };
+    }, [t, handleDelete]);
 
-    const handleCancelDelete = () => {
+    const handleCancelDelete = useCallback(() => {
         setIsWarningOpen(false);
         translateX.value = withSpring(0);
-    };
+    }, []);
+
+    // ✅ CREAR CALLBACK ESTABLE PARA ABRIR WARNING
+    const openWarning = useCallback(() => {
+        setIsWarningOpen(true);
+    }, []);
 
     // Gesto Swipe
     const panGesture = Gesture.Pan()
@@ -133,7 +142,8 @@ export const TransactionItemMobile = React.memo(({
         })
         .onEnd(() => {
             if (Math.abs(translateX.value) > SWIPE_THRESHOLD) {
-                scheduleOnRN(() => setIsWarningOpen(true));
+                // ✅ USAR runOnJS
+                runOnJS(openWarning)();
             } else {
                 translateX.value = withSpring(0);
             }
@@ -209,12 +219,10 @@ export const TransactionItemMobile = React.memo(({
                         onPress={() => {
                             setIsEditOpen(true);
                             setInputNameActive(transaction.type === TransactionType.INCOME ? InputNameActive.INCOME : InputNameActive.SPEND);
-                        }
-                        }
+                        }}
                         style={styles.touchableContent}
-                        // Accesibilidad
                         accessibilityRole="button"
-                        accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_name}`}
+                        accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
                         accessibilityHint={t('accessibility.swipe_hint', 'Tap to edit, use actions to delete')}
                         accessibilityActions={accessibilityActions}
                         onAccessibilityAction={handleAccessibilityAction}
@@ -238,13 +246,12 @@ export const TransactionItemMobile = React.memo(({
                                 >
                                     {transaction.description || t('common.noDescription')}
                                 </Text>
-                                {/* Chip flexible */}
                                 <View style={[styles.chip, { backgroundColor: color + '33' }]}>
                                     <Text
                                         style={[styles.chipText, { color: colors.textSecondary }]}
                                         numberOfLines={1}
                                     >
-                                        {t(`icons.${transaction.category_name}`, transaction.category_name)}
+                                        {t(`icons.${transaction.slug_category_name[0]}`, transaction.slug_category_name[0])}
                                     </Text>
                                 </View>
                             </View>
@@ -256,7 +263,7 @@ export const TransactionItemMobile = React.memo(({
                             </Text>
                         </View>
 
-                        {/* 3. Monto y Cuenta (Fixed/Shrink) */}
+                        {/* 3. Monto y Cuenta */}
                         <View style={styles.amountContainer}>
                             <View style={[styles.accountBadgeContainer, { backgroundColor: colors.primary + '22' }]}>
                                 <Text
@@ -297,7 +304,6 @@ export const TransactionItemMobile = React.memo(({
                 onClose={() => setIsEditOpen(false)}
                 onSave={onSave}
                 transaction={transaction}
-                categoryOptions={categoryOptions}
             />
 
         </Animated.View>
@@ -307,7 +313,7 @@ export const TransactionItemMobile = React.memo(({
 const styles = StyleSheet.create({
     containerWrapper: {
         borderRadius: 12,
-        minHeight: 80, // Altura mínima, pero puede crecer
+        minHeight: 80,
     },
     backgroundContainer: {
         flexDirection: 'row',
@@ -334,10 +340,10 @@ const styles = StyleSheet.create({
     touchableContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16, // Aumentado de 12 a 16 para más espacio
+        padding: 16,
         gap: 12,
         flex: 1,
-        minHeight: 80, // Altura mínima para el contenido
+        minHeight: 80,
     },
     avatar: {
         width: 44,
@@ -349,26 +355,26 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         flex: 1,
-        gap: 6, // Aumentado de 4 a 6
+        gap: 6,
         justifyContent: 'center',
     },
     titleRow: {
         flexDirection: 'column',
         alignItems: 'flex-start',
-        gap: 4, // Aumentado de 2 a 4
+        gap: 4,
         flexWrap: 'wrap', 
     },
     description: {
         fontSize: 16,
         fontWeight: '500',
         flexShrink: 1,
-        lineHeight: 22, // Agregado para mejor legibilidad
+        lineHeight: 22,
     },
     chip: {
-        paddingHorizontal: 10, // Aumentado de 8 a 10
-        paddingVertical: 1, // Aumentado de 2 a 4
+        paddingHorizontal: 10,
+        paddingVertical: 1,
         borderRadius: 12,
-        maxWidth: 120, // Aumentado de 100 a 120
+        maxWidth: 120,
     },
     chipText: {
         fontSize: 11,
@@ -377,21 +383,21 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: 12,
-        lineHeight: 16, // Agregado para mejor legibilidad
+        lineHeight: 16,
     },
     amountContainer: {
         alignItems: 'flex-end',
         justifyContent: 'center',
         flexShrink: 0,
-        gap: 6, // Aumentado de 4 a 6
-        minWidth: 90, // Ancho mínimo para evitar compresión
+        gap: 6,
+        minWidth: 90,
     },
     accountBadgeContainer: {
-        paddingHorizontal: 10, // Aumentado de 8 a 10
-        paddingVertical: 1, // Aumentado de 2 a 4
+        paddingHorizontal: 10,
+        paddingVertical: 1,
         borderRadius: 6,
-        maxWidth: 100, // Aumentado de 80 a 100
-        minHeight: 22, // Altura mínima para el badge
+        maxWidth: 100,
+        minHeight: 22,
     },
     accountBadgeText: {
         fontSize: 11,
@@ -401,6 +407,6 @@ const styles = StyleSheet.create({
     amountText: {
         fontSize: 16,
         fontWeight: '700',
-        lineHeight: 20, // Agregado para mejor legibilidad
+        lineHeight: 20,
     },
 });

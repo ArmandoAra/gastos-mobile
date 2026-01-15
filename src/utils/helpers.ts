@@ -42,7 +42,7 @@ export interface Transaction {
     amount: number,
     type: "income" | "expense",
     date: Date, //Formato ISO 8601
-    category_name: string, //Id del icono de la categoría para hacer que sea visual con el icono
+    category_icon_name: string, //Id del icono de la categoría para hacer que sea visual con el icono
     account_id: string,
     transaction_group_id?: string, //si pertenece a un grupo de transacciones va a tener un id de grupo
     quantity?: number, //Para transacciones recurrentes
@@ -306,7 +306,7 @@ export function sortAmountsByCategories(transacciones: Transaction[]): { categor
     const totalesAgrupados = transacciones.reduce((acumulador, transaction) => {
         if (transaction.type === 'income') return acumulador;
 
-        const categoria = transaction.category_name;
+        const categoria = transaction.category_icon_name;
         const monto = transaction.amount;
 
         // Si la categoría ya existe en el acumulador, sumamos el monto
@@ -391,10 +391,10 @@ export function calculateExpensesByCategory(transactions: Transaction[]): Expens
     const categoryMap: { [key: string]: number } = {};
     transactions.forEach(transaction => {
         if (transaction.type === 'expense') {
-            if (!categoryMap[transaction.category_name]) {
-                categoryMap[transaction.category_name] = 0;
+            if (!categoryMap[transaction.category_icon_name]) {
+                categoryMap[transaction.category_icon_name] = 0;
             }
-            categoryMap[transaction.category_name] += transaction.amount;
+            categoryMap[transaction.category_icon_name] += transaction.amount;
         }
     });
 

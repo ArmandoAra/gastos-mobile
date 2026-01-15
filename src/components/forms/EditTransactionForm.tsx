@@ -53,11 +53,11 @@ import { InputNameActive } from '../../interfaces/settings.interface';
 import { defaultCategories } from '../../constants/categories';
 import CategorySelectorPopover from './Inputs/CategorySelector';
 import { de } from 'date-fns/locale';
+import InfoPopUp from '../messages/InfoPopUp';
 
 interface EditTransactionFormProps {
     open: boolean;
     transaction: Transaction | null;
-    categoryOptions: Category[];
     onClose: (isOpen: boolean) => void;
     onSave: (
         updatedTransaction: Transaction,
@@ -69,7 +69,6 @@ interface EditTransactionFormProps {
 export default function EditTransactionFormMobile({
     open,
     transaction,
-    categoryOptions,
     onClose,
     onSave,
 }: EditTransactionFormProps) {
@@ -84,6 +83,8 @@ export default function EditTransactionFormMobile({
         description,
         selectedAccount,
         amountInputRef,
+        defaultCategoriesOptions,
+        userCategoriesOptions,
         setAmount,
         setDescription,
         setLocalSelectedDay,
@@ -98,9 +99,7 @@ export default function EditTransactionFormMobile({
     const [isLoading, setIsLoading] = useState(false);
     const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(false);
 
-    const defaultCategoriesOptions: Category[] = defaultCategories.filter((cat => cat.type === transaction?.type));
-    const userCategoriesOptions: Category[] = []; // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
-    const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
+    const allCategories = [...defaultCategories, ...userCategoriesOptions];
 
     const [selectedCategory, setSelectedCategory] = useState<Category>(allCategories[0]);
 
@@ -119,7 +118,9 @@ export default function EditTransactionFormMobile({
             setLocalSelectedDay(new Date(transaction.date));
             setNewAccount(transaction.account_id);
 
-            const category = allCategories.find(cat => cat.name === transaction.category_name);
+            console.log("Transaction ", transaction)
+
+            const category = allCategories.find(cat => cat.name === transaction.category_icon_name);
 
             setSelectedCategory(category || allCategories[0]);
 
@@ -184,8 +185,8 @@ export default function EditTransactionFormMobile({
                 finalDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
             }
             const defaultCategoriesSlug: string[] = [
-                CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish],
-                CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese],
+                CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish] || "",
+                CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese] || "",
             ];
 
             const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
@@ -197,14 +198,14 @@ export default function EditTransactionFormMobile({
                     : Math.abs(finalAmountVal),
                 description: description.trim(),
                 date: finalDate.toISOString(),
-                category_name: selectedCategory.name,
-                slug_category_name: isNewCategory ? [selectedCategory.name as string] : defaultCategoriesSlug,
+                category_icon_name: selectedCategory.name,
+                slug_category_name: isNewCategory ? [
+                    selectedCategory.name as string,
+                    ...defaultCategoriesSlug
+                ] : defaultCategoriesSlug,
                 account_id: newAccount,
                 updated_at: new Date().toISOString()
             };
-
-            console.log('Updated Transaction:', updatedTransaction);
-
             await onSave(updatedTransaction, transaction.account_id, newAccount);
             showMessage(MessageType.UPDATED, t('messages.transaction_updated', 'Transaction updated'));
             onClose(false);
@@ -231,6 +232,8 @@ export default function EditTransactionFormMobile({
             statusBarTranslucent
             accessibilityViewIsModal={true}
         >
+            <InfoPopUp />
+
             <View style={StyleSheet.absoluteFill}>
                 {/* Backdrop Accesible */}
                 {/* Main Sheet */}
@@ -360,6 +363,8 @@ export default function EditTransactionFormMobile({
                                 handleSelectCategory={handleSelectCategory}
                                 selectedCategory={selectedCategory}
                                 colors={colors}
+                                defaultCategories={defaultCategoriesOptions}
+                                userCategories={userCategoriesOptions}
                             />
                         )}
                     </Animated.View>

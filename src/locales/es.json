@@ -65,7 +65,8 @@
         "selectCategory": "Seleccionar categoría",
         "noIcons": "No hay íconos disponibles",
         "selectIcon": "Seleccionar ícono",
-        "color": "Seleccionar color"
+        "color": "Seleccionar color",
+        "my": "Mis"
     },
     "commonWarnings": {
         "warning": "Advertencia",
@@ -302,7 +303,9 @@
         "createNew": "Crear nueva categoría",
         "editCategory": "Editar categoría",
         "deleteCategory": "Eliminar categoría",
-        "deleteWarning": "Eliminar una categoría "
+        "deleteWarning": "Eliminar una categoría ",
+        "createdSuccess": "Categoría creada con éxito",
+        "inputNameHint": "Ingresa el nombre de la categoría"
     },
     "accessibility": {
         "save_hint": "Actualizar la transaccion y cerrar el formulario",

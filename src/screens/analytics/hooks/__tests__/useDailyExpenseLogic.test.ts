@@ -72,7 +72,7 @@ const mockTransactions: Transaction[] = [
         description: "Compra en el Súper",
         amount: 85.50,
         type: TransactionType.EXPENSE,
-        category_name: "Food",
+    category_icon_name: "Food",
         date: "2025-01-01T10:30:00", 
         created_at: "", updated_at: ""
     },
@@ -83,7 +83,7 @@ const mockTransactions: Transaction[] = [
         description: "Pago de Nómina",
         amount: 2500.00,
         type: TransactionType.INCOME,
-        category_name: "Salary",
+      category_icon_name: "Salary",
         date: "2025-01-05T09:00:00", 
         created_at: "", updated_at: ""
     },
@@ -94,7 +94,7 @@ const mockTransactions: Transaction[] = [
         description: "Veterinario - Vacunas",
         amount: 45.00,
         type: TransactionType.EXPENSE,
-        category_name: "Pets",
+      category_icon_name: "Pets",
         date: "2025-01-07T16:20:00", 
         created_at: "", updated_at: ""
     },
@@ -105,7 +105,7 @@ const mockTransactions: Transaction[] = [
         description: "Suscripción Netflix",
         amount: 15.99,
         type: TransactionType.EXPENSE,
-        category_name: "Entertainment",
+      category_icon_name: "Entertainment",
         date: "2025-01-10T00:05:00", 
         created_at: "", updated_at: ""
     },
@@ -116,7 +116,7 @@ const mockTransactions: Transaction[] = [
         description: "Gasolina",
         amount: 60.00,
         type: TransactionType.EXPENSE,
-        category_name: "Transport",
+      category_icon_name: "Transport",
         date: "2025-01-12T13:40:45", 
         created_at: "", updated_at: ""
     }

@@ -45,7 +45,7 @@ export interface Transaction {
     description: string;
     amount: number;
     type: TransactionType;
-    category_name: string;
+    category_icon_name: string;
     slug_category_name: string[];
     date: string;
     quantity?: number;

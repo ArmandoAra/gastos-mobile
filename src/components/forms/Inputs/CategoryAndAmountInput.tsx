@@ -22,6 +22,10 @@ import { useTranslation } from 'react-i18next';
 import { Category } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { Icon } from 'react-native-paper';
+import useCategoriesStore from '../../../stores/useCategoriesStore';
+import { de } from 'date-fns/locale';
+import { defaultCategories } from '../../../constants/categories';
+import { useTransactionForm } from '../../../hooks/useTransactionForm';
 
 interface CategoryAndAmountInputProps {
     selectedCategory: Category | null;
@@ -51,6 +55,8 @@ export default function CategoryAndAmountInput({
     const animatedIconStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }]
     }));
+
+
 
     const { icon: IconCategory, color } = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon) || {};
 

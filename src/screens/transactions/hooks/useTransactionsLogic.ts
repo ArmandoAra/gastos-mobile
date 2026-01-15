@@ -12,7 +12,6 @@ import { Transaction, TransactionType } from "../../../interfaces/data.interface
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { ThemeColors } from "../../../types/navigation";
 import { ViewPeriod } from "../../../interfaces/date.interface";
-import { PortugueseToEnglishCategory, SpanishToEnglishCategory } from "../../../constants/categories";
 
 type ViewMode = 'day' | 'month' | 'year';
 
@@ -55,7 +54,6 @@ export const useTransactionsLogic = () => {
             return true;
         });
 
-
         // Filtro por tipo (Income/Expense)
         if (filter !== 'all') {
             result = result.filter(t => t.type === filter);
@@ -70,26 +68,13 @@ export const useTransactionsLogic = () => {
 
             result = result.filter(transaction => {
                 const description = (transaction.description || '').toLowerCase();
-                const category = (transaction.category_name || '').toLowerCase();
+                const category = (transaction.category_icon_name || '').toLowerCase();
                 const slugCategories = transaction.slug_category_name || [];
-                console.log("Slug Categories:", slugCategories);
-
-                // Verificamos si el query coincide con alguna de las slug_category_name
-                // if (slugCategories.some(slug => slug.includes(query))) {
-                //     return true;
-                // }
-
-                // Buscamos la traducción en los diccionarios (si existe) y la pasamos a minúsculas
-                const translationES = SpanishToEnglishCategory[capitalizedQuery]?.toLowerCase();
-                const translationPT = PortugueseToEnglishCategory[capitalizedQuery]?.toLowerCase();
 
                 return (
                     description.includes(query) ||
                     category.includes(query) ||
-                    slugCategories.some(slug => slug.includes(query)) ||
-
-                    (translationES && category.includes(translationES)) ||
-                    (translationPT && category.includes(translationPT))
+                    slugCategories.some(slug => slug.toLowerCase().includes(query) || slug.includes(capitalizedQuery))
                 );
             });
         }

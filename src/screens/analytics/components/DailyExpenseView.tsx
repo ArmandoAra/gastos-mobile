@@ -295,7 +295,7 @@ export default function DailyExpenseViewMobile() {
                             {stats.largestTransaction && (
                                 <InsightCard
                                     label={t('overviews.largestTransaction')}
-                                    title={`${t('common.expense')} - ${t(`icons.${stats.largestTransaction.category_name}`, stats.largestTransaction.category_name)}`}
+                                    title={`${t('common.expense')} - ${t(`icons.${stats.largestTransaction.category_icon_name}`, stats.largestTransaction.category_icon_name)}`}
                                     value={`-${currencySymbol} ${Math.abs(stats.largestTransaction.amount).toFixed(2)}`}
                                     color={colors.warning}
                                     isSmallScreen={isSmallScreen}

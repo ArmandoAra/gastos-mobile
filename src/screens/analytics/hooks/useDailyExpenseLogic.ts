@@ -95,7 +95,7 @@ export const useDailyExpenseLogic = () => {
         const categoryTotals: Record<string, number> = {};
         expenses.forEach(t => {
             const amount = Math.abs(t.amount);
-            categoryTotals[t.category_name] = (categoryTotals[t.category_name] || 0) + amount;
+            categoryTotals[t.category_icon_name] = (categoryTotals[t.category_icon_name] || 0) + amount;
         });
 
         const topCategory = Object.entries(categoryTotals).reduce(
@@ -124,7 +124,7 @@ export const useDailyExpenseLogic = () => {
     const handleCategorySelect = useCallback((categoryName: string, totalValue: number, color: string) => {
         setSelectedCategory(categoryName);
         const categoryTransactions = stats.expensesList.filter(
-            t => t.category_name === categoryName
+            t => t.category_icon_name === categoryName
         );
 
         setModalData({

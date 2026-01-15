@@ -34,7 +34,6 @@ import { useTranslation } from "react-i18next";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
 
-type ViewMode = 'day' | 'month' | 'year';
 
 type ListItem =
     | { type: 'header'; date: string; total: number; id: string }

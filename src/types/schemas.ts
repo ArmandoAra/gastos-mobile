@@ -60,7 +60,7 @@ export interface Transaction {
     description: string;
     amount: number;
     type: TransactionType;
-    category_name: string;
+    category_icon_name: string;
     slug_category_name: string[];
     date: string;
     quantity?: number;
@@ -76,7 +76,7 @@ export interface TransactionCreate {
     description: string;
     amount: number;
     type: TransactionType;
-    category_name: string;
+    category_icon_name: string;
     date: string;
     quantity?: number;
     transaction_group_id?: string;

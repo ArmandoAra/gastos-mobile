@@ -45,6 +45,7 @@ import AccountSelector from "./Inputs/AccoutSelector";
 import ModernCalendarSelector from '../buttons/ModernDateSelector';
 import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
 import CalculatorSheet from './Inputs/CalculatorSheet';
+import InfoPopUp from '../messages/InfoPopUp';
 
 export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolean; onClose: (isOpen: boolean) => void }) {
     const { theme } = useSettingsStore();
@@ -64,7 +65,8 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
         inputNameActive,
         amountInputRef,
         popoverOpen,
-        allCategories,
+        defaultCategoriesOptions,
+        userCategoriesOptions,
         setAmount,
         setDescription,
         setLocalSelectedDay,
@@ -127,6 +129,7 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
             statusBarTranslucent
             accessibilityViewIsModal={true}
         >
+            <InfoPopUp />
             <View style={StyleSheet.absoluteFill}>
 
                 {/* 1. BACKDROP (Fondo borroso interactivo) */}
@@ -286,7 +289,8 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
                                     handleSelectCategory={handleSelectCategory}
                                     selectedCategory={selectedCategory}
                                     colors={colors}
-                                    allCategories={allCategories}
+                                    defaultCategories={defaultCategoriesOptions}
+                                    userCategories={userCategoriesOptions}
                                 />
                             )}
 

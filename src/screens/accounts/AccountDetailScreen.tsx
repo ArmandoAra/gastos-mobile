@@ -187,7 +187,7 @@ export const AccountDetailScreen = ({ route, navigation }: any) => {
                                         {transaction.description}
                                     </Text>
                                     <Text style={styles.transactionCategory}>
-                                        {transaction.category_name} •{' '}
+                                        {transaction.category_icon_name} •{' '}
                                         {format(parseISO(transaction.date), 'dd MMM yyyy', {
                                             locale: es,
                                         })}

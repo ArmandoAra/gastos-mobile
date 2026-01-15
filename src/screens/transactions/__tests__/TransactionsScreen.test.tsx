@@ -76,7 +76,7 @@ const mockTransactions = [
     amount: -50,
     type: 'expense',
     date: '2023-10-15T10:00:00Z', // Coincide con TEST_DATE
-    category_name: 'Comida',
+    category_icon_name: 'Comida',
     account_id: 'acc1'
   },
   {
@@ -85,7 +85,7 @@ const mockTransactions = [
     amount: -15,
     type: 'expense',
     date: '2023-11-01T10:00:00Z', // Coincide con DIFFERENT_DATE
-    category_name: 'Ocio',
+    category_icon_name: 'Ocio',
     account_id: 'acc1'
   }
 ];

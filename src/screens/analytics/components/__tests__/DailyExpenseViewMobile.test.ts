@@ -68,7 +68,7 @@ const mockStats = {
   expenseCount: 5,
   incomeCount: 1,
   topCategory: { category: 'food', amount: 200 },
-  largestTransaction: { category_name: 'food', amount: -200 },
+  largestTransaction: { category_icon_name: 'food', amount: -200 },
   categoryTotals: { food: 200 },
   expensesList: []
 };

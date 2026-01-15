@@ -62,7 +62,8 @@
         "addExpense": "Expense",
         "addIncome": "Income",
         "selectCategory": "Select category",
-        "noIcons": "No icons available"
+        "noIcons": "No icons available",
+        "my": "My"
     },
     "commonWarnings": {
         "warning": "Warning",
@@ -232,6 +233,14 @@
         "AUD": "Australian Dollar",
         "CHF": "Swiss Franc",
         "CNY": "Chinese Yuan"
+    },
+    "categories": {
+        "createNew": "Create new category",
+        "editCategory": "Edit category",
+        "deleteCategory": "Delete category",
+        "deleteWarning": "Deleting a category ",
+        "createdSuccess": "Category created successfully",
+        "inputNameHint": "Enter the category name"
     },
     "navigation": {
         "home": "Home",

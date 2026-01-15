@@ -66,7 +66,7 @@ const mockTransactions: Transaction[] = [
     amount: -100,
     type: TransactionType.EXPENSE,
     date: '2025-01-15T10:00:00', // Sin Z
-    category_name: 'food',
+    category_icon_name: 'food',
   },
   // Otro Gasto en el mismo mes (10 Ene)
   {
@@ -76,7 +76,7 @@ const mockTransactions: Transaction[] = [
     amount: -50,
     type: TransactionType.EXPENSE,
     date: '2025-01-10T10:00:00', // Sin Z
-    category_name: 'transport',
+    category_icon_name: 'transport',
   },
   // INGRESO (Debe ser ignorado por el Heatmap)
   {
@@ -86,7 +86,7 @@ const mockTransactions: Transaction[] = [
     amount: 500,
     type: TransactionType.INCOME,
     date: '2025-01-12T10:00:00',
-    category_name: 'salary',
+    category_icon_name: 'salary',
   },
   // Gasto Mes Pasado (Diciembre 2024) - Solo visible en modo YEAR
   {
@@ -96,7 +96,7 @@ const mockTransactions: Transaction[] = [
     amount: -200,
     type: TransactionType.EXPENSE,
     date: '2024-12-15T10:00:00',
-    category_name: 'food',
+    category_icon_name: 'food',
   },
 ];
 

@@ -60,10 +60,10 @@ export default function ExpenseHeatmap() {
       key={i}
       style={localStyles.txRow}
       accessible={true}
-      accessibilityLabel={`${t.description || t.category_name}, ${currencySymbol} ${Math.abs(t.amount).toFixed(2)}`}
+      accessibilityLabel={`${t.description || t.category_icon_name}, ${currencySymbol} ${Math.abs(t.amount).toFixed(2)}`}
     >
       <Text style={[localStyles.txName, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
-        {t.description || t.category_name}
+        {t.description || t.category_icon_name}
       </Text>
       <Text
         style={[localStyles.txVal, { color: colors.textSecondary }]}
