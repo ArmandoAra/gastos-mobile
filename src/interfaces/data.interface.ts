@@ -1,4 +1,4 @@
-import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from "../api/interfaces";
+import { CategoryLabel } from "../api/interfaces";
 import { COLOR_PICKER_PALETTE } from "../constants/categories";
 
 export interface User {
@@ -68,6 +68,7 @@ export interface Item {
     name: string;
     price: number;
     quantity: number;
+    done: boolean; // Nuevo campo para marcar si el item ya fue comprado
     expenseBudgetId: string; // Foreign key
 }
 
@@ -83,6 +84,7 @@ export interface ExpenseBudget {
     items: Item[];
     spentAmount: number; //Es la suma de los items
     budgetedAmount: number; //Es el monto total del presupuesto
+    favorite: boolean;
     period?: 'weekly' | 'monthly' | 'yearly' | 'one-time'; // La fecha  endDate debe ser obligatoriamente para periodos recurrentes
     date: string;
     endDate?: string;

@@ -9,23 +9,17 @@ export const styles = StyleSheet.create({
         justifyContent: 'flex-start', // Alinea todo arriba
     },
     topSheet: {
-        width: '100%',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        height: '100%',
+        flex: 1
     },
     header: {
         marginTop: 5,
         flexDirection: 'row',
         justifyContent: 'center',
         paddingHorizontal: 20,
-        paddingBottom: 10,
+        paddingBottom: 15,
         width: width - 21,
         marginBottom: 15,
+
     },
     title: {
         fontSize: 18,

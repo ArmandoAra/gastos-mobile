@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, use } from 'react';
 import {
     View,
     Text,
@@ -47,6 +47,9 @@ import InfoPopUp from '../messages/InfoPopUp';
 import { useKeyboardStatus } from '../../screens/transactions/constants/hooks/useKeyboardStatus';
 import { useTransactionForm } from '../../screens/transactions/constants/hooks/useTransactionForm';
 import CategorySelectorPopover from './Inputs/CategorySelector';
+import useBudgetsStore from '../../stores/useBudgetStore';
+import { Category } from '../../interfaces/data.interface';
+import { set } from 'date-fns';
 
 export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolean; onClose: (isOpen: boolean) => void }) {
     const { theme } = useSettingsStore();
@@ -57,7 +60,6 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
         amount,
         description,
         selectedCategory,
-        iconsKey,
         selectedAccount,
         localSelectedDay,
         allAccounts,
@@ -79,7 +81,24 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
         handleCategoryClick
     } = useTransactionForm();
 
-    // const isOpen = inputNameActive !== InputNameActive.NONE;
+    const dataToTransact = useBudgetsStore(state => state.toTransactBudget); //Obtener los datos que obtuvimos del presupuesto que queremos convertir
+    const setDataToTransact = useBudgetsStore(state => state.setToTransactBudget);
+
+
+    useEffect(() => {
+        if (dataToTransact) {
+            setAmount(dataToTransact.totalAmount.toString());
+            setDescription(dataToTransact.name);
+            const categoryName = dataToTransact.slug_category_name[0];
+            const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
+            const foundCategory = allCategories.find(cat => cat.name === categoryName);
+            if (foundCategory) {
+                handleSelectCategory(foundCategory);
+            }
+        }
+    }, [dataToTransact]);
+
+
     const isExpense = inputNameActive === InputNameActive.SPEND;
 
     // Formateo de fecha seguro
@@ -116,6 +135,7 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
     };
 
     const handleCloseForm = () => {
+        setDataToTransact(null); // Limpiar los datos al cerrar el formulario
         setShowCalculator(false);
         onClose(false);
         handleClose();
@@ -131,34 +151,15 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
             accessibilityViewIsModal={true}
         >
             <InfoPopUp />
-            <View style={StyleSheet.absoluteFill}>
+            {/* 2. CONTENEDOR PRINCIPAL (KeyboardAvoidingView) */}
 
-                {/* 1. BACKDROP (Fondo borroso interactivo) */}
-                {isOpen && (
-                    <Animated.View
-                        entering={FadeIn.duration(200)}
-                        exiting={FadeOut.duration(200)}
-                        style={StyleSheet.absoluteFill}
-                    >
-                        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
-                            <TouchableOpacity
-                                style={StyleSheet.absoluteFill}
-                                activeOpacity={1}
-                                onPress={handleCloseForm}
-                                accessibilityRole="button"
-                                accessibilityLabel={t('common.close_modal', 'Close form')}
-                                accessibilityHint={t('accessibility.dismiss_hint', 'Double tap to close without saving')}
-                            />
-                        </BlurView>
-                    </Animated.View>
-                )}
-
-                {/* 2. CONTENEDOR PRINCIPAL (KeyboardAvoidingView) */}
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.container}
                     pointerEvents="box-none" // Permite tocar el backdrop detrás
                 >
+                <View style={StyleSheet.absoluteFill} >
+
                     {isOpen && (
                         <Animated.View
                             entering={SlideInUp.duration(300)}
@@ -297,8 +298,8 @@ export default function AddTransactionForm({ isOpen, onClose }: { isOpen: boolea
 
                         </Animated.View>
                     )}
-                </KeyboardAvoidingView>
-            </View>
+                </View>
+            </KeyboardAvoidingView>
         </Modal>
     );
 }

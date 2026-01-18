@@ -23,7 +23,6 @@ import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
 import { useTranslation } from 'react-i18next';
 
-const { width, height } = Dimensions.get('window');
 
 interface ModernCalendarSelectorProps {
   selectedDate: Date;

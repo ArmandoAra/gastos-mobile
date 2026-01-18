@@ -2,37 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, devtools, StateStorage } from 'zustand/middleware';
 import { createMMKV } from 'react-native-mmkv';
 import * as uuid from 'uuid';
-
-// ============================================
-// INTERFACES
-// ============================================
-
-export interface Item {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    expenseBudgetId: string;
-}
-
-export interface ExpenseBudget {
-    id: string;
-    account_id: string;
-    user_id: string;
-    name: string;
-    slug_category_name: string[];
-    category_icon_name: string;
-    spentAmount: number;    // Calculado: sum(item.price * item.quantity)
-    budgetedAmount: number; // Target
-    date: string;
-    created_at: string;
-    updated_at: string;
-    items: Item[];
-}
-
-// ============================================
-// CONFIGURACIÓN MMKV
-// ============================================
+import { ExpenseBudget, Item } from '../interfaces/data.interface';
 
 export const budgetsStorage = createMMKV({
     id: 'budgets-storage',
@@ -55,7 +25,14 @@ type PersistedState = {
     budgets: ExpenseBudget[];
 };
 
+export interface ToConvertBudget {
+    name: string;
+    totalAmount: number;
+    slug_category_name: string[];
+}
+
 type TransientState = {
+    toTransactBudget: ToConvertBudget | null;
     isLoading: boolean;
     error: string | null;
     _hasHydrated: boolean;
@@ -78,6 +55,8 @@ type Actions = {
     updateItemInBudget: (budgetId: string, itemId: string, itemData: Partial<Item>) => void;
     removeItemFromBudget: (budgetId: string, itemId: string) => void;
 
+    setToTransactBudget: (budget: ToConvertBudget | null) => void;
+
     // === Getters ===
     getBudgetById: (id: string) => ExpenseBudget | undefined;
     getBudgetsByUserId: (userId: string) => ExpenseBudget[];
@@ -99,6 +78,7 @@ const calculateSpentAmount = (items: Item[]): number => {
 // ============================================
 
 const initialState: State = {
+    toTransactBudget: null,
     budgets: [],
     isLoading: false,
     error: null,
@@ -245,6 +225,10 @@ const useBudgetsStore = create<State & Actions>()(
 
                         return { budgets: updatedBudgets };
                     }, false, 'removeItemFromBudget');
+                },
+
+                setToTransactBudget: (budget) => {
+                    set({ toTransactBudget: budget }, false, 'setToTransactBudget');
                 },
 
                 // ----------------------------------------------------------------

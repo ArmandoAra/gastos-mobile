@@ -5,27 +5,35 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
     TextInput,
     Text,
     StyleSheet,
+    TouchableWithoutFeedback,
+    FlatList // <--- Importamos FlatList
 } from "react-native";
-import Animated, { FadeIn, FadeInRight, SlideInDown, SlideOutDown, useSharedValue, withSpring } from "react-native-reanimated";
+import { useState, useCallback } from "react";
+import Animated, { FadeIn, SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors } from '../../../types/navigation';
-import { ICON_OPTIONS } from "../../../constants/icons";
-import { Category, ExpenseBudget, Item } from "../../../interfaces/data.interface";
-import { useTransactionsLogic } from "../../transactions/hooks/useTransactionsLogic";
+import { ExpenseBudget, Item } from "../../../interfaces/data.interface";
 import BudgetCategorySelector from "./BudgetCategorySelector";
+import { useBudgetForm } from "../hooks/useBudgetForm";
+import WarningMessage from "../../transactions/components/WarningMessage";
+import useBudgetsStore, { ToConvertBudget } from "../../../stores/useBudgetStore";
+import { useTranslation } from "react-i18next";
+import { CategoryIconSelector } from "./CategoryIconSelector";
+import { useAuthStore } from "../../../stores/authStore";
 
-// Importamos nuestro nuevo hook
-import { useBudgetForm } from "../hooks/useBudgetForm"; 
+// IMPORTANTE: Importamos el componente optimizado que creamos antes
+import { BudgetItem } from "./BudgetItem";
+import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
+import { useSettingsStore } from "../../../stores/settingsStore";
+import { InputNameActive } from "../../../interfaces/settings.interface";
 
 export const BudgetFormModal = ({
     visible,
     onClose,
     initialData,
-    onSave,
     colors
 }: {
     visible: boolean;
@@ -35,8 +43,11 @@ export const BudgetFormModal = ({
     colors: ThemeColors;
 }) => {
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
-    // 1. Usamos el Hook para obtener toda la lógica
+    const [menuVisible, setMenuVisible] = useState(false);
+    const [delettingBudget, setDelettingBudget] = useState(false);
+
     const {
         name, setName,
         budgetedAmount, setBudgetedAmount,
@@ -48,12 +59,139 @@ export const BudgetFormModal = ({
         userCategoriesOptions,
         defaultCategoriesOptions,
         selectedCategory,
+        isFavorite,
+        itemsInputRefs,
         handleSelectCategory,
         handleAddItem,
         updateItem,
         removeItem,
-        handleSaveForm
+        handleSaveForm,
+        toggleItemDone,
+        toggleFavorite,
     } = useBudgetForm({ visible, onClose, initialData });
+    const { setIsAddOptionsOpen, setInputNameActive } = useSettingsStore();
+
+
+    const currencySymbol = useAuthStore(state => state.currencySymbol);
+    const deleteBudget = useBudgetsStore(state => state.deleteBudget);
+
+    const handleMenuAction = (action: 'favorite' | 'convert' | 'delete') => {
+        setMenuVisible(false);
+        switch (action) {
+            case 'favorite': toggleFavorite(); break;
+            case 'convert': converToTransaction(); break;
+            case 'delete': setDelettingBudget(true); break;
+        }
+    };
+
+    const converToTransaction = () => {
+        const dataToTransact: ToConvertBudget = {
+            name,
+            totalAmount: totalSpent,
+            slug_category_name: initialData ? initialData.slug_category_name : [selectedCategory.name],
+        };
+
+        handleSaveForm();
+        setCategorySelectorOpen(false);
+        onClose();
+        setIsAddOptionsOpen(true);
+        setInputNameActive(InputNameActive.SPEND);
+        useBudgetsStore.getState().setToTransactBudget(dataToTransact);
+    };
+
+    // --- RENDERIZADO DEL HEADER DE LA LISTA ---
+    // Contiene todo lo que va arriba de los items repetitivos
+    const renderListHeader = useCallback(() => (
+        <View onStartShouldSetResponder={() => true}>
+            {/* SECCIÓN GENERAL (Inputs nombre, monto, etc.) */}
+            <View style={[styles.sectionBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={{ marginBottom: 15, width: '100%' }}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budget_form.fields.name_label')}</Text>
+                    <View style={styles.nameInputContainer}>
+                        <TextInput
+                            style={[styles.inputLarge, { color: colors.text, borderColor: colors.border }]}
+                            placeholder={t('budget_form.fields.name_placeholder')}
+                            placeholderTextColor={colors.textSecondary}
+                            value={name}
+                            maxLength={60}
+                            onChangeText={setName}
+                            accessibilityLabel={t('budget_form.fields.name_label')}
+                            multiline={true}
+                        />
+                        <CategoryIconSelector
+                            handleCategorySelector={() => setCategorySelectorOpen(!categorySelectorOpen)}
+                            selectedCategory={selectedCategory}
+                            colors={colors}
+                        />
+                    </View>
+                </View>
+
+                <View style={styles.rowWrap}>
+                    <View style={styles.flexItem}>
+                        <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budget_form.fields.target_amount_label')}</Text>
+                        <TextInput
+                            style={[styles.inputMedium, { color: colors.text, borderColor: colors.text }]}
+                            placeholder={t('budget_form.fields.target_placeholder')}
+                            placeholderTextColor={colors.textSecondary}
+                            keyboardType="numeric"
+                            value={budgetedAmount}
+                            onChangeText={setBudgetedAmount}
+                            accessibilityLabel={t('budget_form.fields.target_amount_label')}
+                        />
+                    </View>
+                    <View style={[styles.flexItem, { alignItems: 'flex-end' }]}>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: 'right' }]}>{t('budget_form.fields.current_total_label')}</Text>
+                        <Text
+                            style={[styles.displayTotal, { color: totalSpent > (parseFloat(budgetedAmount) || 0) ? colors.expense : colors.text }]}
+                            accessibilityLabel={`${t('budget_form.accessibility.calculated_total')} ${totalSpent.toFixed(2)}`}
+                        >
+                            {currencySymbol}{totalSpent.toFixed(2)}
+                        </Text>
+                    </View>
+                </View>
+            </View>
+
+            {/* CABECERA DE LA SECCIÓN ITEMS */}
+            <View style={styles.itemsHeaderRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]} accessibilityRole="header">{t('budget_form.items.section_title')}</Text>
+                    <View
+                        style={[styles.itemsCounter, { backgroundColor: colors.accent }]}
+                        accessible={true}
+                        accessibilityLabel={t('budget_form.accessibility.items_count') + items.length}
+                    >
+                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: 'bold' }}>{items.length}</Text>
+                    </View>
+                </View>
+                <TouchableOpacity
+                    onPress={handleAddItem}
+                    style={[styles.addButtonSmall, { backgroundColor: colors.text, borderColor: colors.border }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('budget_form.items.add_button')}
+                >
+                    <MaterialIcons name="add" size={18 * fontScale} color={colors.surfaceSecondary} />
+                    <Text style={[styles.addButtonText, { fontSize: 14 * fontScale, color: colors.surfaceSecondary }]}>{t('budget_form.items.add_button')}</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    ), [colors, name, budgetedAmount, totalSpent, items.length, selectedCategory, fontScale, currencySymbol, t, setName, setBudgetedAmount, handleAddItem, categorySelectorOpen, setCategorySelectorOpen]);
+
+    // --- RENDERIZADO DE CADA ITEM ---
+    const renderItem = useCallback(({ item }: { item: Item }) => (
+        <BudgetItem
+            item={item}
+            colors={colors}
+            fontScale={fontScale}
+            currencySymbol={currencySymbol}
+            t={t}
+            onUpdate={updateItem}
+            onToggle={toggleItemDone}
+            onRemove={removeItem}
+            onSetRef={(ref) => {
+                if (ref) itemsInputRefs.current[item.id] = ref;
+            }}
+        />
+    ), [colors, fontScale, currencySymbol, t, updateItem, toggleItemDone, removeItem]);
 
     if (!visible) return null;
 
@@ -65,11 +203,21 @@ export const BudgetFormModal = ({
             onRequestClose={onClose}
             statusBarTranslucent
         >
-            <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Modal de Confirmación de Borrado */}
+            {delettingBudget && <WarningMessage
+                message={t('budget_form.warnings.delete_confirmation')}
+                onClose={() => setDelettingBudget(false)}
+                onSubmit={() => {
+                    if (initialData) deleteBudget(initialData.id);
+                    setDelettingBudget(false);
+                    onClose();
+                }}
+            />}
+
+            <View style={[styles.container, { backgroundColor: colors.surfaceSecondary }]}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={{ flex: 1 }}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
                 >
                     <Animated.View
                         entering={SlideInDown.duration(300)}
@@ -78,40 +226,111 @@ export const BudgetFormModal = ({
                             styles.fullScreenSheet,
                             { backgroundColor: colors.surfaceSecondary, paddingTop: insets.top }
                         ]}
+                        accessibilityViewIsModal={true}
                     >
-                        {/* HEADER */}
+                        {/* 1. HEADER FIJO (Titulo y botones cerrar/guardar) */}
                         <View style={[styles.header, { borderBottomColor: colors.border }]}>
                             <TouchableOpacity
-                                onPress={onClose}
-                                style={[styles.iconBtn, { minHeight: 44, minWidth: 44 }]}
+                                onPress={() => {
+                                    setCategorySelectorOpen(false);
+                                    onClose();
+                                }}
+                                style={[styles.iconBtn, { backgroundColor: colors.text }]}
                                 accessibilityRole="button"
-                                accessibilityLabel="Cerrar modal"
-                                accessibilityHint="Cierra el formulario sin guardar"
+                                accessibilityLabel={t('budget_form.close_modal')}
                             >
-                                <MaterialIcons name="close" size={dynamicIconSize} color={colors.text} />
+                                <MaterialIcons name="close" size={dynamicIconSize} color={colors.surfaceSecondary} />
                             </TouchableOpacity>
 
                             <Text
                                 style={[styles.headerTitle, { color: colors.text }]}
                                 accessibilityRole="header"
-                                maxFontSizeMultiplier={1.5}
+                                maxFontSizeMultiplier={2}
+                                numberOfLines={2}
+                                adjustsFontSizeToFit
                             >
-                                {initialData ? 'Editar Presupuesto' : 'Nuevo Presupuesto'}
+                                {initialData ? t('budget_form.title_edit') : t('budget_form.title_new')}
                             </Text>
 
-                            <TouchableOpacity
-                                onPress={handleSaveForm}
-                                style={[styles.iconBtn, { minHeight: 44, minWidth: 44, backgroundColor: colors.text, borderRadius: 50, justifyContent: 'center', alignItems: 'center' }]}
-                                accessibilityRole="button"
-                                accessibilityLabel="Guardar presupuesto"
-                            >
-                                <MaterialIcons name="check" size={dynamicIconSize} color={colors.accent} />
-                            </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                {isFavorite && (
+                                    <View accessibilityLabel={t('budget_form.menu.favorite')}>
+                                        <MaterialIcons name="star" size={24 * fontScale} color={colors.warning} />
+                                    </View>
+                                )}
+
+                                {initialData && (
+                                    <TouchableOpacity
+                                        onPress={() => setMenuVisible(true)}
+                                        style={styles.iconBtn}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={t('budget_form.more_options')}
+                                    >
+                                        <MaterialIcons name="more-vert" size={dynamicIconSize} color={colors.text} />
+                                    </TouchableOpacity>
+                                )}
+
+                                <TouchableOpacity
+                                    onPress={handleSaveForm}
+                                    style={[styles.iconBtn, { backgroundColor: colors.accent }]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={t('budget_form.save_budget')}
+                                >
+                                    <MaterialIcons name="check" size={dynamicIconSize} color={colors.surfaceSecondary} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
-                        {/* CONTENIDO SCROLLABLE */}
+                        {/* 2. MENÚ POPUP (Absoluto, fuera del scroll) */}
+                        {menuVisible && (
+                            <>
+                                <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+                                    <View style={styles.menuBackdrop} accessible={false} />
+                                </TouchableWithoutFeedback>
+
+                                <Animated.View
+                                    entering={FadeIn.duration(150)}
+                                    style={[styles.popupMenu, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.text }]}
+                                    accessibilityRole="menu"
+                                >
+                                    <TouchableOpacity
+                                        style={styles.menuOption}
+                                        onPress={() => handleMenuAction('favorite')}
+                                        accessibilityRole="menuitem"
+                                        accessibilityState={{ selected: isFavorite }}
+                                    >
+                                        <MaterialIcons name={isFavorite ? "star" : "star-outline"} size={24} color={isFavorite ? colors.warning : colors.text} />
+                                        <Text style={[styles.menuOptionText, { color: colors.text }]}>{t('budget_form.menu.favorite')}</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.menuOption}
+                                        onPress={() => handleMenuAction('convert')}
+                                        accessibilityRole="menuitem"
+                                    >
+                                        <MaterialIcons name="transform" size={20} color={colors.text} />
+                                        <Text style={[styles.menuOptionText, { color: colors.text }]}>{t('budget_form.menu.convert_transaction')}</Text>
+                                    </TouchableOpacity>
+
+                                    <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+                                    <TouchableOpacity
+                                        style={styles.menuOption}
+                                        onPress={() => handleMenuAction('delete')}
+                                        disabled={isFavorite}
+                                        accessibilityRole="menuitem"
+                                        accessibilityState={{ disabled: isFavorite }}
+                                    >
+                                        <MaterialIcons name="delete-outline" size={20} color={isFavorite ? colors.text + "50" : colors.expense} />
+                                        <Text style={[styles.menuOptionText, { color: isFavorite ? colors.text + "50" : colors.expense }]}>{t('budget_form.menu.delete')}</Text>
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            </>
+                        )}
+
+                        {/* 3. SELECTOR DE CATEGORÍA (Se muestra por encima de la lista) */}
                         {categorySelectorOpen && (
-                            <View style={{ paddingHorizontal: 20, marginBottom: 10, marginTop: 10 }}>
+                            <View style={styles.categorySelectorContainer}>
                                 <BudgetCategorySelector
                                     closeCategorySelector={() => setCategorySelectorOpen(false)}
                                     handleSelectCategory={handleSelectCategory}
@@ -122,158 +341,43 @@ export const BudgetFormModal = ({
                                 />
                                 <TouchableOpacity
                                     onPress={() => setCategorySelectorOpen(false)}
-                                    style={{ width: "100%", backgroundColor: colors.text, height: 52, marginTop: 10, borderRadius: 12, justifyContent: "center", alignItems: "center" }}
+                                    style={[styles.closeSelectorBtn, { backgroundColor: colors.text }]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={t('budget_form.category_selector.close')}
                                 >
-                                    <Text style={{ color: colors.surfaceSecondary, fontWeight: '600' }}>Cerrar</Text>
+                                    <Text style={{ color: colors.surfaceSecondary, fontWeight: '600' }}>{t('budget_form.category_selector.close')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
-                        <ScrollView
+
+                        {/* 4. FLATLIST PRINCIPAL */}
+                        {/* Se deshabilita el scroll si el selector de categorías está abierto para evitar conflictos */}
+                        <FlatList
+                            data={items}
+                            keyExtractor={(item) => item.id}
+
+                            // Todo el formulario superior es el Header
+                            ListHeaderComponent={renderListHeader()}
+
+                            // Renderiza cada BudgetItem
+                            renderItem={renderItem}
+
+                            // --- OPTIMIZACIONES DE RENDIMIENTO ---
+                            initialNumToRender={10} // Renderiza pocos al abrir
+                            maxToRenderPerBatch={10} // Lotes pequeños al scrollear
+                            windowSize={5} // Mantiene en memoria 5 "pantallas" de items (arriba/abajo)
+                            removeClippedSubviews={Platform.OS === 'android'} // Desmonta views fuera de pantalla (Vital para Android)
+
+                            // --- ESTILOS ---
                             scrollEnabled={!categorySelectorOpen}
                             contentContainerStyle={[
                                 styles.scrollContent,
-                                { paddingBottom: insets.bottom + 150 }
+                                { paddingBottom: insets.bottom + 150 } // Espacio al final
                             ]}
-                            showsVerticalScrollIndicator={false}
                             keyboardShouldPersistTaps="handled"
-                        >
-                            {/* Sección General */}
-                            <View style={[styles.sectionBox, { backgroundColor: colors.surface }]}>
-                                <View style={{ marginBottom: 15, width: '100%' }}>
-                                    <Text style={[styles.label, { color: colors.textSecondary }]}>NOMBRE PRESUPUESTO</Text>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            showsVerticalScrollIndicator={false}
+                        />
 
-                                        <TextInput
-                                            style={[styles.inputLarge, { color: colors.text, minHeight: 44 * fontScale, borderColor: colors.border }]}
-                                            placeholder="Ej. Compras Supermercado"
-                                            placeholderTextColor={colors.textSecondary}
-                                            value={name}
-                                            maxLength={40}
-                                            onChangeText={setName}
-                                            accessibilityLabel="Nombre del presupuesto"
-                                            multiline={true}
-                                            textAlignVertical="center"
-                                        />
-
-                                        <CategoryIconSelector
-                                            handleCategorySelector={() => setCategorySelectorOpen(!categorySelectorOpen)}
-                                            selectedCategory={selectedCategory}
-                                            colors={colors}
-                                        />
-                                    </View>
-                                </View>
-
-                                <View style={styles.rowWrap}>
-                                    <View style={styles.flexItem}>
-                                        <Text style={[styles.label, { color: colors.textSecondary }]}>MONTO OBJETIVO</Text>
-                                        <TextInput
-                                            style={[styles.inputMedium, { color: colors.text, borderColor: colors.text, borderWidth: 0.5, borderRadius: 8 }]}
-                                            placeholder="0.00"
-                                            placeholderTextColor={colors.textSecondary}
-                                            keyboardType="numeric"
-                                            value={budgetedAmount}
-                                            onChangeText={setBudgetedAmount}
-                                            accessibilityLabel="Monto objetivo del presupuesto"
-                                        />
-                                    </View>
-                                    <View style={[styles.flexItem, { alignItems: 'flex-end' }]}>
-                                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: 'right' }]}>TOTAL ACTUAL</Text>
-                                        <Text
-                                            style={[
-                                                styles.displayTotal,
-                                                { color: totalSpent > (parseFloat(budgetedAmount) || 0) ? colors.error : colors.accent }
-                                            ]}
-                                            accessibilityLabel={`Total calculado: ${totalSpent.toFixed(2)}`}
-                                        >
-                                            ${totalSpent.toFixed(2)}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-
-                            {/* Header de Items */}
-                            <View style={styles.itemsHeaderRow}>
-                                <Text style={[styles.sectionTitle, { color: colors.text }]}>Items</Text>
-                                <TouchableOpacity
-                                    onPress={handleAddItem}
-                                    style={[styles.addButtonSmall, { backgroundColor: colors.text, borderColor: colors.border }]}
-                                    accessibilityRole="button"
-                                    accessibilityLabel="Agregar nuevo item a la lista"
-                                >
-                                    <MaterialIcons name="add" size={18 * fontScale} color={colors.surfaceSecondary} />
-                                    <Text style={[styles.addButtonText, { fontSize: 14 * fontScale, color: colors.surfaceSecondary }]}>Agregar</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Lista de Items */}
-                            {items.map((item: Item) => (
-                                <Animated.View
-                                    key={item.id}
-                                    entering={FadeIn}
-                                    style={[styles.itemRow, { backgroundColor: colors.surface }]}
-                                >
-                                    {/* Fila superior: Nombre y Eliminar */}
-                                    <View style={styles.itemRowHeader}>
-                                        <TextInput
-                                            style={[styles.itemNameInput, { color: colors.text, minHeight: 40 * fontScale }]}
-                                            placeholder="Nombre del item"
-                                            placeholderTextColor={colors.textSecondary}
-                                            value={item.name}
-                                            onChangeText={(t) => updateItem(item.id, 'name', t)}
-                                            accessibilityLabel={`Nombre del item ${item.name || 'sin nombre'}`}
-                                            multiline
-                                        />
-                                        <TouchableOpacity
-                                            onPress={() => removeItem(item.id)}
-                                            style={{ padding: 8 }}
-                                            accessibilityRole="button"
-                                            accessibilityLabel={`Eliminar item ${item.name || 'sin nombre'}`}
-                                        >
-                                            <MaterialIcons name="delete-outline" size={24 * fontScale} color={colors.textSecondary} />
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    {/* Fila inferior: Inputs numéricos */}
-                                    <View style={styles.itemRowInputs}>
-                                        <View style={styles.inputGroup}>
-                                            <Text style={[styles.miniLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.5}>Cant.</Text>
-                                            <TextInput
-                                                style={[styles.inputSmall, { color: colors.text, borderColor: colors.border, minHeight: 40 * fontScale }]}
-                                                keyboardType="numeric"
-                                                value={item.quantity.toString()}
-                                                onChangeText={(t) => updateItem(item.id, 'quantity', parseInt(t) || 0)}
-                                                accessibilityLabel={`Cantidad para ${item.name}`}
-                                                selectTextOnFocus
-                                            />
-                                        </View>
-
-                                        <Text style={[styles.operatorText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.2}>x</Text>
-
-                                        <View style={styles.inputGroup}>
-                                            <Text style={[styles.miniLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.5}>Precio</Text>
-                                            <TextInput
-                                                style={[styles.inputSmall, { color: colors.text, borderColor: colors.border, minHeight: 40 * fontScale }]}
-                                                keyboardType="numeric"
-                                                placeholder="0"
-                                                value={item.price === 0 ? '' : item.price.toString()}
-                                                onChangeText={(t) => updateItem(item.id, 'price', parseFloat(t) || 0)}
-                                                accessibilityLabel={`Precio unitario para ${item.name}`}
-                                                selectTextOnFocus
-                                            />
-                                        </View>
-
-                                        <Text style={[styles.operatorText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.2}>=</Text>
-
-                                        <Text
-                                            style={[styles.itemTotal, { color: colors.text }]}
-                                            accessibilityLabel={`Subtotal: ${(item.price * item.quantity).toFixed(2)}`}
-                                        >
-                                            ${(item.price * item.quantity).toFixed(2)}
-                                        </Text>
-                                    </View>
-                                </Animated.View>
-                            ))}
-                        </ScrollView>
                     </Animated.View>
                 </KeyboardAvoidingView>
             </View>
@@ -281,71 +385,11 @@ export const BudgetFormModal = ({
     );
 };
 
-// ... Mantener CategoryIconSelector y Styles exactamente igual ...
-const CategoryIconSelector = ({
-    handleCategorySelector,
-    selectedCategory,
-    colors
-}: {
-    handleCategorySelector: () => void;
-    selectedCategory: Category | null;
-    colors: ThemeColors;
-}) => {
-    // ... tu lógica de selector de iconos ...
-    const { t } = useTransactionsLogic();
-    const scale = useSharedValue(1);
-    const { icon: IconCategory } = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon) || {};
-
-    const handlePressIn = () => { scale.value = withSpring(0.95); };
-    const handlePressOut = () => { scale.value = withSpring(1); };
-    return (
-        <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleCategorySelector}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            accessibilityRole="button"
-            accessibilityLabel={t('accessibility.select_category', 'Select Category')}
-            accessibilityHint={selectedCategory ? `${t('common.current')}: ${selectedCategory.name}` : t('common.none_selected')}
-        >
-            <Animated.View entering={FadeInRight} style={{ minWidth: 48, minHeight: 48, }}>
-
-                <View
-                    style={[{
-                        minWidth: 48,
-                        minHeight: 48,
-                        padding: 12,
-                        borderRadius: 50,
-                        borderWidth: 0.5,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        elevation: 5,
-                    }, { borderColor: colors.border, backgroundColor: selectedCategory?.color || colors.primary }]}
-                >
-                    {selectedCategory && IconCategory ? (
-                        <IconCategory size={24} color={colors.text} style={{
-                            backgroundColor: colors.surfaceSecondary,
-                            borderRadius: 50,
-                            padding: 5,
-                        }} />
-                    ) : (
-                        <MaterialIcons name="category" size={28} color={colors.textSecondary} />
-                    )}
-                </View>
-            </Animated.View>
-        </TouchableOpacity>
-    );
-}
-
-// ... Mantener los styles igual ...
 const styles = StyleSheet.create({
-   // ... Tus estilos existentes
-    container: {
-        flex: 1,
-    },
-    fullScreenSheet: {
-        flex: 1, 
-    },
+    container: { flex: 1 },
+    fullScreenSheet: { flex: 1 },
+
+    // Header con layout flexible
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -353,145 +397,96 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 10,
         borderBottomWidth: StyleSheet.hairlineWidth,
+        zIndex: 10,
+        minHeight: 60,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
-        flexShrink: 1, 
+        flex: 1,
         textAlign: 'center',
+        marginHorizontal: 10,
     },
     iconBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    scrollContent: {
-        padding: 20,
-        flexGrow: 1,
+
+    // Menú
+    menuBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 },
+    popupMenu: {
+        position: 'absolute',
+        top: 65,
+        right: 15,
+        width: 240,
+        borderRadius: 12,
+        borderWidth: 1,
+        paddingVertical: 5,
+        zIndex: 100,
     },
-    sectionBox: {
-        width: '100%',
-        borderRadius: 16,
-        padding: 15,
-        marginBottom: 20,
+    menuOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 15, minHeight: 48 },
+    menuOptionText: { fontSize: 16, marginLeft: 12, fontWeight: '500', flexShrink: 1 },
+    menuDivider: { height: 1, marginVertical: 5 },
+
+    // Categoría Selector Wrapper
+    categorySelectorContainer: { paddingHorizontal: 20, marginVertical: 10 },
+    closeSelectorBtn: {
+        width: "100%",
+        minHeight: 52,
+        marginTop: 10,
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 10
     },
-    label: {
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 0.5,
-        marginBottom: 5,
-        textTransform: 'uppercase',
+
+    // Contenido
+    scrollContent: { padding: 5, flexGrow: 1 },
+    sectionBox: { width: '100%', borderRadius: 16, padding: 15, marginBottom: 20, borderWidth: 0.5 },
+    label: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' },
+
+    // Inputs Principales
+    nameInputContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    inputLarge: { 
+        fontSize: 20,
+        flex: 1,
+        borderWidth: 0.5,
+        borderRadius: 8, 
+        paddingHorizontal: 12,
+        fontWeight: '600', 
+        paddingVertical: 10,
+        textAlignVertical: 'center',
+        minHeight: 48 
     },
-    inputLarge: {
-        fontSize: 22,
-        width: '80%',
+    inputMedium: { 
+        paddingHorizontal: 12, 
+        fontSize: 18,
+        fontWeight: '500', 
         borderWidth: 0.5,
         borderRadius: 8,
-        paddingHorizontal: 10,
-        fontWeight: '600',
-        padding: 5,
-        textAlignVertical: 'center', 
+        paddingVertical: 10,
+        minHeight: 48 
     },
-    inputMedium: {
-        fontSize: 18,
-        fontWeight: '500',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: 'rgba(128,128,128,0.2)',
-        marginVertical: 10,
-    },
+
+    // Layout Flexible
     rowWrap: {
         flexDirection: 'row',
-        flexWrap: 'wrap', 
-        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between', 
         alignItems: 'flex-start',
-        gap: 10,
+        gap: 15,
+        marginTop: 10
     },
-    flexItem: {
-        flex: 1,
-        minWidth: 120, 
-    },
-    displayTotal: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        paddingVertical: 5,
-        textAlign: 'right',
-    },
-    itemsHeaderRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
-        paddingHorizontal: 5,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    addButtonSmall: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        minHeight: 36,
-    },
-    addButtonText: {
-        color: '#FFF',
-        fontWeight: '600',
-        marginLeft: 6,
-    },
-    itemRow: {
-        padding: 15,
-        borderRadius: 12,
-        marginBottom: 12,
-    },
-    itemRowHeader: {
-        flexDirection: 'row',
-        alignItems: 'flex-start', 
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    itemNameInput: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '500',
-        marginRight: 10,
-        textAlignVertical: 'center',
-    },
-    itemRowInputs: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap', 
-        gap: 10,
-    },
-    inputGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1, 
-        minWidth: 90, 
-    },
-    miniLabel: {
-        fontSize: 12,
-        marginRight: 8,
-    },
-    inputSmall: {
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        flex: 1, 
-        minWidth: 50, 
-        textAlign: 'center',
-    },
-    operatorText: {
-        marginHorizontal: 5,
-        fontSize: 14,
-    },
-    itemTotal: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        minWidth: 60,
-        textAlign: 'right',
-    }
+    flexItem: { flex: 1, minWidth: 140 },
+    displayTotal: { fontSize: 22, fontWeight: 'bold', paddingVertical: 5, textAlign: 'right' },
+
+    // Items
+    itemsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 5, flexWrap: 'wrap', gap: 10 },
+    sectionTitle: { fontSize: 20, fontWeight: 'bold' },
+    itemsCounter: { borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' },
+    addButtonSmall: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, minHeight: 44, borderWidth: 1 },
+    addButtonText: { fontWeight: '600', marginLeft: 6 },
 });

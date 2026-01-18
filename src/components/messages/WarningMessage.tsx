@@ -4,8 +4,7 @@ import {
     Text, 
     TouchableOpacity, 
     StyleSheet, 
-    Modal, 
-    Dimensions 
+    Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';

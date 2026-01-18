@@ -418,5 +418,50 @@
         "Security": "Security",
         "Gym": "Gym",
         "Refund": "Refund"
+},
+"budget_screen": {
+    "empty_state": "No active budgets found",
+    "fab_label": "Create new budget"
+},
+"budget_form": {
+    "title_edit": "Edit Budget",
+    "title_new": "New Budget",
+    "close_modal": "Close modal",
+    "save_budget": "Save budget",
+    "more_options": "More options",
+    "menu": {
+        "favorite": "Favorite",
+        "favorites": "Favorites",
+        "todos": "All",
+        "convert_transaction": "Convert to Transaction",
+        "delete": "Delete"
+    },
+    "category_selector": {
+        "close": "Close selector"
+    },
+    "fields": {
+        "name_label": "BUDGET NAME",
+        "name_placeholder": "e.g. Grocery Shopping",
+        "target_amount_label": "TARGET AMOUNT",
+        "target_placeholder": "0.00",
+        "current_total_label": "CURRENT TOTAL"
+    },
+    "items": {
+        "section_title": "Items",
+        "add_button": "Add",
+        "item_name_placeholder": "Item name",
+        "quantity_label": "Qty.",
+        "price_label": "Price",
+        "delete_action": "Delete item",
+        "toggle_done_action": "Mark as completed"
+    },
+    "accessibility": {
+        "items_count": "Number of items in the list: ",
+        "item_row_hint": "Item row",
+        "calculated_total": "Calculated total"
+    },
+    "warnings": {
+        "delete_confirmation": "Are you sure you want to delete this budget? This action cannot be undone."
+    }
 }
 }

@@ -241,7 +241,6 @@ export default function EditTransactionFormMobile({
             <InfoPopUp />
 
             <View style={StyleSheet.absoluteFill}>
-                {/* Backdrop Accesible */}
                 {/* Main Sheet */}
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -286,7 +285,6 @@ export default function EditTransactionFormMobile({
                         <ScrollView
                             contentContainerStyle={[
                                 styles.scrollContent,
-                                // Padding dinámico para que la calculadora no tape el botón guardar
                                 { paddingBottom: (isKeyboardVisible || showCalculator) ? 370 : 100 }
                             ]}
                             keyboardShouldPersistTaps="handled"

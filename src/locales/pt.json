@@ -421,5 +421,50 @@
         "Security": "Segurança",
         "Gym": "Academia",
         "Refund": "Reembolso"
+},
+"budget_screen": {
+    "empty_state": "Nenhum orçamento ativo",
+    "fab_label": "Criar novo orçamento"
+},
+"budget_form": {
+    "title_edit": "Editar Orçamento",
+    "title_new": "Novo Orçamento",
+    "close_modal": "Fechar modal",
+    "save_budget": "Salvar orçamento",
+    "more_options": "Mais opções",
+    "menu": {
+        "favorite": "Favorito",
+        "favorites": "Favoritos",
+        "todos": "Todos",
+        "convert_transaction": "Converter em Transação",
+        "delete": "Excluir"
+    },
+    "category_selector": {
+        "close": "Fechar seletor"
+    },
+    "fields": {
+        "name_label": "NOME DO ORÇAMENTO",
+        "name_placeholder": "Ex: Compras de Mercado",
+        "target_amount_label": "VALOR ALVO",
+        "target_placeholder": "0.00",
+        "current_total_label": "TOTAL ATUAL"
+    },
+    "items": {
+        "section_title": "Itens",
+        "add_button": "Adicionar",
+        "item_name_placeholder": "Nome do item",
+        "quantity_label": "Qtd.",
+        "price_label": "Preço",
+        "delete_action": "Excluir item",
+        "toggle_done_action": "Marcar como concluído"
+    },
+    "accessibility": {
+        "items_count": "Quantidade de itens na lista: ",
+        "item_row_hint": "Linha do item",
+        "calculated_total": "Total calculado"
+    },
+    "warnings": {
+        "delete_confirmation": "Tem certeza de que deseja excluir este orçamento? Esta ação não pode ser desfeita."
+    }
 }
 }

@@ -411,5 +411,50 @@
         "Security": "Seguridad",
         "Gym": "Gimnasio",
         "Refund": "Reembolso"
-    }
+    },
+    "budget_screen": {
+        "empty_state": "No hay presupuestos activos",
+        "fab_label": "Crear nuevo presupuesto"
+    },
+    "budget_form": {
+        "title_edit": "Editar Presupuesto",
+        "title_new": "Nuevo Presupuesto",
+        "close_modal": "Cerrar modal",
+        "save_budget": "Guardar presupuesto",
+        "more_options": "Más opciones",
+        "menu": {
+            "favorite": "Favorito",
+            "favorites": "Favoritos",
+            "todos": "Todos",
+            "convert_transaction": "Convertir en Transacción",
+            "delete": "Eliminar"
+        },
+        "category_selector": {
+            "close": "Cerrar selector"
+        },
+        "fields": {
+            "name_label": "NOMBRE PRESUPUESTO",
+            "name_placeholder": "Ej. Compras Supermercado",
+            "target_amount_label": "MONTO OBJETIVO",
+            "target_placeholder": "0.00",
+            "current_total_label": "TOTAL ACTUAL"
+        },
+        "items": {
+            "section_title": "Items",
+            "add_button": "Agregar",
+            "item_name_placeholder": "Nombre del item",
+            "quantity_label": "Cant.",
+            "price_label": "Precio",
+            "delete_action": "Eliminar item",
+            "toggle_done_action": "Marcar como completado"
+        },
+        "accessibility": {
+            "items_count": "Cantidad de items en la lista",
+            "item_row_hint": "Fila de item",
+            "calculated_total": "Total calculado"
+        },
+        "warnings": {
+            "delete_confirmation": "¿Estás seguro de que deseas eliminar este presupuesto? Esta acción no se puede deshacer."
+        }
+}
 }

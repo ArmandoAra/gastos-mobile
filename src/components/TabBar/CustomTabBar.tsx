@@ -42,7 +42,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
       <View style={[
         styles.tabBar,
         {
-          backgroundColor: colors.background,
+          backgroundColor: colors.surfaceSecondary,
           borderWidth: 1,
           borderTopColor: colors.border,
           paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom,

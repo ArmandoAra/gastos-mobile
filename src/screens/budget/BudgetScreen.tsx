@@ -1,53 +1,54 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     FlatList,
-    Modal,
-    TextInput,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    Alert
+    Platform
 } from 'react-native';
-import { BlurView } from 'expo-blur';
-import Animated, {
-    FadeIn,
-    FadeOut,
-    SlideInUp,
-    SlideOutUp,
-    Layout
-} from 'react-native-reanimated';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+// Componentes
 import { BudgetCard } from './components/BudgetCard';
 import { BudgetFormModal } from './components/BudgetFormModal';
-import { useTransactionForm } from '../transactions/constants/hooks/useTransactionForm';
+import AddTransactionForm from '../../components/forms/AddTransactionForm';
+import InfoPopUp from '../../components/messages/InfoPopUp';
+
+// Hooks y Stores
 import { useTransactionsLogic } from '../transactions/hooks/useTransactionsLogic';
 import { ExpenseBudget } from '../../interfaces/data.interface';
 import useBudgetsStore from '../../stores/useBudgetStore';
-import { useBudgetForm } from './hooks/useBudgetForm';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { InputNameActive } from '../../interfaces/settings.interface';
 
-// --- MOCKS Y TIPOS (Basado en tu descripción) ---
-
-
-export  function BudgetScreen() {
+export function BudgetScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTransactionsLogic();
-    
-    // 1. Usar el store en lugar de useState
-    // Esto se suscribirá a cambios y re-renderizará automáticamente
-    const {budgets , addBudget} = useBudgetsStore();
-    const {handleSaveForm} = useBudgetForm({ visible: false, onClose: () => {}, initialData: null });
-    // Nota: Para editar items completos, podrías necesitar una lógica específica 
-    // en tu handleSaveBudget o usar las funciones addItem/updateItem del store
+    const { t } = useTranslation();
+    const { inputNameActive, isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
 
+    // Accedemos a los presupuestos desde el Store
+    const budgets = useBudgetsStore(state => state.budgets);
+
+    // Estado para el filtro
+    const [filter, setFilter] = useState<'all' | 'favorites'>('all');
+
+    // Estado local para el modal
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBudget, setSelectedBudget] = useState<ExpenseBudget | null>(null);
 
-     const handleOpenCreate = () => {
+    // Lógica de filtrado
+    const filteredBudgets = useMemo(() => {
+        if (filter === 'favorites') {
+            return budgets.filter(b => b.favorite === true);
+        }
+        return budgets;
+    }, [budgets, filter]);
+
+    const handleOpenCreate = () => {
         setSelectedBudget(null);
         setModalVisible(true);
     };
@@ -59,45 +60,126 @@ export  function BudgetScreen() {
 
     return (
         <View style={[styles.screenContainer, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
+            <InfoPopUp />
 
-            {/* Lista Grid */}
+            {/* --- ZONA FIJA SUPERIOR (FILTROS) --- */}
+            <View style={[styles.fixedHeader, { backgroundColor: colors.surface }]}>
+                {/* Botones alineados a la derecha */}
+                <View style={styles.filterContainer}>
+                    <TouchableOpacity
+                        onPress={() => setFilter('all')}
+                        style={[
+                            styles.filterButton,
+                            filter === 'all'
+                                ? { backgroundColor: colors.text, borderColor: colors.text }
+                                : { backgroundColor: 'transparent', borderColor: colors.border }
+                        ]}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[
+                            styles.filterText,
+                            { color: filter === 'all' ? colors.surfaceSecondary : colors.textSecondary }
+                        ]}>
+                            {t('budget_form.menu.todos') || "All"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => setFilter('favorites')}
+                        style={[
+                            styles.filterButton,
+                            filter === 'favorites'
+                                ? { backgroundColor: colors.text, borderColor: colors.text }
+                                : { backgroundColor: 'transparent', borderColor: colors.border }
+                        ]}
+                        activeOpacity={0.7}
+                    >
+                        <MaterialIcons
+                            name="star"
+                            size={16}
+                            color={filter === 'favorites' ? colors.warning : colors.textSecondary}
+                            style={{ marginRight: 4 }}
+                        />
+                        <Text style={[
+                            styles.filterText,
+                            { color: filter === 'favorites' ? colors.surfaceSecondary : colors.textSecondary }
+                        ]}>
+                            {t('budget_form.menu.favorites') || "Favorites"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            {/* --- LISTA DE PRESUPUESTOS (COLUMNA ÚNICA) --- */}
             <FlatList
-                data={budgets}
+                data={filteredBudgets}
                 keyExtractor={(item) => item.id}
-                numColumns={2}
-                columnWrapperStyle={styles.columnWrapper}
-                contentContainerStyle={styles.listContent}
+
+                // Eliminado numColumns y columnWrapperStyle para que sea una columna vertical estándar
+
+                contentContainerStyle={[
+                    styles.listContent,
+                    { paddingBottom: Platform.OS === 'ios' ? 120 : 140 }
+                ]}
+
+                // Añadimos un separador visual entre tarjetas
+                ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+
                 renderItem={({ item }) => (
-                    <BudgetCard 
-                        item={item} 
-                        colors={colors} 
-                        onPress={() => handleOpenEdit(item)} 
+                    <BudgetCard
+                        item={item}
+                        colors={colors}
+                        onPress={() => handleOpenEdit(item)}
                     />
                 )}
+
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Text style={{ color: colors.textSecondary }}>No hay presupuestos activos</Text>
+                        <MaterialIcons name="account-balance-wallet" size={64} color={colors.textSecondary + "40"} style={{ marginBottom: 10 }} />
+                        <Text
+                            style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 16 }}
+                            accessibilityRole="text"
+                        >
+                            {filter === 'favorites'
+                                ? "No tienes favoritos guardados"
+                                : (t('budget_screen.empty_state') || "No hay presupuestos activos")
+                            }
+                        </Text>
                     </View>
                 }
+                showsVerticalScrollIndicator={false}
             />
 
-            {/* Floating Action Button (FAB) para agregar */}
+            {/* FAB (Botón Flotante) */}
             <TouchableOpacity
-                style={[styles.fab, { backgroundColor: colors.text, shadowColor: colors.text }]}
+                style={[
+                    styles.fab,
+                    {
+                        backgroundColor: colors.text,
+                        shadowColor: "#000",
+                        bottom: Platform.OS === 'ios' ? 100 : 120
+                    }
+                ]}
                 onPress={handleOpenCreate}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t('budget_screen.fab_label') || "Crear nuevo presupuesto"}
             >
-                <MaterialIcons name="add" size={32} color={colors.primary} />
+                <MaterialIcons name="add" size={32} color={colors.surfaceSecondary} />
             </TouchableOpacity>
 
-            {/* Modal Formulario */}
-            <BudgetFormModal 
+            {/* Modal de Formulario */}
+            <BudgetFormModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 initialData={selectedBudget}
-                onSave={handleSaveForm}
                 colors={colors}
+                onSave={() => { }}
             />
+
+            {(inputNameActive === InputNameActive.SPEND) && (
+                <AddTransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
+            )}
         </View>
     );
 }
@@ -105,121 +187,54 @@ export  function BudgetScreen() {
 export const styles = StyleSheet.create({
     screenContainer: {
         flex: 1,
+        // Eliminamos paddingBottom global para manejarlo en el FlatList
     },
-    screenHeader: {
-        paddingHorizontal: 20,
-        paddingBottom: 15,
-        paddingTop: 10,
+    // Contenedor fijo arriba
+    fixedHeader: {
+        paddingHorizontal: 5,
+        paddingBottom: 10,
+        zIndex: 1,
     },
-    screenTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
+    filterContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end', // ALINEA A LA DERECHA
+        gap: 10,
+        alignItems: 'center',
+    },
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6, // Un poco más compacto
+        paddingHorizontal: 14,
+        borderRadius: 20,
+        borderWidth: 1,
+    },
+    filterText: {
+        fontWeight: '600',
+        fontSize: 13,
     },
     listContent: {
-        paddingHorizontal: 10,
-        paddingBottom: 100,
-    },
-    columnWrapper: {
-        justifyContent: 'space-between',
-        marginBottom: 10,
+        paddingHorizontal: 5,
+        paddingTop: 5, 
     },
     emptyContainer: {
         padding: 40,
         alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 40,
     },
-    // FAB
     fab: {
         position: 'absolute',
-        bottom: 120,
-        right: 25,
-        width: 60,
-        height: 60,
-        borderRadius: 50,
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 5,
+        elevation: 6,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4.65,
+        zIndex: 999,
     },
-    iconCircle: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    // Card Styles
-    cardContainer: {
-        width: '48%', // Para 2 columnas con espacio
-        borderRadius: 12,
-        borderWidth: 1,
-        overflow: 'hidden',
-    },
-    cardTouchable: {
-        padding: 12,
-        minHeight: 140,
-        justifyContent: 'space-between',
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    cardTitle: {
-        fontWeight: '700',
-        fontSize: 16,
-        flex: 1,
-        marginRight: 5,
-    },
-    cardItemsPreview: {
-        marginBottom: 10,
-        flex: 1,
-    },
-    miniItemRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 2,
-    },
-    bullet: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
-        marginRight: 4,
-    },
-    miniItemText: {
-        fontSize: 12,
-    },
-    moreText: {
-        fontSize: 11,
-        fontStyle: 'italic',
-        marginTop: 2,
-    },
-    cardFooter: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        marginBottom: 6,
-    },
-    amountText: {
-        fontWeight: 'bold',
-        fontSize: 15,
-    },
-    targetText: {
-        fontSize: 12,
-        marginLeft: 4,
-    },
-    progressBarBg: {
-        height: 4,
-        borderRadius: 2,
-        width: '100%',
-        overflow: 'hidden',
-    },
-    progressBarFill: {
-        height: '100%',
-        borderRadius: 2,
-    },
-   
 });
-
-
-

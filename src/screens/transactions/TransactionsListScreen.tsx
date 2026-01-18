@@ -33,6 +33,8 @@ import InfoHeader from "../../components/headers/InfoHeader";
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
+import AddTransactionForm from "../../components/forms/AddTransactionForm";
+import { InputNameActive } from "../../interfaces/settings.interface";
 
 
 type ListItem =
@@ -55,6 +57,7 @@ export function TransactionsScreen() {
         handleSave,
         getGroupTitle
     } = useTransactionsLogic();
+    const { inputNameActive, isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
 
     // --- RENDERIZADO DE ITEMS ---
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
@@ -186,6 +189,10 @@ export function TransactionsScreen() {
                     />
                 </GestureHandlerRootView>
             </View>
+            {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
+                <AddTransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
+            )}
+
 
             <AddTransactionsButton />
         </SafeAreaView>

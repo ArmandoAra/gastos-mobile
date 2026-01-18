@@ -21,6 +21,7 @@ import useDataStore from '../../stores/useDataStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
 import { useTranslation } from 'react-i18next';
+import useBudgetsStore from '../../stores/useBudgetStore';
 
 const FAB_SIZE = 62;
 
@@ -34,6 +35,8 @@ export default function AddTransactionsButton() {
         selectedAccount
     } = useDataStore();
     const [isOpen, setIsOpen] = React.useState(false);
+    const setDataToTransact = useBudgetsStore(state => state.setToTransactBudget);
+
 
     // Shared Value para la rotación (0 a 1)
     const animationProgress = useSharedValue(0);
@@ -57,7 +60,8 @@ export default function AddTransactionsButton() {
     }, [allAccounts, selectedAccount]);
 
     const handleToggleOptions = () => {
-        setIsAddOptionsOpen(!isAddOptionsOpen);
+        !isOpen && setDataToTransact(null); // Limpiar datos si se abre el menú(Por medidas de seguridad por si queda rastro de un presupuesto)
+        setIsOpen(!isOpen);
     };
 
     const handleClose = () => {
@@ -83,7 +87,7 @@ export default function AddTransactionsButton() {
         <>
 
             {/* --- BACKDROP (FONDO OSCURO) --- */}
-            {isAddOptionsOpen && (
+            {isOpen && (
                 <Animated.View
                     style={styles.backdrop}
                     entering={FadeIn.duration(200)}
@@ -95,7 +99,7 @@ export default function AddTransactionsButton() {
             )}
 
             {/* --- OPCIONES DEL MENÚ --- */}
-            {isAddOptionsOpen && (
+            {isOpen && (
                 <View style={styles.optionsContainer} pointerEvents="box-none">
                     <View style={styles.optionsWrapper}>
                         {/* Opción 1: Ingreso */}
@@ -104,9 +108,9 @@ export default function AddTransactionsButton() {
                             iconName="trending-up"
                             gradientColors={['#10b981', '#34d399']}
                             onPress={() => {
-                                setIsOpen(true);
+                                setIsOpen(false);
                                 setInputNameActive(InputNameActive.INCOME);
-                                setIsAddOptionsOpen(false);
+                                setIsAddOptionsOpen(true);
                             }}
                             index={1} // Invertimos indices para que el de arriba salga ultimo o primero segun gusto
                         />
@@ -117,9 +121,9 @@ export default function AddTransactionsButton() {
                             iconName="trending-down"
                             gradientColors={['#ec4899', '#f43f5e']}
                             onPress={() => {
-                                setIsOpen(true);
+                                setIsOpen(false);
                                 setInputNameActive(InputNameActive.SPEND);
-                                setIsAddOptionsOpen(false);
+                                setIsAddOptionsOpen(true);
                             }}
                             index={0}
                         />
@@ -148,11 +152,6 @@ export default function AddTransactionsButton() {
                     </TouchableOpacity>
                 </Animated.View>
             )}
-            {/* Modal del Formulario (Gasto/Ingreso) */}
-            {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
-                <AddTransactionForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
-            )}
-
         </>
     );
 }

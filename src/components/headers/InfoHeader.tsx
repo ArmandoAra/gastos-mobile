@@ -15,10 +15,6 @@ export interface InfoHeaderProps {
   viewMode: ViewMode | ViewPeriod;
 }
 
-const COLORS = {
-  accentGradient: ['#f97316', '#dc2626'] as [string, string],
-};
-
 export default function InfoHeader({ viewMode }: InfoHeaderProps) {
   const { theme, language } = useSettingsStore();
   const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
@@ -79,7 +75,7 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
         
         {/* Fondo decorativo ignorado por accesibilidad */}
         <View
-          style={styles.glowEffect}
+          style={[styles.glowEffect, { backgroundColor: colors.accent }]}
           importantForAccessibility="no-hide-descendants"
         />
 
@@ -147,7 +143,6 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: COLORS.accentGradient[0],
     opacity: 0.15, // Opacidad reducida para no interferir con el texto
     transform: [{ scale: 1.2 }],
   },
