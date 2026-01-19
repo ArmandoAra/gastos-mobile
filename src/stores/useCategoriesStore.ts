@@ -5,6 +5,8 @@ import * as uuid from 'uuid';
 
 // Importa tus interfaces y enums aquí
 import { Category, TransactionType } from '../interfaces/data.interface'; 
+import { use } from 'react';
+import { useAuthStore } from './authStore';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -55,7 +57,7 @@ type Actions = {
     
     // Read / Getters
     getCategoryById: (id: string) => Category | undefined;
-    getCategoriesByUserId: (userId: string) => Category[];
+    getUserCategories: () => Category[];
     getCategoriesByType: (type: TransactionType) => Category[];
     getCategoriesByUserIdAndType: (userId: string, type: TransactionType) => Category[];
     
@@ -171,7 +173,9 @@ const useCategoriesStore = create<State & Actions>()(
                     return get().userCategories.find((cat) => cat.id === id);
                 },
 
-                getCategoriesByUserId: (userId: string) => {
+                getUserCategories: () => {
+                    const userId = useAuthStore.getState().user?.id;
+                    if (!userId) return [];
                     return get().userCategories.filter((cat) => cat.userId === userId);
                 },
 

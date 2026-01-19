@@ -10,27 +10,26 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import { ThemeColors } from '../../../types/navigation';
+import { Account } from '../../../interfaces/data.interface';
 
-// Asumo que tienes este tipo definido, si no, puedes usar este placeholder
-export interface Account {
-    id: string;
-    name: string;
-    type: string;
-}
+// Asumo que tienes este tipo definido, si no, puedes usar este placeholde
 
-interface AccountSelectorProps {
+interface AccountInputProps {
     label: string;
     accountSelected: string;
     setAccountSelected: (account: string) => void;
     accounts: Account[];
+    colors: ThemeColors;
 }
 
-export default function AccountSelector({
+export default function AccountInput({
     label,
     accountSelected,
     setAccountSelected,
-    accounts
-}: AccountSelectorProps) {
+    accounts,
+    colors
+}: AccountInputProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     // Encontrar la cuenta seleccionada para mostrar su nombre

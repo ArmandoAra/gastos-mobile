@@ -5,6 +5,8 @@ import * as uuid from 'uuid';
 import { ExpenseBudget, Item } from '../interfaces/data.interface';
 import { getUser } from '../../../Gastos/frontend/app/lib/dal';
 import { useAuthStore } from './authStore';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { set } from 'date-fns';
 
 export const budgetsStorage = createMMKV({
     id: 'budgets-storage',
@@ -44,6 +46,7 @@ type State = PersistedState & TransientState;
 
 type Actions = {
     // === Budget CRUD ===
+    setBudgets: (budgets: ExpenseBudget[]) => void;
     addBudget: (budget: Omit<ExpenseBudget, 'id' | 'created_at' | 'updated_at' | 'spentAmount'>) => void;
     
     // Acción para reemplazar completamente un budget (usada al editar desde el modal)
@@ -53,16 +56,17 @@ type Actions = {
     deleteBudget: (id: string) => void;
     
     // === Item Management (Nested Logic) ===
+    setItems: (items: Item[]) => void;
     addItemToBudget: (budgetId: string, item: Omit<Item, 'id' | 'expenseBudgetId'>) => void;
     updateItemInBudget: (budgetId: string, itemId: string, itemData: Partial<Item>) => void;
     removeItemFromBudget: (budgetId: string, itemId: string) => void;
+    getUserItems: () => Item[];
 
     setToTransactBudget: (budget: ToConvertBudget | null) => void;
 
     // === Getters ===
     getBudgetById: (id: string) => ExpenseBudget | undefined;
     getUserBudgets: () => ExpenseBudget[];
-    // getBudgetsByUserId: (userId: string) => ExpenseBudget[];
 
     deleteAllItems: () => void;
     deleteAllBudgets: () => void;
@@ -100,6 +104,10 @@ const useBudgetsStore = create<State & Actions>()(
                 // ----------------------------------------------------------------
                 // BUDGET ACTIONS
                 // ----------------------------------------------------------------
+
+                setBudgets: (budgets: ExpenseBudget[]) => {
+                    set({ budgets, error: null }, false, 'setBudgets');
+                },
 
                 addBudget: (budgetData) => {
                     const now = new Date().toISOString();
@@ -166,6 +174,20 @@ const useBudgetsStore = create<State & Actions>()(
                 // ITEM ACTIONS 
                 // ----------------------------------------------------------------
 
+                setItems: (items: Item[]) => {
+                    set((state) => {
+                        const updatedBudgets = state.budgets.map((budget) => {
+                            const budgetItems = items.filter(item => item.expenseBudgetId === budget.id);
+                            return {
+                                ...budget,
+                                items: budgetItems,
+                                spentAmount: calculateSpentAmount(budgetItems)
+                            };
+                        });
+                        return { budgets: updatedBudgets, error: null };
+                    }, false, 'setItems');
+                },
+
                 addItemToBudget: (budgetId, itemData) => {
                     set((state) => {
                         const budgetIndex = state.budgets.findIndex(b => b.id === budgetId);
@@ -213,6 +235,13 @@ const useBudgetsStore = create<State & Actions>()(
 
                         return { budgets: updatedBudgets };
                     }, false, 'updateItemInBudget');
+                },
+
+                getUserItems: () => {
+                    const currentUser = useAuthStore.getState().user;
+                    if (!currentUser) return [];
+                    const userBudgets = get().budgets.filter(b => b.user_id === currentUser.id);
+                    return userBudgets.flatMap(budget => budget.items);
                 },
 
                 removeItemFromBudget: (budgetId, itemId) => {

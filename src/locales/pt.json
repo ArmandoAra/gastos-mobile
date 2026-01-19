@@ -69,7 +69,8 @@
         "noIcons": "Nenhum ícone disponível",
         "selectIcon": "Selecionar ícone",
         "color": "Selecionar cor",
-        "my": "Minhas"
+        "my": "Minhas",
+        "filterAccount": "Filtrar conta"
     },
     "commonWarnings": {
         "warning": "Aviso",

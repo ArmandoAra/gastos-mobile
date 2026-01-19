@@ -93,7 +93,6 @@ export default function AccountManagementSection({ colors }: AccountManagementPr
 
     const handleSyncAccounts = () => {
         setIsSync(true);
-        // Anuncio de inicio
         if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Syncing accounts");
 
         syncAccountsWithTransactions();

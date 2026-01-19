@@ -14,6 +14,9 @@ import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
 import { ViewMode } from '../../../interfaces/date.interface';
 import { filterTransactionsTypes, filterViewModes } from '../constants/filters';
+import AccountSelector from '../../../components/forms/Inputs/AccoutSelector';
+import { Account } from '../../../interfaces/data.interface';
+import { useTransactionsLogic } from '../hooks/useTransactionsLogic';
 
 interface FilterFloatingButtonProps {
     viewMode: ViewMode;
@@ -21,14 +24,30 @@ interface FilterFloatingButtonProps {
     filter: string;
     setFilter: (filter: string) => void;
     colors: ThemeColors;
+    accountSelected: string;
+    setAccountSelected: (accountId: string) => void;
+    allAccounts: Account[];
 }
+
+const emptyAccount: Account = {
+    id: 'all',
+    name: 'All Accounts',
+    balance: 0,
+    type: 'checking',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    userId: ''
+};
 
 export default function FilterFloatingButton({ 
     viewMode, 
     setViewMode, 
-    filter, 
+    filter,
     setFilter,
     colors,
+    setAccountSelected,
+    accountSelected,
+    allAccounts,
 }: FilterFloatingButtonProps) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
@@ -132,7 +151,10 @@ export default function FilterFloatingButton({
                                 return (
                                     <TouchableOpacity
                                         key={f}
-                                        onPress={() => {setFilter(f); setIsOpen(false);}}
+                                        onPress={() => {
+                                            setFilter(f);
+                                            setIsOpen(false);
+                                        }}
                                         style={styles.optionWrapper}
                                     >
                                         {isActive ? (
@@ -154,6 +176,16 @@ export default function FilterFloatingButton({
                                 );
                             })}
                         </View>
+
+                        <View style={{ marginTop: 20 }} />
+
+                        <AccountSelector
+                            label={t('common.filterAccount')}
+                            accountSelected={accountSelected}
+                            setAccountSelected={setAccountSelected}
+                            accounts={[emptyAccount, ...allAccounts]}
+                            colors={colors}
+                        />
                     </Animated.View>
                 </View>
             </Modal>

@@ -31,20 +31,33 @@ export const useTransactionsLogic = () => {
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // --- NUEVO: Estado para filtro por cuenta ---
+    const [accountSelected, setAccountSelected] = useState<string>('all');
+
     // Store de Datos
     const {
         transactions,
+        allAccounts: accounts, // Obtenemos las cuentas del store
         getUserTransactions,
+        getTransactionsByAccount,
         deleteTransaction,
         updateTransaction,
         deleteSomeAmountInAccount,
         updateAccountBalance,
     } = useDataStore();
 
+    // --- NUEVO: Todas las cuentas disponibles ---
+    const allAccounts = useMemo(() => accounts || [], [accounts]);
+
     // --- 1. LÓGICA DE FILTRADO ---
     const filteredTransactions = useMemo(() => {
-        let result = getUserTransactions();
+        let result = getUserTransactions() 
         if (!result || result.length === 0) return [];
+
+        // --- NUEVO: Filtro por Cuenta Seleccionada ---
+        if (accountSelected !== 'all') {
+            result = result.filter(t => t.account_id === accountSelected);
+        }
 
         // Filtro por fecha
         result = result.filter(transaction => {
@@ -55,6 +68,7 @@ export const useTransactionsLogic = () => {
             return true;
         });
 
+
         // Filtro por tipo (Income/Expense)
         if (filter !== 'all') {
             result = result.filter(t => t.type === filter);
@@ -63,8 +77,6 @@ export const useTransactionsLogic = () => {
         // Filtro por búsqueda
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-
-            // Normalizamos la búsqueda para que coincida con las llaves de los diccionarios (Ej: "comida" -> "Comida")
             const capitalizedQuery = query.charAt(0).toUpperCase() + query.slice(1);
 
             result = result.filter(transaction => {
@@ -82,8 +94,7 @@ export const useTransactionsLogic = () => {
 
         // Ordenar por fecha (descendente)
         return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [filter, searchQuery, transactions, localSelectedDay, viewMode, t]);
-
+    }, [filter, searchQuery, transactions, localSelectedDay, viewMode, t, accountSelected]);
     // --- 2. LÓGICA DE AGRUPACIÓN (FlashList Data) ---
     const listData = useMemo(() => {
         const groups: Record<string, Transaction[]> = {};
@@ -184,7 +195,6 @@ export const useTransactionsLogic = () => {
     const getGroupTitle = useCallback((dateKey: string) => {
         const date = parseISO(dateKey);
         const localeMap = { es, pt, en: enGB };
-        // Fallback a inglés si no encuentra el idioma
         const currentLocale = localeMap[language as keyof typeof localeMap] || enGB;
 
         if (viewMode === 'year') return format(date, 'MMMM', { locale: currentLocale });
@@ -203,6 +213,12 @@ export const useTransactionsLogic = () => {
         selectedPeriod,
         setSelectedPeriod,
         handlePeriodChange,
+
+        // --- NUEVO: Estado de Cuentas ---
+        accountSelected,
+        setAccountSelected,
+        allAccounts,
+
         // Traducción
         t,
         

@@ -69,7 +69,8 @@
         "noIcons": "No hay íconos disponibles",
         "selectIcon": "Seleccionar ícono",
         "color": "Seleccionar color",
-        "my": "Mis"
+        "my": "Mis",
+        "filterAccount": "Filtrar cuenta"
     },
     "commonWarnings": {
         "warning": "Advertencia",

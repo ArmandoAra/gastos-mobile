@@ -1,4 +1,4 @@
-import { format, parseISO, isSameMonth, isSameYear, isSameDay } from "date-fns";
+import { format, parseISO, isSameMonth, isSameYear, isSameDay, set } from 'date-fns';
 import { es, pt, enGB } from "date-fns/locale";
 import React, { useState, useMemo, useCallback } from "react";
 import {
@@ -52,6 +52,9 @@ export function TransactionsScreen() {
         colors,
         t,
         listData,
+        accountSelected,
+        setAccountSelected,
+        allAccounts,
         stickyHeaderIndices,
         handleDelete,
         handleSave,
@@ -120,6 +123,9 @@ export function TransactionsScreen() {
                         filter={filter}
                         setFilter={setFilter}
                         colors={colors}
+                        accountSelected={accountSelected}
+                        setAccountSelected={setAccountSelected}
+                        allAccounts={allAccounts}
                     />
                     <View style={localStyles.badgesContainer}>
                         <Text

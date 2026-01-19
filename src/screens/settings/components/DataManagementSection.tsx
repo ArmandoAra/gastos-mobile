@@ -31,6 +31,9 @@ import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
 import useMessage from '../../../stores/useMessage';
 import { MessageType } from '../../../interfaces/message.interface';
+import useBudgetStore from '../../../stores/useBudgetStore';
+import useCategoriesStore from '../../../stores/useCategoriesStore';
+import { set } from 'date-fns';
 
 interface DataManagementProps {
     colors: ThemeColors;
@@ -44,12 +47,14 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
 
     const { user, updateUser } = useAuthStore();
     const {
-        getAllTransactionsByUserId,
-        getAllAccountsByUserId,
+        getUserTransactions,
+        getUserAccounts,
         setAllAccounts,
         syncAccountsWithTransactions,
         setTransactions
     } = useDataStore();
+    const { getUserBudgets, getUserItems, setBudgets, setItems } = useBudgetStore();
+    const { getUserCategories, setCategories } = useCategoriesStore();   
 
     // --- ANIMACIONES ---
     const cloudY = useSharedValue(0);
@@ -91,8 +96,11 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
         try {
             const data = {
                 user,
-                accounts: getAllAccountsByUserId(user.id),
-                transactions: getAllTransactionsByUserId(user.id),
+                accounts: getUserAccounts(),
+                transactions: getUserTransactions(),
+                budgets: getUserBudgets(),
+                items: getUserItems(),
+                categories: getUserCategories(),
                 exportDate: new Date().toISOString()
             };
 
@@ -151,6 +159,9 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
                             if (parsedData.user) updateUser(parsedData.user);
                             setAllAccounts(parsedData.accounts);
                             setTransactions(parsedData.transactions);
+                            setBudgets(parsedData.budgets || []);
+                            setItems(parsedData.items || []);
+                            setCategories(parsedData.categories || []);
                             handleSyncAccounts();
                             setIsUploading(false);
                             showMessage(MessageType.SUCCESS, t('dataAndBackup.importSuccess'));

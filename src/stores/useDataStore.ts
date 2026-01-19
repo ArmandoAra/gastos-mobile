@@ -4,6 +4,7 @@ import { createMMKV } from 'react-native-mmkv' // 1. Importar MMKV
 import { Account, Transaction, TransactionType } from '../interfaces/data.interface'
 import * as uuid from 'uuid';
 import { useAuthStore } from './authStore';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -54,7 +55,7 @@ type Actions = {
     setSelectedAccount: (accountId: string) => void
     setAllAccounts: (accounts: Account[]) => void
     getAccountNameById: (accountId: string) => string
-    getAllAccountsByUserId: (userId: string) => Account[]
+    getUserAccounts: () => Account[]
     addAccount: (account: Account) => void
     createAccount: (accountData: Partial<Account>) => Promise<void>
     updateAccount: (accountId: string, data: Partial<Account>) => void
@@ -154,8 +155,10 @@ const useDataStore = create<State & Actions>()(
                     return account ? account.name : 'Unknown Account';
                 },
 
-                getAllAccountsByUserId: (userId: string): Account[] => {
-                    return get().allAccounts.filter(account => account.userId === userId);
+                getUserAccounts: (): Account[] => {
+                    const currentUser = useAuthStore.getState().user;
+                    if (!currentUser) return [];
+                    return get().allAccounts.filter(account => account.userId === currentUser.id);
                 },
 
                 setAllAccounts: (accounts: Account[]) => {
@@ -348,9 +351,6 @@ const useDataStore = create<State & Actions>()(
                     )
                 },
 
-                // getAllTransactionsByUserId: (userId: string): Transaction[] => {
-                //     return get().transactions.filter(transaction => transaction.user_id === userId);
-                // },
                 getUserTransactions: () => {
                     const allTransactions = get().transactions;
                     const currentUser = useAuthStore.getState().user; // Accedemos al ID del usuario actual

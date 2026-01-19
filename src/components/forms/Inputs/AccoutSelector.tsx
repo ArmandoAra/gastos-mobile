@@ -13,13 +13,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
+import { Account } from '../../../interfaces/data.interface';
 
-// Definición de tipos
-export interface Account {
-    id: string;
-    name: string;
-    type: string;
-}
 
 interface AccountSelectorProps {
     label: string;
@@ -56,8 +51,8 @@ export default function AccountSelector({
             {/* Label Superior */}
             <Text
                 style={[styles.label, { color: colors.textSecondary }]}
-                maxFontSizeMultiplier={1.5} // Evita que la etiqueta se vuelva gigantesca
-                importantForAccessibility="no" // El input ya tendrá el label accesible
+                maxFontSizeMultiplier={1.5}
+                importantForAccessibility="no"
             >
                 {label}
             </Text>
@@ -222,7 +217,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginBottom: 6,
         fontFamily: 'FiraSans-Bold',
-        fontFamily: 'FiraSans-Bold',
         marginLeft: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -245,7 +239,6 @@ const styles = StyleSheet.create({
     },
     inputText: {
         fontSize: 16,
-        fontFamily: 'FiraSans-Regular',
         fontFamily: 'FiraSans-Regular',
     },
     inputTypeText: {
