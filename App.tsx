@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Font from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { 
   MD3LightTheme,
   MD3DarkTheme,
@@ -180,8 +182,34 @@ const RootNavigator = () => {
 // ============================================
 // MAIN APP COMPONENT
 // ============================================
+// Evita que la pantalla de carga se oculte automáticamente
+SplashScreen.preventAutoHideAsync();
 const App = () => {
   const themeMode = useSettingsStore(state => state.theme);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          // El nombre de la izquierda es como la llamarás en tu CSS
+          'Tinos-Bold': require('./src/theme/fonts/Tinos-Bold.ttf'),
+          'Tinos-Regular': require('./src/theme/fonts/Tinos-Regular.ttf'),
+          'Tinos-Italic': require('./src/theme/fonts/Tinos-Italic.ttf'),
+          'FiraSans-Bold': require('./src/theme/fonts/FiraSans-Bold.ttf'),
+          'FiraSans-Regular': require('./src/theme/fonts/FiraSans-Regular.ttf'),
+          'FiraSans-Thin': require('./src/theme/fonts/FiraSans-Thin.ttf'),
+        });
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setFontsLoaded(true);
+        await SplashScreen.hideAsync(); // Oculta la pantalla de carga
+      }
+    }
+
+    loadFonts();
+  }, []);
 
   const paperTheme = React.useMemo(() => {
     const isDark = themeMode === 'dark';
@@ -200,6 +228,8 @@ const App = () => {
       },
     };
   }, [themeMode]);
+
+  if (!fontsLoaded) return null; // O un componente de carga
 
   return (
     <SafeAreaProvider>

@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface HeaderTitleProps {
-    title: string; // Ej: "New Expense"
-    date: string;  // Ej: "Oct 26, 2023"
-    titleColor: string; // Ej: "#EF5350"
+    title: string;
+    date: string;
+    titleColor: string;
 }
 
 export const TransactionHeaderTitle: React.FC<HeaderTitleProps> = ({ title, date, titleColor }) => {
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20, // Tamaño prominente
-        fontWeight: '800', // Extra Bold para impacto moderno
+        fontFamily: 'Tinos-Bold',
         letterSpacing: 0.5,
         includeFontPadding: false, // Ayuda a alinear mejor en Android
     },
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     date: {
         fontSize: 12,
         color: '#94a3b8', // Un gris moderno y sutil (Slate 400)
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         textTransform: 'uppercase', // Le da un toque elegante y ordenado
         letterSpacing: 1.2, // Facilita la lectura en tamaños pequeños
     }

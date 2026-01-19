@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, // Cambiado a 1 para mejor visibilidad en bordes
   },
   periodText: {
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     fontSize: 14,
     textAlign: 'center',
   },

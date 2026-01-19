@@ -222,7 +222,7 @@ export default function ModernCalendarSelector({
                         style={[
                           styles.dayText,
                           { color: selected ? colors.surface : colors.text },
-                          today && !selected && { color: colors.accent, fontWeight: 'bold' }
+                          today && !selected && { color: colors.accent }
                         ]}
                         // CLAVE: Evita que el número se salga del círculo si el texto es gigante
                         adjustsFontSizeToFit={true}
@@ -316,12 +316,13 @@ const styles = StyleSheet.create({
   },
   monthTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     textTransform: 'capitalize',
+    fontFamily: 'Tinos-Bold',
   },
   yearSubtitle: {
     fontSize: 14,
     marginTop: 4,
+    fontFamily: 'Tinos-Bold',
   },
   arrowBtn: {
     padding: 10, // Touch target más grande
@@ -337,8 +338,8 @@ const styles = StyleSheet.create({
   },
   weekdayText: {
     fontSize: 13,
-    fontWeight: '600',
     width: '14.28%', // Distribución exacta
+    fontFamily: 'FiraSans-Bold',
     textAlign: 'center',
     textTransform: 'uppercase',
   },
@@ -365,7 +366,7 @@ const styles = StyleSheet.create({
   dayText: {
     textAlign: 'center',
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'FiraSans-Regular',
   },
 
   // --- Footer ---
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   todayButtonText: {
-    fontWeight: '700',
+    fontFamily: 'FiraSans-Bold',
     fontSize: 16,
     textTransform: 'uppercase',
     letterSpacing: 1,

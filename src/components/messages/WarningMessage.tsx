@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 28, // 1.7rem aprox
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         color: 'white',
         marginBottom: 8,
         textAlign: 'center',
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: 'white',
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         fontSize: 16,
         letterSpacing: 0.5,
     }

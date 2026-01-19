@@ -26,14 +26,17 @@ import useMessage from '../../../stores/useMessage';
 import { MessageType } from '../../../interfaces/message.interface';
 import { t } from 'i18next';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
+import useBudgetStore from '../../../stores/useBudgetStore';
 
 interface DangerZoneSectionProps {
     colors: ThemeColors;
 }
 
+
 export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
     const { t } = useTranslation();
     const { clearTransactions, deleteAllAccounts, createAccount } = useDataStore();
+    const { deleteAllItems, deleteAllBudgets } = useBudgetStore();
     const { deleteAllCategories } = useCategoriesStore();
     const { logout, deleteUser, user } = useAuthStore();
     const { showMessage } = useMessage();
@@ -51,12 +54,15 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
         setConfirmText('');
     };
 
+    // De implementar con varios usuarios en el futuro debo borrar solo los datos del usuario actual
     const handleDeleteAllData = async () => {
         if (confirmText !== (user?.name.toLocaleUpperCase())) return;
         setIsDeleting(true);
         if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Deleting all data, please wait");
 
         await new Promise(resolve => setTimeout(resolve, 2000));
+        deleteAllItems();
+        deleteAllBudgets();
         deleteAllCategories();
         clearTransactions();
         deleteAllAccounts();
@@ -73,6 +79,8 @@ export default function DangerZoneSection({ colors }: DangerZoneSectionProps) {
         if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility("Deleting account, please wait");
         
         try {
+            deleteAllItems();
+            deleteAllBudgets();
             deleteAllCategories();
             clearTransactions();
             deleteAllAccounts();
@@ -188,7 +196,7 @@ const DangerOption = ({ colors, title, subtitle, buttonText, onPress, variant }:
             <Text
                 style={{
                     color: variant === 'solid' ? '#FFF' : colors.error,
-                    fontWeight: '600',
+                    fontFamily: 'FiraSans-Bold',
                     fontSize: 13,
                     textAlign: 'center'
                 }}
@@ -274,7 +282,7 @@ const ConfirmationModal = ({
 
                     <View style={[styles.instructionBox, { backgroundColor: colors.surfaceSecondary }]}>
                         <Text style={[styles.instructionText, { color: colors.text }]}>
-                            {type}: <Text style={{ fontWeight: '800', color: colors.error }}>{matchText}</Text>
+                            {type}: <Text style={{ fontFamily: 'Tinos-Bold', color: colors.error }}>{matchText}</Text>
                         </Text>
                     </View>
 
@@ -306,7 +314,7 @@ const ConfirmationModal = ({
                             accessibilityRole="button"
                             accessibilityLabel="Cancel"
                         >
-                            <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>{t('common.cancel')}</Text>
+                            <Text style={{ color: colors.textSecondary, fontFamily: 'FiraSans-Bold' }}>{t('common.cancel')}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
@@ -348,7 +356,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: '400',
+        fontFamily: 'FiraSans-Regular',
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
@@ -369,7 +377,7 @@ const styles = StyleSheet.create({
     },
     optionTitle: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         marginBottom: 4,
     },
     optionSubtitle: {
@@ -427,7 +435,7 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: '800',
+        fontFamily: 'Tinos-Bold',
         textAlign: 'center',
     },
     modalDescription: {
@@ -481,7 +489,7 @@ const styles = StyleSheet.create({
     },
     modalDeleteBtnText: {
         color: '#FFF',
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         fontSize: 15,
     }
 });

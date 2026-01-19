@@ -82,7 +82,7 @@ const transactionCardStyles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Regular',
         color: '#000',
         marginBottom: 4,
     },
@@ -95,7 +95,7 @@ const transactionCardStyles = StyleSheet.create({
     },
     amount: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: 'FiraSans-Bold',
         marginBottom: 4,
     },
     date: {

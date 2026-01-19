@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#666',
         marginBottom: 8,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         marginLeft: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     inputText: {
         fontSize: 16,
         color: '#333',
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
     },
     
     // Estilos del Modal
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 18,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         color: '#333',
     },
     closeButton: {
@@ -222,6 +222,6 @@ const styles = StyleSheet.create({
     },
     optionTextSelected: {
         color: '#6200EE',
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
     }
 });

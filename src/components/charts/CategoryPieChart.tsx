@@ -39,7 +39,7 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
                     labels: {
                         fontSize: 11,
                         fill: 'white',
-                        fontWeight: 'bold',
+                        fontFamily: 'FiraSans-Bold',
                     },
                 }}
                 innerRadius={60}

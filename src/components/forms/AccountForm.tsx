@@ -119,7 +119,8 @@ const accountFormStyles = StyleSheet.create({
     },
     label: {
         fontSize: 14,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
+
         color: '#424242',
         marginBottom: 8,
     },
@@ -162,7 +163,7 @@ const accountFormStyles = StyleSheet.create({
     },
     typeBtnText: {
         fontSize: 12,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         color: '#424242',
     },
     buttons: {
@@ -184,7 +185,7 @@ const accountFormStyles = StyleSheet.create({
     },
     buttonText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         color: '#424242',
     },
 });

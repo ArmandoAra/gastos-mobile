@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
         minHeight: 56, // Altura táctil recomendada
     },
     bioText: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 24,
         marginHorizontal: 10,
     },

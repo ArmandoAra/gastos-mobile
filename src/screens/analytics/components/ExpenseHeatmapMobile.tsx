@@ -439,8 +439,8 @@ const localStyles = StyleSheet.create({
     gap: 12,
   },
   iconTitle: { flex: 1 },
-  title: { fontSize: 24, fontWeight: 'bold', lineHeight: 30 },
-  subtitle: { fontSize: 14, marginTop: 2, lineHeight: 18 },
+  title: { fontSize: 24, fontFamily: 'Tinos-Bold', lineHeight: 30 },
+  subtitle: { fontSize: 14, marginTop: 2, lineHeight: 18, fontFamily: 'Tinos-Italic' },
   totalBadge: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -448,7 +448,7 @@ const localStyles = StyleSheet.create({
     minWidth: 100,
     alignItems: 'center',
   },
-  totalText: { fontSize: 18, fontWeight: 'bold', lineHeight: 22 },
+  totalText: { fontSize: 18, fontFamily: 'FiraSans-Bold', lineHeight: 22 },
   controlsRow: {
     flexDirection: 'row',
     gap: 12,
@@ -470,7 +470,7 @@ const localStyles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
   },
-  toggleText: { fontSize: 14, fontWeight: '600', lineHeight: 18 },
+  toggleText: { fontSize: 14, fontFamily: 'FiraSans-Bold', lineHeight: 18 },
 
   // GRID CON 7 COLUMNAS FIJAS
   gridContainer: { marginBottom: 20 },
@@ -485,7 +485,7 @@ const localStyles = StyleSheet.create({
   },
   weekDayText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -509,7 +509,7 @@ const localStyles = StyleSheet.create({
   },
   cellText: {
     fontSize: 14,
-    fontWeight: '600', 
+    fontFamily: 'FiraSans-Bold', 
     lineHeight: 18 
   },
   yearCell: {
@@ -522,7 +522,7 @@ const localStyles = StyleSheet.create({
   },
   yearCellText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     lineHeight: 20,
   },
 
@@ -530,12 +530,12 @@ const localStyles = StyleSheet.create({
   catContainer: { flexDirection: 'row', marginBottom: 20 },
   catFixedColumn: { borderRightWidth: 1, paddingRight: 8, minWidth: 70, maxWidth: 120 },
   catHeaderPlaceholder: { height: 40, justifyContent: 'center', paddingHorizontal: 4 },
-  catHeaderLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  catHeaderLabel: { fontSize: 10, fontFamily: 'Tinos-Bold', letterSpacing: 0.5 },
   catNameRow: { height: MINI_CELL_SIZE + GAP_SIZE, justifyContent: 'center', paddingHorizontal: 4 },
-  catLabel: { fontSize: 12, fontWeight: '500', lineHeight: 16 },
+  catLabel: { fontSize: 12, fontFamily: 'FiraSans-Regular', lineHeight: 16 },
   catDateHeaderRow: { flexDirection: 'row', gap: GAP_SIZE, marginBottom: GAP_SIZE },
   catHeaderCell: { width: MINI_CELL_SIZE, height: 40, justifyContent: 'center', alignItems: 'center' },
-  catColHeader: { fontSize: 10, fontWeight: '300', lineHeight: 14 },
+  catColHeader: { fontSize: 10, fontFamily: 'FiraSans-Regular', lineHeight: 14 },
   catDataRow: { flexDirection: 'row', gap: GAP_SIZE, marginBottom: GAP_SIZE },
   miniCell: { width: MINI_CELL_SIZE, height: MINI_CELL_SIZE, borderRadius: 4, minHeight: 24, minWidth: 24 },
 
@@ -548,7 +548,7 @@ const localStyles = StyleSheet.create({
     borderTopWidth: 1,
     gap: 12,
   },
-  legendLabel: { fontSize: 12, fontWeight: '500', lineHeight: 16 },
+  legendLabel: { fontSize: 12, fontFamily: 'FiraSans-Regular', lineHeight: 16 },
   scaleBar: { flexDirection: 'row', gap: 6 },
   scaleDot: { width: 20, height: 20, borderRadius: 4 },
 
@@ -575,7 +575,7 @@ const localStyles = StyleSheet.create({
   modalHeaderLeft: { flex: 1, marginRight: 12 },
   modalTitle: { fontSize: 20, fontWeight: 'bold', lineHeight: 24 },
   modalSub: { fontSize: 14, marginTop: 2, lineHeight: 18 },
-  modalAmount: { fontSize: 18, fontWeight: '600', lineHeight: 22 },
+  modalAmount: { fontSize: 18, fontFamily: 'FiraSans-Bold', lineHeight: 22 },
   txScrollView: { flexGrow: 0, maxHeight: 250, marginBottom: 12 },
   txRow: {
     flexDirection: 'row',
@@ -586,12 +586,12 @@ const localStyles = StyleSheet.create({
     borderBottomColor: '#CCC',  
   },
   txName: { fontSize: 14, flex: 1, marginRight: 8, lineHeight: 18 },
-  txVal: { fontSize: 14, fontWeight: '600', lineHeight: 18 },
+  txVal: { fontSize: 14, fontFamily: 'FiraSans-Bold', lineHeight: 18 },
   noTx: { fontSize: 14, fontStyle: 'italic', textAlign: 'center', marginTop: 20, lineHeight: 18 },
   closeBtn: {
     paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
   },
-  closeText: { fontSize: 16, fontWeight: '600', lineHeight: 20 },
+  closeText: { fontSize: 16, fontFamily: 'FiraSans-Bold', lineHeight: 20 },
 });

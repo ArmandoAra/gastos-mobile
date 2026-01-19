@@ -425,7 +425,7 @@ const localStyles = StyleSheet.create({
     },
     chartCenterLabel: {
         fontSize: 12,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         marginTop: 2,
         lineHeight: 16,
     },
@@ -472,7 +472,7 @@ const localStyles = StyleSheet.create({
     },
     catName: {
         fontSize: 15,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         flex: 1,
         lineHeight: 20,
     },
@@ -482,7 +482,7 @@ const localStyles = StyleSheet.create({
     },
     catValue: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         flexShrink: 0,
         textAlign: 'right',
         minWidth: 100,
@@ -509,7 +509,7 @@ const localStyles = StyleSheet.create({
     },
     catPercent: {
         fontSize: 13,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         textAlign: 'right',
         lineHeight: 18,
     },
@@ -556,7 +556,7 @@ const localStyles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontFamily: 'Tinos-Bold',
         flex: 1,
         lineHeight: 26,
     },
@@ -571,10 +571,11 @@ const localStyles = StyleSheet.create({
         letterSpacing: 1,
         marginBottom: 6,
         lineHeight: 16,
+        fontFamily: 'FiraSans-Bold',
     },
     modalTotalValue: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontFamily: 'FiraSans-Bold',
         lineHeight: 34,
     },
     transactionList: {
@@ -595,16 +596,17 @@ const localStyles = StyleSheet.create({
     },
     txDescription: {
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         lineHeight: 20,
     },
     txDate: {
         fontSize: 12,
         lineHeight: 16,
+        fontFamily: 'FiraSans-Regular',
     },
     txAmount: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         textAlign: 'right',
         minWidth: 90,
         lineHeight: 20,

@@ -212,12 +212,12 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontFamily: 'Tinos-Bold',
         color: 'white',
     },
     sectionLabel: {
         fontSize: 12,
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         color: '#94a3b8',
         textTransform: 'uppercase',
         marginBottom: 10,
@@ -250,23 +250,11 @@ const styles = StyleSheet.create({
     },
     textActive: {
         color: 'white',
-        fontWeight: 'bold',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 13,
     },
     textInactive: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Regular',
         fontSize: 13,
-    },
-    // Footer
-    applyButton: {
-        marginTop: 24,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    applyText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 14,
     }
 });

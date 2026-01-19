@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
     },
     listContainer: {
         gap: 4,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     },
     settingLabel: {
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         flexWrap: 'wrap', // Permite múltiples líneas
     },
 });

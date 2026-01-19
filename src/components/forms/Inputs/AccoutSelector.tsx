@@ -146,11 +146,11 @@ export default function AccountSelector({
                             {/* Botón de cierre explícito para mejor accesibilidad */}
                             <TouchableOpacity
                                 onPress={() => setIsOpen(false)}
-                                style={{ padding: 8 }}
+                                style={{ padding: 8, borderRadius: 20, backgroundColor: colors.text }}
                                 accessibilityRole="button"
                                 accessibilityLabel="Close"
                             >
-                                <MaterialIcons name="close" size={24} color={colors.textSecondary} />
+                                <MaterialIcons name="close" size={24} color={colors.surface} />
                             </TouchableOpacity>
                         </View>
 
@@ -221,7 +221,8 @@ const styles = StyleSheet.create({
         // Aumentado de 8 a 12 para legibilidad mínima
         fontSize: 12,
         marginBottom: 6,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
+        fontFamily: 'FiraSans-Bold',
         marginLeft: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -244,7 +245,8 @@ const styles = StyleSheet.create({
     },
     inputText: {
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
+        fontFamily: 'FiraSans-Regular',
     },
     inputTypeText: {
         fontSize: 13,
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 18,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
     },
     // Estilos de la Lista
     optionItem: {
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     optionTextSelected: {
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
     },
     optionSubText: {
         fontSize: 13,

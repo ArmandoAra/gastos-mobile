@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24, // Texto grande por defecto
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
         flexShrink: 1, // Permite que el texto haga wrap si es necesario
     },
     contentRow: {
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     },
     avatarText: {
         fontSize: 28,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
     },
     detailsContainer: {
         flex: 1,
@@ -434,14 +434,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     saveButtonText: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
     },
     cancelButton: {
         borderWidth: 1,
     },
     cancelButtonText: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
     },
     infoBlock: {
@@ -451,13 +451,13 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 12,
         marginBottom: 4,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         textTransform: 'uppercase',
         opacity: 0.8,
     },
     value: {
         fontSize: 18, // Valor más legible
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         flexWrap: 'wrap', // Permite que emails largos bajen de línea
     },
 });

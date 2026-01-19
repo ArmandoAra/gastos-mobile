@@ -23,6 +23,7 @@ import { ExpenseBudget } from '../../interfaces/data.interface';
 import useBudgetsStore from '../../stores/useBudgetStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 export function BudgetScreen() {
     const insets = useSafeAreaInsets();
@@ -31,7 +32,7 @@ export function BudgetScreen() {
     const { inputNameActive, isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
 
     // Accedemos a los presupuestos desde el Store
-    const budgets = useBudgetsStore(state => state.budgets);
+    const getUserBudgets = useBudgetsStore(state => state.getUserBudgets);
 
     // Estado para el filtro
     const [filter, setFilter] = useState<'all' | 'favorites'>('all');
@@ -42,11 +43,12 @@ export function BudgetScreen() {
 
     // Lógica de filtrado
     const filteredBudgets = useMemo(() => {
+        const budgets = getUserBudgets();
         if (filter === 'favorites') {
             return budgets.filter(b => b.favorite === true);
         }
         return budgets;
-    }, [budgets, filter]);
+    }, [modalVisible, filter]);
 
     const handleOpenCreate = () => {
         setSelectedBudget(null);
@@ -210,7 +212,7 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
     },
     filterText: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 13,
     },
     listContent: {

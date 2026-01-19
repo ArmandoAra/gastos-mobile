@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
         flexShrink: 1, // Permite wrap si el texto es gigante
     },
     contentContainer: {
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     },
     settingLabel: {
         fontSize: 12,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         letterSpacing: 0.5,
         marginLeft: 4,
         textTransform: 'uppercase',

@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
     },
     title: {
         fontSize: isSmallScreen ? 18 : 24,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
     },
     subtitle: {
         fontSize: isSmallScreen ? 11 : 12,
@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: isSmallScreen ? 12 : 13,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
         letterSpacing: 0.5,
     },
     totalBadge: { 
@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
     },
     totalText: { 
         fontSize: 14, 
-        fontWeight: '700' 
+        fontFamily: 'Tinos-Bold' 
     },
 
     // --- STATS CARDS & GRIDS ---
@@ -134,12 +134,12 @@ export const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: isSmallScreen ? 10 : 11,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Regular',
         textTransform: 'uppercase',
     },
     statValue: {
         fontSize: isSmallScreen ? 16 : 18,
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         marginVertical: 2,
     },
     statSub: {
@@ -150,7 +150,7 @@ export const styles = StyleSheet.create({
     // --- CHART SPECIFICS ---
     chartCenterValue: {
         fontSize: isSmallScreen ? 18 : 22,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
     },
     chartCenterLabel: {
         fontSize: isSmallScreen ? 11 : 12,
@@ -194,7 +194,7 @@ export const styles = StyleSheet.create({
     },
     toggleText: { 
         fontSize: 11, 
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         textTransform: 'capitalize' 
     },
     switchContainer: { 
@@ -205,7 +205,7 @@ export const styles = StyleSheet.create({
     switchLabel: { 
         fontSize: 10, 
         marginBottom: 2, 
-        fontWeight: '600' 
+        fontFamily: 'FiraSans-Bold' 
     },
 
     // --- CATEGORY LISTS (Dashboard) ---
@@ -237,11 +237,11 @@ export const styles = StyleSheet.create({
     },
     catName: {
         fontSize: isSmallScreen ? 12 : 13,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     catValue: {
         fontSize: isSmallScreen ? 12 : 13,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     catProgressRow: {
         flexDirection: 'row',
@@ -260,7 +260,7 @@ export const styles = StyleSheet.create({
     },
     catPercent: {
         fontSize: isSmallScreen ? 10 : 11,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
 
     // --- GRID / HEATMAP (Calendar) ---
@@ -276,7 +276,7 @@ export const styles = StyleSheet.create({
     weekDayText: { 
         textAlign: 'center', 
         fontSize: 10, 
-        fontWeight: '700' 
+        fontFamily: 'Tinos-Bold' 
     },
     gridWrap: { 
         flexDirection: 'row', 
@@ -294,7 +294,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center' 
     },
     cellText: { 
-        fontWeight: '700' 
+        fontFamily: 'Tinos-Bold' 
     },
 
     // --- HEATMAP CATEGORY LAYOUT (Sticky) ---
@@ -314,7 +314,7 @@ export const styles = StyleSheet.create({
     },
     catHeaderLabel: {
         fontSize: 10,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         textTransform: 'uppercase',
     },
     catNameRow: {
@@ -324,7 +324,7 @@ export const styles = StyleSheet.create({
     },
     catLabel: {
         fontSize: 11,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     catDateHeaderRow: {
         flexDirection: 'row',
@@ -387,11 +387,11 @@ export const styles = StyleSheet.create({
     },
     insightLabel: {
         fontSize: isSmallScreen ? 11 : 12,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     insightTitle: {
         fontSize: isSmallScreen ? 12 : 14,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         marginVertical: 6,
     },
     insightText: { 
@@ -400,7 +400,7 @@ export const styles = StyleSheet.create({
     },
     insightValue: {
         fontSize: isSmallScreen ? 16 : 18,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
     },
 
     // --- LEGEND ---
@@ -414,7 +414,7 @@ export const styles = StyleSheet.create({
     },
     legendLabel: { 
         fontSize: 10, 
-        fontWeight: '600', 
+        fontFamily: 'FiraSans-Bold', 
         textTransform: 'uppercase' 
     },
     scaleBar: { 
@@ -434,7 +434,7 @@ export const styles = StyleSheet.create({
     },
     emptyTitle: {
         fontSize: isSmallScreen ? 16 : 18,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         marginTop: 12,
     },
     emptySub: {
@@ -467,14 +467,14 @@ export const styles = StyleSheet.create({
     },
     modalTitle: { 
         fontSize: 16, 
-        fontWeight: '700' 
+        fontFamily: 'Tinos-Bold' 
     },
     modalSub: { 
         fontSize: 12 
     },
     modalAmount: { 
         fontSize: 18, 
-        fontWeight: '700' 
+        fontFamily: 'Tinos-Bold' 
     },
     txRow: { 
         flexDirection: 'row', 
@@ -488,7 +488,7 @@ export const styles = StyleSheet.create({
     },
     txVal: { 
         fontSize: 13, 
-        fontWeight: '600' 
+        fontFamily: 'FiraSans-Bold' 
     },
     noTx: { 
         fontStyle: 'italic', 
@@ -502,7 +502,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center' 
     },
     closeText: { 
-        fontWeight: '700', 
+        fontFamily: 'Tinos-Bold', 
         fontSize: 12 
     },
     statLabelSmall: {
@@ -531,6 +531,7 @@ export const styles = StyleSheet.create({
     },
     insightValueSmall: {
         fontSize: 15,
+        fontFamily: 'FiraSans-Bold',
     },
     emptyTitleSmall: {
         fontSize: 15,

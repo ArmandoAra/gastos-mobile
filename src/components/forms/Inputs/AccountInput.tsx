@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#666',
         marginBottom: 8,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         marginLeft: 4,
     },
     // Estilo del "Input" falso
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     inputText: {
         fontSize: 16,
         color: '#333',
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
     },
     inputTypeText: {
         fontSize: 12,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 18,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         color: '#333',
     },
     optionItem: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     },
     optionTextSelected: {
         color: '#6200EE',
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     optionSubText: {
         fontSize: 12,

@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     },
     text: {
         color: 'white',
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
         letterSpacing: 0.5,
     }

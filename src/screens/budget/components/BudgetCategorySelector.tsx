@@ -134,6 +134,7 @@ export default function BudgetCategorySelector({
               <CategoryFormInput 
                 type={iconsKey}
                 closeInput={handleToggleOptions}
+            setSelectingMyCategories={setSelectingMyCategories}
               />
 
   ) : <View style={styles.gridContainer}>

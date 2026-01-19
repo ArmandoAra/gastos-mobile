@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 11, // Aumentado de 8px a 11px para legibilidad mínima
-        fontWeight: '800',
+        fontFamily: 'FiraSans-Bold',
         marginBottom: 6,
         marginLeft: 4,
         textTransform: 'uppercase',
@@ -103,7 +103,8 @@ const styles = StyleSheet.create({
     },
     input: {
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
+        fontFamily: 'FiraSans-Regular',
         minHeight: 80, // Altura base
         // CLAVE: Padding bottom extra para que el texto nunca escriba ENCIMA del contador
         paddingBottom: 20,
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     },
     counter: {
         fontSize: 10,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         opacity: 0.8,
     }
 });

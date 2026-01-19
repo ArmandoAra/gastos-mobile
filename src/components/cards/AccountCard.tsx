@@ -72,7 +72,7 @@ const accountCardStyles = StyleSheet.create({
     },
     balance: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontFamily: 'FiraSans-Bold',
         color: '#000',
     },
 });

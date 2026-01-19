@@ -3,6 +3,7 @@ import { persist, createJSONStorage, devtools, StateStorage } from 'zustand/midd
 import { createMMKV } from 'react-native-mmkv' // 1. Importar MMKV
 import { Account, Transaction, TransactionType } from '../interfaces/data.interface'
 import * as uuid from 'uuid';
+import { useAuthStore } from './authStore';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -70,7 +71,8 @@ type Actions = {
     addTransactionStore: (transaction: Transaction) => void
     updateTransaction: (updatedTransaction: Partial<Transaction>) => void
     deleteTransaction: (transactionId: string) => void
-    getAllTransactionsByUserId: (userId: string) => Transaction[]
+    // getAllTransactionsByUserId: (userId: string) => Transaction[]
+    getUserTransactions: () => Transaction[]
     getTransactionsByAccount: (accountId: string) => Transaction[]
     clearTransactions: () => void
 
@@ -309,9 +311,12 @@ const useDataStore = create<State & Actions>()(
                 },
 
                 addTransactionStore: (transaction: Transaction) => {
+                    const currentUserId = useAuthStore.getState().user?.id;
+                    if (!currentUserId) return;
+                    const transactionWithId = { ...transaction, user_id: currentUserId };    
                     set(
                         (state) => ({
-                            transactions: [transaction, ...state.transactions],
+                            transactions: [...state.transactions, transactionWithId],
                             error: null,
                         }),
                         false,
@@ -343,8 +348,16 @@ const useDataStore = create<State & Actions>()(
                     )
                 },
 
-                getAllTransactionsByUserId: (userId: string): Transaction[] => {
-                    return get().transactions.filter(transaction => transaction.user_id === userId);
+                // getAllTransactionsByUserId: (userId: string): Transaction[] => {
+                //     return get().transactions.filter(transaction => transaction.user_id === userId);
+                // },
+                getUserTransactions: () => {
+                    const allTransactions = get().transactions;
+                    const currentUser = useAuthStore.getState().user; // Accedemos al ID del usuario actual
+
+                    if (!currentUser) return [];
+
+                    return allTransactions.filter(t => t.user_id === currentUser.id);
                 },
 
                 getTransactionsByAccount: (accountId: string) => {

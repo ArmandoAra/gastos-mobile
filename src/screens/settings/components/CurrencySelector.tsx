@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 10, // Un poco más legible que 8
         marginBottom: 6,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         marginLeft: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     },
     inputText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     inputTypeText: {
         fontSize: 12,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
         marginVertical: 4,
         textAlign: 'center',
         fontSize: 12,
-        fontWeight: '400',
+        fontFamily: 'FiraSans-Regular',
     },
 
     // Estilos de la Lista
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     optionTextSelected: {
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
     },
     optionSubText: {
         fontSize: 12,

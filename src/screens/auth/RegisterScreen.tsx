@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: 'rgba(255,255,255,0.9)',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   logo: {
     fontSize: 60,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     marginBottom: 8,
   },
   input: {

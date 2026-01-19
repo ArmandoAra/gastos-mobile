@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     errorText: {
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         fontSize: 14, // Base un poco más grande
         flex: 1, // Permite que el texto fluya y haga wrap
         flexWrap: 'wrap',
@@ -290,12 +290,12 @@ const styles = StyleSheet.create({
         borderWidth: 1, // Borde más visible (antes 0.5)
     },
     cancelButtonText: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16, // Texto base legible
         textAlign: 'center',
     },
     saveButtonText: {
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
         textAlign: 'center',
     },

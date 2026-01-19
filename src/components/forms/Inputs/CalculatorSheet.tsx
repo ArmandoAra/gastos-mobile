@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
         width: '100%',
         padding: 6,
         borderTopWidth: 1,
+        marginBottom: 30,// Espacio para el home indicator en iOS
         gap: 6,
     },
     row: {
@@ -145,6 +146,6 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 22,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Bold',
     }
 });

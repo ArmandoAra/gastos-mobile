@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   },
   balanceItemAmount: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   section: {
     marginBottom: 24,
@@ -136,7 +136,7 @@ export const styles = StyleSheet.create({
   },
   transactionDescription: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     color: '#000',
     marginBottom: 4,
   },
@@ -175,7 +175,7 @@ export const styles = StyleSheet.create({
   quickActionText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   filterContainer: {
     flexDirection: 'row',
@@ -199,7 +199,7 @@ export const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: 'white',
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   transactionsList: {
     flex: 1,
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
   },
   dateHeaderText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     textTransform: 'capitalize',
   },
   dateHeaderTotal: {
@@ -261,7 +261,7 @@ export const styles = StyleSheet.create({
   periodText: {
     fontSize: 14,
     color: '#757575',
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   chartContainer: {
     backgroundColor: 'white',
@@ -314,7 +314,7 @@ export const styles = StyleSheet.create({
   },
   heatmapDay: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     color: '#000',
   },
   statsContainer: {
@@ -372,11 +372,11 @@ export const styles = StyleSheet.create({
   },
   navTextActive: {
     color: '#6200EE',
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   periodTextActive: {
     color: 'white',
-    fontWeight: '700',
+    fontFamily: 'Tinos-Bold',
   },
 
   
@@ -384,21 +384,21 @@ export const styles = StyleSheet.create({
   legendTextBold: {
     fontSize: 13,
     color: '#424242',
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
 
  
 
   heatmapDayLight: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'FiraSans-Regular',
     color: '#9E9E9E',
   },
 
 
   statValueSecondary: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Tinos-Bold',
     color: '#424242',
   },
 });

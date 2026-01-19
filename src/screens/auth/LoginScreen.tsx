@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: '#fff' },
     title: { fontSize: 28, fontWeight: 'bold', marginBottom: 32, color: '#333' },
     inputContainer: { marginBottom: 16 },
-    label: { fontSize: 14, color: '#666', marginBottom: 8, fontWeight: '600' },
+    label: { fontSize: 14, color: '#666', marginBottom: 8, fontFamily: 'FiraSans-Bold' },
     input: {
         backgroundColor: '#F5F5F5',
         padding: 16,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     buttonDisabled: { backgroundColor: '#B0B0B0' },
     buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
     linkButton: { marginTop: 20, alignItems: 'center' },
-    linkText: { color: '#6200EE', fontWeight: '600' },
+    linkText: { color: '#6200EE', fontFamily: 'FiraSans-Bold' },
     errorContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',

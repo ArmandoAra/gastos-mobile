@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
     },
     headerButtonsContainer: {
         flexDirection: 'row',
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     },
     addButtonText: {
         fontSize: 13,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     addFormContainer: {
         marginBottom: 20,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 10,
         fontSize: 14,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
     },
     accountItem: {
         borderRadius: 12,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     },
     accountName: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     metaRow: {
         flexDirection: 'row',
@@ -444,12 +444,12 @@ const styles = StyleSheet.create({
     },
     chipText: {
         fontSize: 11,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         textTransform: 'uppercase',
     },
     balanceText: {
         fontSize: 14,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     actionsRowView: {
         flexDirection: 'row',

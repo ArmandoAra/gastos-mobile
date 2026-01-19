@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
         marginBottom: 4,
         flexWrap: 'wrap', // Permite que baje de línea
     },
     headerSubtitle: {
         fontSize: 13,
-        fontWeight: '400',
+        fontFamily: 'FiraSans-Regular',
         flexWrap: 'wrap',
     },
     listContainer: {

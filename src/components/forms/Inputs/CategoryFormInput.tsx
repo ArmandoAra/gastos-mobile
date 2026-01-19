@@ -33,13 +33,20 @@ import useCategoriesStore from '../../../stores/useCategoriesStore';
 import { Category } from '../../../interfaces/data.interface';
 import useMessage from '../../../stores/useMessage';
 import { MessageType } from '../../../interfaces/message.interface';
+import { set } from 'date-fns';
 
 interface CreateCategoryFormProps {
     type: TransactionType;
     closeInput: () => void;
+    setSelectingMyCategories: (value: boolean) => void;
+
 }
 
-export default function CreateCategoryForm({ type, closeInput }: CreateCategoryFormProps) {
+export default function CreateCategoryForm({
+    type,
+    closeInput,
+    setSelectingMyCategories
+}: CreateCategoryFormProps) {
     const { t } = useTranslation();
     const { showMessage } = useMessage();
     
@@ -90,14 +97,8 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
         setIsNameTouched(false);
         Keyboard.dismiss();
 
-
-        // Anuncio de accesibilidad para lectores de pantalla
-        if (Platform.OS !== 'web') {
-            showMessage(MessageType.SUCCESS, t('categories.createdSuccess'));
-            AccessibilityInfo.announceForAccessibility(t('categories.createdSuccess'));
-        }
-        // Cerrar el formulario
         closeInput();
+        setSelectingMyCategories(true);
     };
 
     // Componente de Icono seleccionado para el preview
@@ -138,7 +139,7 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
                             onPressIn={handlePressIn}
                             onPressOut={handlePressOut}
                             accessibilityLabel={t('accessibility.selected_icon_preview')}
-                            accessibilityHint={selectedCategory ? t('common.selected') : t('validation.iconRequired')}
+                            accessibilityHint={selectedCategory ? t('common.selected') : t('commonWarnings.requiredField')}
                         >
                             <Animated.View entering={FadeInLeft} style={styles.iconContainerShadow}>
                                 <Animated.View style={animatedIconStyle}>
@@ -182,7 +183,7 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
                                     style={[styles.errorText, { color: colors.expense }]}
                                     maxFontSizeMultiplier={1.5}
                                 >
-                                    {t('validation.required')}
+                                    {t('commonWarnings.requiredField')}
                                 </Text>
                             )}
                         </View>
@@ -310,7 +311,7 @@ export default function CreateCategoryForm({ type, closeInput }: CreateCategoryF
                     accessibilityRole="button"
                     accessibilityState={{ disabled: !isFormValid }}
                     accessibilityLabel={t('common.create')}
-                    accessibilityHint={!isFormValid ? t('validation.completeAllFields') : undefined}
+                    accessibilityHint={!isFormValid ? t('commonWarnings.requiredField') : undefined}
                 >
                     <Text
                         style={[styles.createButtonText, { color: isFormValid ? '#FFF' : colors.textSecondary }]}
@@ -332,7 +333,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 28,
-        fontWeight: '800',
+        fontFamily: 'Tinos-Italic',
         marginBottom: 24,
         flexWrap: 'wrap', // Permite que el título baje de línea si la fuente es enorme
     },
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
     },
     iconColumn: {
         alignItems: 'center',
-        paddingTop: 4, // Ajuste visual ligero
+        gap: 8,
     },
     iconContainerShadow: {
         shadowColor: "#000",
@@ -373,14 +374,14 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12,
-        fontWeight: '800',
+        fontFamily: 'FiraSans-Bold',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
         marginLeft: 4,
     },
     errorText: {
         fontSize: 11,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Regular',
     },
     inputWrapper: {
         // height: 68, -> ELIMINADO para soportar texto grande
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
     },
     input: {
         fontSize: 20,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Regular',
         paddingVertical: 0, // Reset default padding
     },
 
@@ -403,7 +404,8 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 14,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
+        fontFamily: 'FiraSans-Bold',
         textTransform: 'uppercase',
         marginBottom: 12,
         letterSpacing: 1,

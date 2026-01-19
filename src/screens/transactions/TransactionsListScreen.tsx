@@ -192,8 +192,6 @@ export function TransactionsScreen() {
             {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
                 <AddTransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
             )}
-
-
             <AddTransactionsButton />
         </SafeAreaView>
     );
@@ -227,7 +225,7 @@ const localStyles = StyleSheet.create({
         maxWidth: 100, // Límite máximo para que no empuje demasiado
     },
     modeLabel: {
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Bold',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 14,
@@ -251,6 +249,8 @@ const localStyles = StyleSheet.create({
         fontSize: 14,
         paddingVertical: 8, // Área de toque vertical
         height: '100%',
+        fontFamily: 'FiraSans-Regular',
+
     },
     // Headers de Fecha
     dateHeader: {
@@ -265,12 +265,12 @@ const localStyles = StyleSheet.create({
     },
     dateHeaderText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         textTransform: 'capitalize',
     },
     dateHeaderTotal: {
         fontSize: 14,
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
     },
     // Empty State
     emptyState: {
@@ -283,5 +283,6 @@ const localStyles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         textAlign: 'center',
+        fontFamily: 'FiraSans-Regular',
     }
 });

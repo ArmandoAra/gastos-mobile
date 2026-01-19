@@ -159,6 +159,7 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
             slug_category_name: selectedCategory ? [selectedCategory.name] : (initialData?.slug_category_name || []),
             category_icon_name: selectedCategory ? selectedCategory.icon : (initialData?.category_icon_name || 'shopping-cart'),
             favorite: initialData?.favorite || false,
+            user_id: user?.id || 'current-user-id',
         };
 
         // Caso A: EDITAR (Usamos replaceBudget)
@@ -178,7 +179,6 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
             // El store generará el ID y las fechas
             addBudget({
                 account_id: allAccounts[0]?.id || 'default-account',
-                user_id: user?.id || 'current-user-id',
                 date: new Date().toISOString(),
                 ...commonData,
             });

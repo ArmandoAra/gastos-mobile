@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   periodText: {
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     fontSize: 14,
     textAlign: 'center',
     textTransform: 'capitalize'

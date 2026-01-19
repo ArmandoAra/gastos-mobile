@@ -3,6 +3,8 @@ import { persist, createJSONStorage, devtools, StateStorage } from 'zustand/midd
 import { createMMKV } from 'react-native-mmkv';
 import * as uuid from 'uuid';
 import { ExpenseBudget, Item } from '../interfaces/data.interface';
+import { getUser } from '../../../Gastos/frontend/app/lib/dal';
+import { useAuthStore } from './authStore';
 
 export const budgetsStorage = createMMKV({
     id: 'budgets-storage',
@@ -59,7 +61,11 @@ type Actions = {
 
     // === Getters ===
     getBudgetById: (id: string) => ExpenseBudget | undefined;
-    getBudgetsByUserId: (userId: string) => ExpenseBudget[];
+    getUserBudgets: () => ExpenseBudget[];
+    // getBudgetsByUserId: (userId: string) => ExpenseBudget[];
+
+    deleteAllItems: () => void;
+    deleteAllBudgets: () => void;
 
     // === System ===
     setHasHydrated: (state: boolean) => void;
@@ -98,6 +104,8 @@ const useBudgetsStore = create<State & Actions>()(
                 addBudget: (budgetData) => {
                     const now = new Date().toISOString();
                     const items = (budgetData as any).items || []; 
+                    const user = useAuthStore.getState().user;
+                    if (!user) return;
                     
                     const newBudget: ExpenseBudget = {
                         id: uuid.v4(),
@@ -106,6 +114,7 @@ const useBudgetsStore = create<State & Actions>()(
                         ...budgetData,
                         items,
                         spentAmount: calculateSpentAmount(items), 
+                        user_id: user.id
                     };
 
                     set((state) => ({
@@ -236,7 +245,24 @@ const useBudgetsStore = create<State & Actions>()(
                 // ----------------------------------------------------------------
 
                 getBudgetById: (id) => get().budgets.find(b => b.id === id),
-                getBudgetsByUserId: (userId) => get().budgets.filter(b => b.user_id === userId),
+                getUserBudgets: () => {
+                    const currentUser = useAuthStore.getState().user;
+                    if (!currentUser) return [];
+                    return get().budgets.filter(b => b.user_id === currentUser.id);
+                },
+                deleteAllItems: () => {
+                    set((state) => ({
+                        budgets: state.budgets.map(budget => ({
+                            ...budget,
+                            items: [],
+                            spentAmount: 0,
+                            updated_at: new Date().toISOString()
+                        }))
+                    }), false, 'deleteAllItems');
+                },
+                deleteAllBudgets: () => {
+                    set({ budgets: [] }, false, 'deleteAllBudgets');
+                },
 
                 // ----------------------------------------------------------------
                 // SYSTEM

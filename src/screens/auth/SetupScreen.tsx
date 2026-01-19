@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Tinos-Bold',
     marginBottom: 8,
     marginLeft: 8,
     letterSpacing: 1,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   pinInput: {
     fontSize: 20,
     letterSpacing: 4,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     textAlign: 'center'
   },
   row: {
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     flexShrink: 1 // Permite que el texto se ajuste si es largo
   },
   button: {

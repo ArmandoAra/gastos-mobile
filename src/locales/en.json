@@ -18,6 +18,9 @@
         "biometricToggle": "Enable biometrics"
     },
     "messagesInfo": {
+        "Success": "Success",
+        "Error": "Error",
+        "Updated": "Updated",
         "validAmmount": "Please enter a valid amount.",
         "selectAccount": "Please select an account.",
         "transactionAdded": "Transaction successfully added.",

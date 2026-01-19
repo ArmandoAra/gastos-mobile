@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 26,
-        fontWeight: '900',
+        fontFamily: 'FiraSans-Bold',
         marginBottom: 10,
         textAlign: 'center',
     },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
         color: '#ff453a',
         fontSize: 14,
         textAlign: 'center',
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     actions: {
         flexDirection: 'row',
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
         minHeight: 60, 
     },
     buttonText: {
-        fontWeight: '800',
+        fontFamily: 'Tinos-Bold',
         fontSize: 14,
         textAlign: 'center',
         textTransform: 'uppercase',
@@ -309,6 +309,6 @@ const styles = StyleSheet.create({
     },
     closeBtnText: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
     }
 });

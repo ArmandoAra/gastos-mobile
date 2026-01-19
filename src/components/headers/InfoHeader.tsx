@@ -164,14 +164,14 @@ const styles = StyleSheet.create({
   overviewLabel: {
     fontSize: 12,
     textTransform: 'uppercase',
-    fontWeight: '700',
+    fontFamily: 'Tinos-Italic',
     letterSpacing: 1,
     marginBottom: 4,
     opacity: 0.8,
   },
   dateDisplay: {
     fontSize: 20, // Ligeramente más grande
-    fontWeight: '800',
+    fontFamily: 'Tinos-Bold',
     textTransform: 'capitalize',
     lineHeight: 26, // Altura de línea para cuando hace wrap
     flexWrap: 'wrap',

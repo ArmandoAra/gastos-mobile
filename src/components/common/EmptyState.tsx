@@ -47,7 +47,7 @@ const emptyStateStyles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontFamily: 'Tinos-Bold',
         color: '#424242',
         marginBottom: 8,
         textAlign: 'center',
@@ -67,6 +67,6 @@ const emptyStateStyles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 14,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
 });

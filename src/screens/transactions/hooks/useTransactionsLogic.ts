@@ -33,7 +33,8 @@ export const useTransactionsLogic = () => {
 
     // Store de Datos
     const {
-        transactions = [],
+        transactions,
+        getUserTransactions,
         deleteTransaction,
         updateTransaction,
         deleteSomeAmountInAccount,
@@ -42,7 +43,7 @@ export const useTransactionsLogic = () => {
 
     // --- 1. LÓGICA DE FILTRADO ---
     const filteredTransactions = useMemo(() => {
-        let result = transactions;
+        let result = getUserTransactions();
         if (!result || result.length === 0) return [];
 
         // Filtro por fecha

@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useMessage from '../../stores/useMessage';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 const DURATION = 3000;
 
@@ -52,6 +53,7 @@ const VARIANT_CONFIG = {
 export default function InfoPopUp() {
     const { hideMessage, messageType, isMessageOpen, messageText } = useMessage();
     const { theme } = useSettingsStore()
+    const { t } = useTranslation();
     const colors = theme === 'dark' ? darkTheme : lightTheme;
     
     // Valores animados para la barra de progreso
@@ -117,7 +119,7 @@ export default function InfoPopUp() {
 
                     {/* Textos */}
                     <View style={styles.textContainer}>
-                        <Text style={[styles.titleText, { color: colors.text }]}>{config.title}</Text>
+                        <Text style={[styles.titleText, { color: colors.text }]}>{t(`messagesInfo.${config.title}`)}</Text>
                         <Text style={[styles.messageText, { color: colors.text }]}>{messageText}</Text>
                     </View>
 
@@ -186,13 +188,14 @@ const styles = StyleSheet.create({
     },
     titleText: {
         color: 'white',
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
         marginBottom: 4,
     },
     messageText: {
         color: 'rgba(255, 255, 255, 0.9)',
         fontSize: 14,
+        fontFamily: 'FiraSans-Regular',
     },
     closeButton: {
         width: 28,

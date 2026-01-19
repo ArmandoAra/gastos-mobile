@@ -29,6 +29,7 @@ import { Category, TransactionType } from "../../../interfaces/data.interface";
 import CategoryFormInput from "./CategoryFormInput";
 import MaterialIcons from "@expo/vector-icons/build/MaterialIcons";
 import { MyCustomCategories } from "./myCustomCategories";
+import { set } from "date-fns";
 
 interface CategorySelectorPopoverProps {
   popoverOpen: boolean;
@@ -149,9 +150,10 @@ export default function CategorySelectorPopover({
 {
   addingNewCategory ? (
 
-              <CategoryFormInput 
+              <CategoryFormInput
                 type={iconsKey}
                 closeInput={handleToggleOptions}
+                setSelectingMyCategories={setSelectingMyCategories}
               />
 
   ) : <View style={styles.gridContainer}>
@@ -248,8 +250,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#667eea",
+    fontFamily: 'Tinos-Italic',
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -280,7 +281,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   iconItemSelected: {
-    borderColor: "#667eea",
     backgroundColor: "rgba(102, 126, 234, 0.08)",
   },
   avatar: {
@@ -295,13 +295,13 @@ const styles = StyleSheet.create({
   },
   iconLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: 'FiraSans-Regular',
     color: "#888",
     textAlign: "center",
   },
   iconLabelSelected: {
     color: "#667eea",
-    fontWeight: "700",
+    fontFamily: 'FiraSans-Bold',
   },
   addUserCategory: {
     borderRadius: 25,

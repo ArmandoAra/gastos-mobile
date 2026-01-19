@@ -1,16 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { 
   View, 
   Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  Platform 
+  StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ThemeColors } from '../../types/navigation'; // Tu tipo de tema
 
 // Props del componente
@@ -90,14 +84,14 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     marginBottom: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   title: {
     fontSize: 22,
-    fontWeight: '800', // Extra bold para look moderno
+    fontFamily: 'Tinos-Bold', // Extra bold para look moderno
   },
   
   // Botones Circulares

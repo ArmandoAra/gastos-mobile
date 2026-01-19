@@ -66,7 +66,7 @@ export const styles = StyleSheet.create({
   },
   accountName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     color: '#000',
     marginBottom: 4,
   },
@@ -153,7 +153,7 @@ export const styles = StyleSheet.create({
   },
   typeBtnText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -173,7 +173,7 @@ export const styles = StyleSheet.create({
   },
   modalBtnText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
 
   // Settings
@@ -433,7 +433,7 @@ export const styles = StyleSheet.create({
   pinKeyText: {
     fontSize: 28,
     color: 'white',
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   pinBiometric: {
     marginTop: 40,
@@ -496,7 +496,7 @@ export const styles = StyleSheet.create({
   },
   formLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
     color: '#424242',
     marginBottom: 8,
   },
@@ -528,7 +528,7 @@ export const styles = StyleSheet.create({
   },
   categoryChipTextActive: {
     color: 'white',
-    fontWeight: '600',
+    fontFamily: 'FiraSans-Bold',
   },
   accountSelector: {
     backgroundColor: 'white',

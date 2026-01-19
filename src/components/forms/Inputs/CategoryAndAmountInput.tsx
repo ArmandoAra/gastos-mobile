@@ -125,7 +125,7 @@ export default function CategoryAndAmountInput({
                         maxLength={12}
                         placeholderTextColor={colors.textSecondary}
                         keyboardType="decimal-pad"
-                        style={[styles.input, { color: colors.text }]}
+                        style={[styles.input, { color: colors.text, fontFamily: 'FiraSans-Bold' }]}
                         // Accesibilidad
                         accessibilityLabel={t('accessibility.amount_input', 'Amount input')}
                         // Escalado dinámico
@@ -193,12 +193,11 @@ const styles = StyleSheet.create({
 
     // --- COLUMNA MONTO ---
     amountColumn: {
-        flex: 1, // Toma todo el espacio restante
+        flex: 1, 
     },
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        // Altura mínima en lugar de fija para permitir crecimiento de fuente
         minHeight: 58,
         borderRadius: 18,
         borderWidth: 1.5,
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 22, // Fuente base grande
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         minHeight: 44, // Altura táctil mínima
         paddingVertical: 0, // Reset padding
     },
@@ -226,7 +225,7 @@ const styles = StyleSheet.create({
     // --- TEXTOS ---
     label: {
         fontSize: 11,
-        fontWeight: '800',
+        fontFamily: 'FiraSans-Bold',
         marginBottom: 8,
         textTransform: 'uppercase',
         letterSpacing: 0.5,

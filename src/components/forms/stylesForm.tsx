@@ -21,10 +21,6 @@ export const styles = StyleSheet.create({
         marginBottom: 15,
 
     },
-    title: {
-        fontSize: 18,
-        fontWeight: '700',
-    },
     closeButton: {
         position: 'absolute',
         left: 12,
@@ -44,7 +40,7 @@ export const styles = StyleSheet.create({
     },
     closeButtonText: {
         fontSize: 24,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
     },
     rowSelectors: {
         flexDirection: 'row',
@@ -67,9 +63,5 @@ export const styles = StyleSheet.create({
         paddingVertical: 16,
         borderRadius: 16,
         alignItems: 'center',
-    },
-    saveButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
     },
 });

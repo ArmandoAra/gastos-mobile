@@ -194,7 +194,7 @@ export default function ChangePinModal({ visible, onClose, onSave, colors }: Cha
                                 accessibilityLabel={t('common.cancel')}
                             >
                                 <Text
-                                    style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 16 }}
+                                    style={{ color: colors.textSecondary, fontFamily: 'FiraSans-Bold', fontSize: 16 }}
                                     maxFontSizeMultiplier={1.5}
                                 >
                                     {t('common.cancel')}
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 22,
-        fontWeight: '800',
+        fontFamily: 'Tinos-Bold',
         marginBottom: 8,
         textAlign: 'center',
     },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 14,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         flex: 1,
         textAlign: 'center',
     },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12,
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         textTransform: 'uppercase',
         letterSpacing: 1,
         marginLeft: 4,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     },
     saveBtnText: {
         color: '#FFF',
-        fontWeight: '700',
+        fontFamily: 'Tinos-Bold',
         fontSize: 16,
     }
 });

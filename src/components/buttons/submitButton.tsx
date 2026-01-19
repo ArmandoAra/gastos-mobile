@@ -87,7 +87,7 @@ export default function SubmitButton({
                         <ActivityIndicator size="small" color={textColor} />
                     ) : (
                             <Text
-                                style={[styles.text, { color: colors.surface }]}
+                                style={[styles.text, { color: colors.text, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, textShadowColor: 'rgba(0, 0, 0, 0.3)' }]}
                                 maxFontSizeMultiplier={1.5} // Evita que el texto crezca excesivamente rompiendo todo
                                 numberOfLines={1}
                             >
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.1)',
     },
     text: {
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
         letterSpacing: 0.5,
         textAlign: 'center',

@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: '300',
+        fontFamily: 'FiraSans-Regular',
     },
     descriptionText: {
         fontSize: 14, // Ligeramente más grande para legibilidad
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     },
     actionTitle: {
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         flexWrap: 'wrap', // Permite que el texto baje si es necesario
     },
 });

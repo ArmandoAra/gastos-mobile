@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     cardTitle: {
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 16,
         flex: 1,
         marginRight: 5,
@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     miniItemText: {
         fontSize: 11,
         flex: 1,                    // Para que el texto se corte si es largo
+        fontFamily: 'FiraSans-Regular',
     },
     bullet: {
         width: 3,
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     },
     moreText: {
         fontSize: 11,
-        fontStyle: 'italic',
+        fontFamily: 'Tinos-Italic',
     },
     // ------------------------------------
 
@@ -204,10 +205,11 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     amountText: {
-        fontWeight: 'bold',
+        fontFamily: 'FiraSans-Bold',
         fontSize: 15,
     },
     targetText: {
+        fontFamily: 'FiraSans-Bold',
         fontSize: 12,
         marginLeft: 4,
     },

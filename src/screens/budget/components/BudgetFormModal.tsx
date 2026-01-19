@@ -88,7 +88,7 @@ export const BudgetFormModal = ({
         const dataToTransact: ToConvertBudget = {
             name,
             totalAmount: totalSpent,
-            slug_category_name: initialData ? initialData.slug_category_name : [selectedCategory.name],
+            slug_category_name: selectedCategory.name ? [selectedCategory.name] : initialData?.slug_category_name || [],
         };
 
         handleSaveForm();
@@ -160,7 +160,7 @@ export const BudgetFormModal = ({
                         accessible={true}
                         accessibilityLabel={t('budget_form.accessibility.items_count') + items.length}
                     >
-                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: 'bold' }}>{items.length}</Text>
+                        <Text style={{ color: colors.text, fontSize: 12, fontFamily: 'FiraSans-Regular' }}>{items.length}</Text>
                     </View>
                 </View>
                 <TouchableOpacity
@@ -345,7 +345,7 @@ export const BudgetFormModal = ({
                                     accessibilityRole="button"
                                     accessibilityLabel={t('budget_form.category_selector.close')}
                                 >
-                                    <Text style={{ color: colors.surfaceSecondary, fontWeight: '600' }}>{t('budget_form.category_selector.close')}</Text>
+                                    <Text style={{ color: colors.surfaceSecondary, fontFamily: 'FiraSans-Bold' }}>{t('budget_form.category_selector.close')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 18,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
         flex: 1,
         textAlign: 'center',
         marginHorizontal: 10,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
         zIndex: 100,
     },
     menuOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 15, minHeight: 48 },
-    menuOptionText: { fontSize: 16, marginLeft: 12, fontWeight: '500', flexShrink: 1 },
+    menuOptionText: { fontSize: 16, marginLeft: 12, fontFamily: 'FiraSans-Regular', flexShrink: 1 },
     menuDivider: { height: 1, marginVertical: 5 },
 
     // Categoría Selector Wrapper
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     // Contenido
     scrollContent: { padding: 5, flexGrow: 1 },
     sectionBox: { width: '100%', borderRadius: 16, padding: 15, marginBottom: 20, borderWidth: 0.5 },
-    label: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' },
+    label: { fontSize: 12, fontFamily: 'Tinos-Bold', letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' },
 
     // Inputs Principales
     nameInputContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         borderRadius: 8, 
         paddingHorizontal: 12,
-        fontWeight: '600', 
+        fontFamily: 'FiraSans-Bold', 
         paddingVertical: 10,
         textAlignVertical: 'center',
         minHeight: 48 
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     inputMedium: { 
         paddingHorizontal: 12, 
         fontSize: 18,
-        fontWeight: '500', 
+        fontFamily: 'FiraSans-Regular', 
         borderWidth: 0.5,
         borderRadius: 8,
         paddingVertical: 10,
@@ -481,12 +481,12 @@ const styles = StyleSheet.create({
         marginTop: 10
     },
     flexItem: { flex: 1, minWidth: 140 },
-    displayTotal: { fontSize: 22, fontWeight: 'bold', paddingVertical: 5, textAlign: 'right' },
+    displayTotal: { fontSize: 22, fontFamily: 'FiraSans-Bold', paddingVertical: 5, textAlign: 'right' },
 
     // Items
     itemsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 5, flexWrap: 'wrap', gap: 10 },
-    sectionTitle: { fontSize: 20, fontWeight: 'bold' },
+    sectionTitle: { fontSize: 20, fontFamily: 'FiraSans-Regular' },
     itemsCounter: { borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' },
     addButtonSmall: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, minHeight: 44, borderWidth: 1 },
-    addButtonText: { fontWeight: '600', marginLeft: 6 },
+    addButtonText: { fontFamily: 'FiraSans-Regular', marginLeft: 6 },
 });

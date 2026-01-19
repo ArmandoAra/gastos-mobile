@@ -9,6 +9,7 @@ import {
 
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
+import { set } from 'date-fns';
 
 
 // --- SUBCOMPONENTE REFACTORIZADO ---
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     },
     settingLabel: {
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         flexWrap: 'wrap',
     },
     switchContainer: {

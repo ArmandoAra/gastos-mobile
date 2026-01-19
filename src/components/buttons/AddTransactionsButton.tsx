@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     },
     cardText: {
         fontSize: 14,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Regular',
         color: '#333',
     },
     avatarNoShadow: {

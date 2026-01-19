@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 24, // Ligeramente reducido para móviles pequeños
-        fontWeight: '800',
+        fontFamily: 'Tinos-Bold',
         color: '#FFF',
         marginBottom: 12,
         letterSpacing: 0.5,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
         color: 'rgba(255, 255, 255, 0.95)',
         textAlign: 'center',
         lineHeight: 24,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
     },
     buttonRow: {
         flexDirection: 'row',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: '#FFF',
-        fontWeight: '800',
+        fontFamily: 'Tinos-Bold',
         fontSize: 16,
         letterSpacing: 1,
         textTransform: 'uppercase',

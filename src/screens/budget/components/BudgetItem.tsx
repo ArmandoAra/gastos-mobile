@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     itemNameInput: {
         flex: 1,
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         textAlignVertical: 'center',
         paddingVertical: 5
     },
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 100
     },
-    miniLabel: { fontSize: 12, marginRight: 8 },
+    miniLabel: { fontSize: 12, marginRight: 8, fontFamily: 'FiraSans-Regular' },
     inputSmall: {
         borderWidth: 1,
         borderRadius: 8,
@@ -171,8 +171,9 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 60,
         textAlign: 'center',
-        paddingVertical: 8
+        paddingVertical: 8,
+        fontFamily: 'FiraSans-Regular',
     },
     operatorText: { marginHorizontal: 2, fontSize: 14 },
-    itemTotal: { fontWeight: 'bold', fontSize: 16, minWidth: 70, textAlign: 'right', paddingVertical: 5 }
+    itemTotal: { fontFamily: 'FiraSans-Bold', fontSize: 16, minWidth: 70, textAlign: 'right', paddingVertical: 5 }
 });

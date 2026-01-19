@@ -277,7 +277,7 @@ export const TransactionItemMobile = React.memo(({
                                 </View>
                             </View>
                             <Text
-                                style={[styles.dateText, { color: colors.textSecondary }]}
+                                style={[styles.dateText, { color: colors.text }]}
                                 numberOfLines={2}
                             >
                                 {formattedDate}
@@ -388,7 +388,8 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
+        fontFamily: 'FiraSans-Regular',
         flexShrink: 1,
         lineHeight: 22,
     },
@@ -400,12 +401,14 @@ const styles = StyleSheet.create({
     },
     chipText: {
         fontSize: 11,
-        fontWeight: '600',
+        fontFamily: 'FiraSans-Bold',
+        fontFamily: 'FiraSans-Bold',
         lineHeight: 14,
     },
     dateText: {
         fontSize: 12,
         lineHeight: 16,
+        fontFamily: 'FiraSans-Regular',
     },
     amountContainer: {
         alignItems: 'flex-end',
@@ -423,12 +426,12 @@ const styles = StyleSheet.create({
     },
     accountBadgeText: {
         fontSize: 11,
-        fontWeight: '500',
+        fontFamily: 'FiraSans-Regular',
         lineHeight: 14,
     },
     amountText: {
         fontSize: 16,
-        fontWeight: '700',
+        fontFamily: 'FiraSans-Bold',
         lineHeight: 20,
     },
 });

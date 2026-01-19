@@ -86,10 +86,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     baseText: {
-        fontWeight: '900', // Usar el peso más grueso disponible
         letterSpacing: 0.5,
-        // Si tienes una fuente personalizada (ej. 'Poppins-Black' o 'Inter-ExtraBold'), úsala aquí:
-        // fontFamily: 'Poppins-Black', 
+        fontFamily: 'Tinos-Bold', 
         includeFontPadding: false,
         textAlign: 'center',
     },
