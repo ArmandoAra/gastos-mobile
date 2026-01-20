@@ -125,7 +125,8 @@
         "transferToAccount": "Seleccionar cuenta de destino",
         "deleteWarning": "Eliminar una cuenta también eliminará todas las transacciones asociadas a ella.Tambien puedes transferirlas a otra cuenta. ¿Estás seguro de que deseas continuar?",
         "transferAndDelete": "Transferir y eliminar",
-        "justDelete": "Eliminar Cuenta"
+        "justDelete": "Eliminar Cuenta",
+        "allAcounts": "Todas las cuentas"
     },
     "theme": {
         "titleHeader": "Apariencia",

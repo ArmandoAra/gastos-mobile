@@ -178,7 +178,7 @@ export default function AccountSelector({
                                                 { color: isSelected ? colors.accent : colors.textSecondary },
                                                 isSelected && [styles.optionTextSelected, { color: colors.accent }]
                                             ]}>
-                                                {item.name}
+                                                {item.name === 'allAccounts' ? t('accounts.allAccounts') : item.name}
                                             </Text>
                                             <Text style={[
                                                 styles.optionSubText,

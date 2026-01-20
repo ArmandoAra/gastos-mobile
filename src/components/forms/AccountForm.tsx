@@ -1,5 +1,4 @@
-// ACCOUNT FORM COMPONENT
-// ============================================
+
 import { useState } from 'react';
 import { TextInput, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 

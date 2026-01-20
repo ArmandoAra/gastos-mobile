@@ -1,42 +1,18 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
-    Dimensions,
-    Platform,
-    AccessibilityInfo,
-    AccessibilityActionInfo,
-    LayoutChangeEvent
 } from 'react-native';
-import Animated, { 
-    useSharedValue, 
-    useAnimatedStyle, 
-    withSpring, 
-    withTiming,
-    runOnJS,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { formatCurrency } from '../../../utils/helpers';
 import WarningMessage from './WarningMessage';
-import { Category, Transaction, TransactionType } from '../../../interfaces/data.interface';
-import { ICON_OPTIONS } from '../../../constants/icons';
-import { CategoryLabel } from '../../../api/interfaces';
+import { Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ThemeColors } from '../../../types/navigation';
-import { useAuthStore } from '../../../stores/authStore';
-import useDataStore from '../../../stores/useDataStore';
-import { useTranslation } from 'react-i18next';
-import EditTransactionFormMobile from '../../../components/forms/EditTransactionForm';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { InputNameActive } from '../../../interfaces/settings.interface';
-import { defaultCategories } from '../../../constants/categories';
-import { useTransactionForm } from '../constants/hooks/useTransactionForm';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
+import TransactionForm from '../../../components/forms/TransactionForm';
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -51,163 +27,37 @@ export const TransactionItemMobile = React.memo(({
     onDelete,
     colors,
 }: TransactionItemProps) => {
-    const { t } = useTranslation();
-    const { user } = useAuthStore();
-    const { setInputNameActive } = useSettingsStore();
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isWarningOpen, setIsWarningOpen] = useState(false);
-    const { currencySymbol } = useAuthStore();
-    const { getAccountNameById } = useDataStore();
-    const { userCategoriesOptions } = useTransactionForm();
 
-    // Valores Animados - altura ahora es dinámica
-    const translateX = useSharedValue(0);
-    const itemHeight = useSharedValue<number | null>(null);
-    const opacity = useSharedValue(1);
-    const marginBottom = useSharedValue(8);
-
-    // Datos Memoizados
-    const categoryIconData = useMemo(() => {
-        // 1. Obtenemos el nombre que buscamos
-        const categoryName = transaction.slug_category_name[0] as CategoryLabel;
-
-        // 2. BUSQUEDA CON PRIORIDAD:
-        // Intentamos encontrar primero una categoría que coincida en nombre Y sea del usuario
-        const customCategory = userCategoriesOptions.find(
-            cat => cat.name === categoryName && cat.userId === user?.id
-        );
-
-        // Si no hay custom, buscamos la por defecto (userId 'default' o cualquiera que coincida en nombre)
-        const defaultCategory = defaultCategories.find(
-            cat => cat.name === categoryName && cat.userId === 'default'
-        );
-
-        // La categoría final es la custom (si existe) o la default
-        const found = customCategory || defaultCategory;
-
-        // 3. Obtener el componente visual del Icono
-        // Buscamos en ICON_OPTIONS usando el 'icon' (label) que viene dentro de la categoría encontrada
-        const iconDefinition = ICON_OPTIONS.find(opt => opt.label === found?.icon);
-
-        return {
-            IconComponent: iconDefinition?.icon,
-            color: found?.color || '#B0BEC5',
-        };
-
-    }, [transaction.type, transaction.slug_category_name, userCategoriesOptions, defaultCategories, user?.id]);
-
-    const accountName = useMemo(() => {
-        return getAccountNameById(transaction.account_id);
-    }, [transaction.account_id, getAccountNameById]);
+    // Llamada al Hook que contiene toda la lógica
+    const {
+        categoryIconData,
+        accountName,
+        formattedDate,
+        formattedAmount,
+        isExpense,
+        t,
+        isEditOpen,
+        setIsEditOpen,
+        isWarningOpen,
+        handleLayout,
+        handleEditPress,
+        performDelete,
+        handleCancelDelete,
+        handleAccessibilityAction,
+        panGesture,
+        rStyle,
+        rContainerStyle,
+        rBackgroundStyle,
+        accessibilityActions
+    } = useTransactionItemLogic({ transaction, onDelete, colors });
 
     const { IconComponent, color } = categoryIconData;
-    const isExpense = transaction.type === TransactionType.EXPENSE;
-    const formattedDate = format(new Date(transaction.date), 'MM/dd/yyyy - HH:mm');
-    const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
-
-    // Callback para capturar la altura real del contenido
-    const handleLayout = useCallback((event: LayoutChangeEvent) => {
-        const { height } = event.nativeEvent.layout;
-        if (itemHeight.value === null) {
-            itemHeight.value = height;
-        }
-    }, []);
-
-    // ✅ CREAR CALLBACK ESTABLE PARA DELETE
-    const handleDelete = useCallback(() => {
-        onDelete(
-            transaction.id,
-            transaction.account_id,
-            transaction.amount,
-            transaction.type as TransactionType
-        );
-    }, [transaction.id, transaction.account_id, transaction.amount, transaction.type, onDelete]);
-
-    // Lógica de Borrado
-    const performDelete = useCallback(() => {
-        setIsWarningOpen(false);
-        if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('common.deleted'));
-
-        // Animación de salida
-        translateX.value = withTiming(-SCREEN_WIDTH, { duration: 300 });
-        itemHeight.value = withTiming(0, { duration: 300 });
-        marginBottom.value = withTiming(0, { duration: 300 });
-        opacity.value = withTiming(0, { duration: 300 }, (finished) => {
-            if (finished) {
-                // ✅ USAR runOnJS
-                runOnJS(handleDelete)();
-            }
-        });
-    }, [t, handleDelete]);
-
-    const handleCancelDelete = useCallback(() => {
-        setIsWarningOpen(false);
-        translateX.value = withSpring(0);
-    }, []);
-
-    // ✅ CREAR CALLBACK ESTABLE PARA ABRIR WARNING
-    const openWarning = useCallback(() => {
-        setIsWarningOpen(true);
-    }, []);
-
-    // Gesto Swipe
-    const panGesture = Gesture.Pan()
-        .activeOffsetX([-10, 10])
-        .onUpdate((event) => {
-            translateX.value = event.translationX;
-        })
-        .onEnd(() => {
-            if (Math.abs(translateX.value) > SWIPE_THRESHOLD) {
-                // ✅ USAR runOnJS
-                runOnJS(openWarning)();
-            } else {
-                translateX.value = withSpring(0);
-            }
-        });
-
-    // Estilos Animados
-    const rStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: translateX.value }],
-    }));
-
-    const rContainerStyle = useAnimatedStyle(() => ({
-        height: itemHeight.value === null ? undefined : itemHeight.value,
-        marginBottom: marginBottom.value,
-        opacity: opacity.value,
-        overflow: 'hidden',
-    }));
-
-    const rBackgroundStyle = useAnimatedStyle(() => {
-        const isSwipe = Math.abs(translateX.value) > 0;
-        return {
-            backgroundColor: isSwipe ? colors.error : 'transparent',
-            justifyContent: translateX.value < 0 ? 'flex-end' : 'flex-start', 
-        };
-    });
-
-    // Accesibilidad Actions
-    const accessibilityActions: AccessibilityActionInfo[] = [
-        { name: 'delete', label: t('common.delete') },
-        { name: 'activate', label: t('common.edit') }
-    ];
-
-    const handleAccessibilityAction = (event: any) => {
-        switch (event.nativeEvent.actionName) {
-            case 'delete':
-                setIsWarningOpen(true);
-                break;
-            case 'activate':
-                setIsEditOpen(true);
-                break;
-        }
-    };
 
     return (
         <Animated.View
             style={[styles.containerWrapper, rContainerStyle]}
             onLayout={handleLayout}
         >
-            
             {/* FONDO (Swipe Actions) */}
             <Animated.View
                 style={[StyleSheet.absoluteFill, styles.backgroundContainer, rBackgroundStyle]}
@@ -232,10 +82,7 @@ export const TransactionItemMobile = React.memo(({
                 >
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={() => {
-                            setIsEditOpen(true);
-                            setInputNameActive(transaction.type === TransactionType.INCOME ? InputNameActive.INCOME : InputNameActive.SPEND);
-                        }}
+                        onPress={handleEditPress}
                         style={styles.touchableContent}
                         accessibilityRole="button"
                         accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
@@ -250,14 +97,13 @@ export const TransactionItemMobile = React.memo(({
                                     backgroundColor: colors.surface,
                                     borderRadius: 50,
                                     padding: 4,
-
                                 }} />
                             ) : (
                                     <MaterialIcons name="shopping-bag" size={22} color={colors.text} />
                             )}
                         </View>
 
-                        {/* 2. Textos (Flexible) */}
+                        {/* 2. Textos */}
                         <View style={styles.textContainer}>
                             <View style={styles.titleRow}>
                                 <Text
@@ -319,12 +165,10 @@ export const TransactionItemMobile = React.memo(({
                     onSubmit={performDelete}
                 />
             )}
-
-            <EditTransactionFormMobile
-                open={isEditOpen}
+            <TransactionForm
+                isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
-                onSave={onSave}
-                transaction={transaction}
+                transactionToEdit={transaction}
             />
 
         </Animated.View>
@@ -389,7 +233,6 @@ const styles = StyleSheet.create({
     description: {
         fontSize: 16,
         fontFamily: 'FiraSans-Regular',
-        fontFamily: 'FiraSans-Regular',
         flexShrink: 1,
         lineHeight: 22,
     },
@@ -401,7 +244,6 @@ const styles = StyleSheet.create({
     },
     chipText: {
         fontSize: 11,
-        fontFamily: 'FiraSans-Bold',
         fontFamily: 'FiraSans-Bold',
         lineHeight: 14,
     },

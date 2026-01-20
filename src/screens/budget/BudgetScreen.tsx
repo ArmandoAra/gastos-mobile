@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 // Componentes
 import { BudgetCard } from './components/BudgetCard';
 import { BudgetFormModal } from './components/BudgetFormModal';
-import AddTransactionForm from '../../components/forms/AddTransactionForm';
 import InfoPopUp from '../../components/messages/InfoPopUp';
 
 // Hooks y Stores
@@ -24,6 +23,7 @@ import useBudgetsStore from '../../stores/useBudgetStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import TransactionForm from '../../components/forms/TransactionForm';
 
 export function BudgetScreen() {
     const insets = useSafeAreaInsets();
@@ -61,11 +61,11 @@ export function BudgetScreen() {
     };
 
     return (
-        <View style={[styles.screenContainer, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
+        <View style={[styles.screenContainer, { backgroundColor: colors.surface, paddingTop: 5 }]}>
             <InfoPopUp />
 
             {/* --- ZONA FIJA SUPERIOR (FILTROS) --- */}
-            <View style={[styles.fixedHeader, { backgroundColor: colors.surface }]}>
+            <View style={[styles.fixedHeader]}>
                 {/* Botones alineados a la derecha */}
                 <View style={styles.filterContainer}>
                     <TouchableOpacity
@@ -180,7 +180,7 @@ export function BudgetScreen() {
             />
 
             {(inputNameActive === InputNameActive.SPEND) && (
-                <AddTransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
+                <TransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
             )}
         </View>
     );
@@ -193,8 +193,10 @@ export const styles = StyleSheet.create({
     },
     // Contenedor fijo arriba
     fixedHeader: {
+        position: 'absolute',
+        top: -50,
+        right: 0,
         paddingHorizontal: 5,
-        paddingBottom: 10,
         zIndex: 1,
     },
     filterContainer: {

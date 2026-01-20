@@ -39,7 +39,6 @@ export const useTransactionsLogic = () => {
         transactions,
         allAccounts: accounts, // Obtenemos las cuentas del store
         getUserTransactions,
-        getTransactionsByAccount,
         deleteTransaction,
         updateTransaction,
         deleteSomeAmountInAccount,

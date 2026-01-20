@@ -9,8 +9,10 @@ import {
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
+import { is } from 'date-fns/locale';
 
 interface DescriptionInputProps {
+    isReady?: boolean;
     description: string;
     setDescription: (desc: string) => void;
     colors: ThemeColors;
@@ -19,6 +21,7 @@ interface DescriptionInputProps {
 const MAX_LENGTH = 120;
 
 export default function DescriptionInput({ 
+    isReady = true,
     description,
     setDescription,
     colors
@@ -26,9 +29,7 @@ export default function DescriptionInput({
     const { t } = useTranslation();
 
     return (
-        <Animated.View 
-            layout={FadeInLeft} // Maneja cambios de layout suaves
-            entering={FadeInLeft.duration(300).delay(50)}
+        <View 
             style={styles.container}
         >
             {/* Label Superior */}
@@ -41,6 +42,10 @@ export default function DescriptionInput({
             </Text>
 
             <View style={[styles.inputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                {isReady &&
+                    <Animated.View
+                        entering={FadeInLeft.duration(300)}
+                    >
                 <TextInput
                     value={description}
                     onChangeText={setDescription}
@@ -73,10 +78,15 @@ export default function DescriptionInput({
                         maxFontSizeMultiplier={1.2}
                     >
                         {description.length}/{MAX_LENGTH}
-                    </Text>
-                </View>
+                            </Text>
+                        </View>
+                    </Animated.View>
+
+                }
             </View>
-        </Animated.View>
+
+
+        </View>
     );
 }
 
@@ -94,6 +104,7 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     inputWrapper: {
+        minHeight: 120,
         width: '100%',
         borderRadius: 18,
         padding: 16,
@@ -103,7 +114,6 @@ const styles = StyleSheet.create({
     },
     input: {
         fontSize: 16,
-        fontFamily: 'FiraSans-Regular',
         fontFamily: 'FiraSans-Regular',
         minHeight: 80, // Altura base
         // CLAVE: Padding bottom extra para que el texto nunca escriba ENCIMA del contador

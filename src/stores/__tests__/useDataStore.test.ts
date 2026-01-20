@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import useDataStore from '../useDataStore'; // Ajusta la ruta si es necesario
-import { TransactionType } from '../../interfaces/data.interface'; // Ajusta la ruta
-import { create } from 'zustand';
+import { Transaction, TransactionType } from '../../interfaces/data.interface'; // Ajusta la ruta
+import { useAuthStore } from '../../stores/authStore';
 
 // Mockeamos uuid para controlar los IDs en el test
 const mockUuid = require('uuid');
@@ -10,6 +10,17 @@ describe('useDataStore (Zustand)', () => {
   // LIMPIEZA: Antes de cada test, reseteamos el store a su estado inicial
   beforeEach(() => {
     const { result } = renderHook(() => useDataStore());
+      act(() => {
+          useAuthStore.setState({
+              user: {
+                  id: 'user-1', // Este ID debe coincidir con el que usas en tus tests
+                  name: 'Test User',
+                  email: 'test@test.com',
+                  currency: "USD"
+              }
+          });
+      });
+
     act(() => {
       result.current.reset();
     });
@@ -57,7 +68,7 @@ describe('useDataStore (Zustand)', () => {
     });
 
     // Simulamos transacciones
-    const incomeTx = {
+      const incomeTx: Transaction = {
       id: 'tx-1',
       account_id: 'acc-1',
       amount: 1000,
@@ -65,12 +76,13 @@ describe('useDataStore (Zustand)', () => {
       user_id: 'u1',
       date: (new Date()).toISOString(),
         category_icon_name: 'Salary',
+          slug_category_name: ['Salary'],
       description: 'Pago',
       created_at: (new Date()).toISOString(),
       updated_at: (new Date()).toISOString(),
     };
 
-    const expenseTx = {
+      const expenseTx: Transaction = {
       id: 'tx-2',
       account_id: 'acc-1',
       amount: 200,
@@ -78,6 +90,7 @@ describe('useDataStore (Zustand)', () => {
       user_id: 'u1',
       date: (new Date()).toISOString(),
         category_icon_name: 'Food',
+          slug_category_name: ['Food'],
       description: 'Cena',
       created_at: (new Date()).toISOString(),
       updated_at: (new Date()).toISOString(),
@@ -120,7 +133,13 @@ describe('useDataStore (Zustand)', () => {
 });
 
 describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
-    
+
+    act(() => {
+        useAuthStore.setState({
+            user: { id: 'user-1', name: 'Test User', email: 'test@test.com', currency: "USD" }
+        });
+    });
+
     // Limpieza antes de cada test
     beforeEach(() => {
         const { result } = renderHook(() => useDataStore());
@@ -140,7 +159,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
         });
 
         // 2. Agregar Transacción de Ingreso (+1500)
-        const incomeTx = {
+        const incomeTx: Transaction = {
             id: 'tx-1',
             account_id: 'acc-1',
             amount: 1500,
@@ -148,6 +167,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             user_id: 'user-1',
             date: ( new Date()).toISOString(),
             category_icon_name: 'Salary',
+            slug_category_name: ['Salary'],
             description: 'Nómina',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -178,7 +198,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
 
         // 2. Agregar Gasto (500)
         // Nota: Si el saldo es 0, debería quedar en -500
-        const expenseTx = {
+        const expenseTx: Transaction = {
             id: 'tx-2',
             account_id: 'acc-1',
             amount: 500,
@@ -186,6 +206,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             user_id: 'user-1',
             date: ( new Date()).toISOString(),
             category_icon_name: 'Food',
+            slug_category_name: ['Food'],
             description: 'Supermercado',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -209,7 +230,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             await result.current.createAccount({ name: 'Ahorros', userId: 'u1' });
         });
 
-        const tx = {
+        const tx: Transaction = {
             id: 'tx-1',
             account_id: 'acc-1',
             amount: 1000,
@@ -217,6 +238,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             user_id: 'u1',
             date: ( new Date()).toISOString(),
             category_icon_name: 'Job',
+            slug_category_name: ['Job'],
             description: 'Freelance',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -249,7 +271,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             await result.current.createAccount({ name: 'Cartera', userId: 'u1' });
         });
 
-        const tx = {
+        const tx: Transaction = {
             id: 'tx-del',
             account_id: 'acc-1',
             amount: 300,
@@ -257,6 +279,7 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             user_id: 'u1',
             date: ( new Date()).toISOString(),
             category_icon_name: 'Taxi',
+            slug_category_name: ['Taxi'],
             description: 'Uber',
             created_at: ( new Date()).toISOString(),
             updated_at: ( new Date()).toISOString(),
@@ -288,9 +311,45 @@ describe('Integración Transacciones <-> Cuentas (Sync Logic)', () => {
             await result.current.createAccount({ name: 'Mix Account', userId: 'u1' });
         });
 
-        const t1 = { id: '1', account_id: 'acc-mix', amount: 1000, type: TransactionType.INCOME, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_icon_name: 'A', description: 'A' };
-        const t2 = { id: '2', account_id: 'acc-mix', amount: 200, type: TransactionType.EXPENSE, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_icon_name: 'B', description: 'B' };
-        const t3 = { id: '3', account_id: 'acc-mix', amount: 50, type: TransactionType.EXPENSE, user_id: 'u1', date: (new Date()).toISOString(), created_at: (new Date()).toISOString(), updated_at: (new Date()).toISOString(), category_icon_name: 'C', description: 'C' };
+        const t1: Transaction = {
+            id: '1',
+            account_id: 'acc-mix',
+            amount: 1000,
+            type: TransactionType.INCOME,
+            user_id: 'u1',
+            date: (new Date()).toISOString(),
+            created_at: (new Date()).toISOString(),
+            updated_at: (new Date()).toISOString(),
+            category_icon_name: 'A',
+            slug_category_name: ['A'],
+            description: 'A'
+        };
+        const t2: Transaction = {
+            id: '2',
+            account_id: 'acc-mix',
+            amount: 200,
+            type: TransactionType.EXPENSE,
+            user_id: 'u1',
+            date: (new Date()).toISOString(),
+            created_at: (new Date()).toISOString(),
+            updated_at: (new Date()).toISOString(),
+            category_icon_name: 'B',
+            slug_category_name: ['B'],
+            description: 'B'
+        };
+        const t3: Transaction = {
+            id: '3',
+            account_id: 'acc-mix'
+            , amount: 50,
+            type: TransactionType.EXPENSE,
+            user_id: 'u1',
+            date: (new Date()).toISOString(),
+            created_at: (new Date()).toISOString(),
+            updated_at: (new Date()).toISOString(),
+            category_icon_name: 'C',
+            slug_category_name: ['C'],
+            description: 'C'
+        };
 
         // 1000 (Ingreso) - 200 (Gasto) - 50 (Gasto) = 750
         act(() => {
@@ -321,9 +380,9 @@ describe('Operaciones Críticas de Cuentas y Transferencias', () => {
         });
 
         // 2. Agregar dinero a la cuenta Origen (1000)
-        const tx1 = { 
+        const tx1: Transaction = { 
             id: 'tx-1', account_id: 'acc-origin', amount: 1000, type: TransactionType.INCOME, 
-            user_id: 'u1', date: (new Date()).toISOString(), created_at: '', updated_at: '', category_icon_name: '', description: '' 
+            user_id: 'u1', date: (new Date()).toISOString(), created_at: '', updated_at: '', category_icon_name: '', slug_category_name: [''], description: '' 
         };
         
         act(() => {
@@ -366,7 +425,19 @@ describe('Operaciones Críticas de Cuentas y Transferencias', () => {
         });
 
         // Agregar transacciones a la cuenta A
-        const txA = { id: 'tx-A', account_id: 'acc-A', amount: 100, type: TransactionType.EXPENSE, user_id: 'u1', date: '', created_at: '', updated_at: '', category_icon_name: '', description: '' };
+        const txA: Transaction = {
+            id: 'tx-A',
+            account_id: 'acc-A',
+            amount: 100,
+            type: TransactionType.EXPENSE,
+            user_id: 'u1',
+            date: '',
+            created_at: '',
+            updated_at: '',
+            category_icon_name: '',
+            slug_category_name: [''],
+            description: ''
+        };
         
         act(() => {
             result.current.setTransactions([txA]);
@@ -408,8 +479,8 @@ describe('Operaciones Críticas de Cuentas y Transferencias', () => {
         });
 
         // 2. Probar Selectores
-        const accountsU1 = result.current.getAllAccountsByUserId('user-1');
-        const txsU1 = result.current.getAllTransactionsByUserId('user-1');
+        const accountsU1 = result.current.getUserAccounts();
+        const txsU1 = result.current.getUserTransactions();
 
         // 3. ASSERT
         expect(accountsU1).toHaveLength(1);
@@ -417,6 +488,14 @@ describe('Operaciones Críticas de Cuentas y Transferencias', () => {
 
         expect(txsU1).toHaveLength(1);
         expect(txsU1[0].id).toBe('t1');
+
+        act(() => {
+            useAuthStore.setState({ user: { id: 'user-2', name: 'Other', email: '', currency: "USD" } });
+        });
+
+        // Ahora pedimos los datos de nuevo
+        const accountsU2 = result.current.getUserAccounts();
+        expect(accountsU2[0].id).toBe('acc-u2');
     });
 
     it('debe borrar una cantidad específica de una cuenta (deleteSomeAmountInAccount)', () => {

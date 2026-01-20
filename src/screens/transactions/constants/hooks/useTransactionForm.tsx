@@ -19,6 +19,8 @@ import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../api/i
 import { defaultCategories } from '../../../../constants/categories';
 import { filterCategoriesByType } from "../../../../utils/categories";
 import useCategoriesStore from "../../../../stores/useCategoriesStore";
+import { se } from "date-fns/locale";
+import { LanguageCode, languages } from "../../../../constants/languages";
 
 
 const INITIAL_FORM_STATE = {
@@ -59,10 +61,13 @@ export function useTransactionForm() {
     const popoverOpen = Boolean(anchorEl);
 
     useEffect(() => {
-        setSelectedCategory(allCategories[0]);
+        // si la categoria seleccionada no esta en todas las categorias filtradas, se selecciona la primera
+        if (!allCategories.find(cat => cat.name === selectedCategory.name)) {
+            setSelectedCategory(allCategories[0]);
+        }
     }, [iconsKey]);
 
-    useEffect(() => {
+    useEffect(() => {   
         if (inputNameActive === InputNameActive.NONE) {
             setAmount(INITIAL_FORM_STATE.amount);
             setDescription(INITIAL_FORM_STATE.description);
@@ -103,6 +108,7 @@ export function useTransactionForm() {
     }, [amount, selectedAccount, showMessage, t]);
 
     const prepareTransactionData = useCallback((): Transaction => {
+        const language = useSettingsStore.getState().language;
         const now = new Date();
         const baseDate = localSelectedDay ? new Date(localSelectedDay) : now;
 
@@ -128,13 +134,17 @@ export function useTransactionForm() {
             CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese] || "",
         ];
 
+        const defaultDescription = language === LanguageCode.PT
+            ? CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese]
+            : CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish];
+
         const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
 
         return {
             id: uuidv4(),
             account_id: selectedAccount,
             user_id: user?.id || "current-user-id",
-            description: description.trim() || `${selectedCategory.name}`,
+            description: description.trim() || (language === LanguageCode.EN ? selectedCategory.name : defaultDescription),
             amount: finalAmount,
             type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
             category_icon_name: selectedCategory.icon,
@@ -168,7 +178,7 @@ export function useTransactionForm() {
             );
 
             showMessage(MessageType.SUCCESS, t("messagesInfo.transactionAdded"));
-            handleClose();
+            // handleClose();
         } catch (error) {
             console.error(error);
             showMessage(MessageType.ERROR, t("messagesInfo.transactionAddError"));

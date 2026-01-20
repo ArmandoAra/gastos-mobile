@@ -73,7 +73,6 @@ export default function WarningAccountDeleteMessage({
 
         try {
             transferAllAccountTransactions(accountToDelete, toNewAccount);
-            updateAccountBalance(toNewAccount, 0); 
             deleteAccountStore(accountToDelete);
             onClose();
         } catch (error) {

@@ -15,7 +15,12 @@ import Animated, {
     useSharedValue, 
     withSpring, 
     FadeInLeft,
-    FadeInRight
+    FadeInRight,
+    SlideInRight,
+    SlideOutLeft,
+    SlideInLeft,
+    SlideOutRight,
+    FadeIn
 } from 'react-native-reanimated';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
@@ -23,10 +28,11 @@ import { Category } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { Icon } from 'react-native-paper';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
-import { de } from 'date-fns/locale';
+import { de, is } from 'date-fns/locale';
 import { defaultCategories } from '../../../constants/categories';
 
 interface CategoryAndAmountInputProps {
+    isReady?: boolean;
     selectedCategory: Category | null;
     amount: string;
     setAmount: (value: string) => void;
@@ -37,6 +43,7 @@ interface CategoryAndAmountInputProps {
 }
 
 export default function CategoryAndAmountInput({
+    isReady,
     selectedCategory,
     amount = '',
     setAmount,
@@ -57,12 +64,15 @@ export default function CategoryAndAmountInput({
 
 
 
-    const { icon: IconCategory, color } = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon) || {};
+    const { icon: IconCategory } = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon) || {};
 
     return (
         <View style={styles.container}>
             {/* 1. SELECCIÓN DE CATEGORÍA */}
             <View style={styles.categoryColumn}>
+                {isReady && <Animated.View
+                    entering={FadeIn.delay(200)}
+                >
                 <Text
                     style={[styles.label, { color: colors.textSecondary }]}
                     maxFontSizeMultiplier={1.5} // Evita que labels auxiliares rompan el layout
@@ -70,6 +80,10 @@ export default function CategoryAndAmountInput({
                 >
                     {t('transactions.category', 'CATEGORY')}
                 </Text>
+                </Animated.View>
+
+                }
+
                 
                 <TouchableOpacity
                     activeOpacity={0.8}
@@ -81,7 +95,10 @@ export default function CategoryAndAmountInput({
                     accessibilityHint={selectedCategory ? `${t('common.current')}: ${selectedCategory.name}` : t('common.none_selected')}
                 >
                     <Animated.View entering={FadeInLeft} style={styles.iconContainer}>
-                        <Animated.View style={animatedIconStyle}>
+                        {isReady && <Animated.View
+                            entering={SlideInLeft.duration(200)}
+                            exiting={SlideOutRight.duration(300)}
+                            style={animatedIconStyle}>
                             <View
                                 style={[styles.gradient, { borderColor: colors.border, backgroundColor: selectedCategory?.color || colors.primary }]}
                             >
@@ -96,12 +113,17 @@ export default function CategoryAndAmountInput({
                                 )}
                             </View>
                         </Animated.View>
+                        }
+
                     </Animated.View>
                 </TouchableOpacity>
             </View>
 
             {/* 2. ENTRADA DE MONTO */}
             <View style={styles.amountColumn}>
+                {isReady && <Animated.View
+                    entering={FadeIn.delay(300)}
+                >
                 <Text
                     style={[styles.label, { color: colors.textSecondary }]}
                     maxFontSizeMultiplier={1.5}
@@ -109,9 +131,10 @@ export default function CategoryAndAmountInput({
                 >
                     {t('transactions.amount', 'AMOUNT')}* ({amount.length}/12)
                 </Text>
-                
-                <Animated.View
-                    entering={FadeInRight}
+                </Animated.View>}
+
+                {isReady && <Animated.View
+                    entering={SlideInRight.duration(300)}
                     style={[
                         styles.inputWrapper,
                         { backgroundColor: colors.surface, borderColor: colors.border }
@@ -146,14 +169,17 @@ export default function CategoryAndAmountInput({
                     >
                         <MaterialIcons
                             name="calculate"
-                            size={28} // Tamaño un poco más grande para mejor visibilidad
+                            size={28} 
                             color={colors.surface}
                         />
                     </TouchableOpacity>
 
 
                 </Animated.View>
+                }
+
             </View>
+            <Animated.View />
         </View>
     );
 }
@@ -170,6 +196,7 @@ const styles = StyleSheet.create({
     },
     // --- COLUMNA CATEGORÍA ---
     categoryColumn: {
+        minHeight: 90,
         alignItems: 'center',
         flexShrink: 0, // No se encoge
         maxWidth: 80, // Limita el ancho para que no empuje el input
@@ -193,6 +220,7 @@ const styles = StyleSheet.create({
 
     // --- COLUMNA MONTO ---
     amountColumn: {
+        minHeight: 90,
         flex: 1, 
     },
     inputWrapper: {

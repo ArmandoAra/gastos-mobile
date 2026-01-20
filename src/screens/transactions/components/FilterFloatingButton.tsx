@@ -31,9 +31,9 @@ interface FilterFloatingButtonProps {
 
 const emptyAccount: Account = {
     id: 'all',
-    name: 'All Accounts',
+    name: 'allAccounts',
     balance: 0,
-    type: 'checking',
+    type: '',
     createdAt: new Date(),
     updatedAt: new Date(),
     userId: ''

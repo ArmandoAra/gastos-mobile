@@ -205,26 +205,31 @@ const useDataStore = create<State & Actions>()(
                         })
                     }), false, 'updateAccountBalance');
                 },
-
                 transferAllAccountTransactions: (fromAccountId: string, toAccountId: string) => {
                     set((state) => {
                         const transactionsToMove = state.transactions.filter(t => t.account_id === fromAccountId);
 
-                        // Calcular el saldo neto de las transacciones a mover
+
                         const totalImpact = transactionsToMove.reduce((acc, t) => {
-                            return t.type === 'income' ? acc + t.amount : acc - t.amount;
+
+                            return t.type === 'income'
+                                ? acc + t.amount
+                                : acc - Math.abs(t.amount);
                         }, 0);
 
+                        // Actualizamos las transacciones y las cuentas
                         return {
                             transactions: state.transactions.map(t =>
                                 t.account_id === fromAccountId
-                                    ? { ...t, account_id: toAccountId }
+                                    ? { ...t, account_id: toAccountId } // Movemos la transacción
                                     : t
                             ),
                             allAccounts: state.allAccounts.map(acc => {
+                                // Cuenta Origen: Se queda en 0
                                 if (acc.id === fromAccountId) {
                                     return { ...acc, balance: 0 };
                                 }
+                                // Cuenta Destino: Sumamos el impacto calculado
                                 if (acc.id === toAccountId) {
                                     return { ...acc, balance: acc.balance + totalImpact };
                                 }
@@ -233,6 +238,8 @@ const useDataStore = create<State & Actions>()(
                             error: null,
                         };
                     });
+
+
                 },
                 getAccountById: (accountId: string) => get().allAccounts.find(acc => acc.id === accountId),
 
@@ -315,6 +322,7 @@ const useDataStore = create<State & Actions>()(
 
                 addTransactionStore: (transaction: Transaction) => {
                     const currentUserId = useAuthStore.getState().user?.id;
+                    console.log("Current User ID:", currentUserId);
                     if (!currentUserId) return;
                     const transactionWithId = { ...transaction, user_id: currentUserId };    
                     set(
@@ -353,7 +361,7 @@ const useDataStore = create<State & Actions>()(
 
                 getUserTransactions: () => {
                     const allTransactions = get().transactions;
-                    const currentUser = useAuthStore.getState().user; // Accedemos al ID del usuario actual
+                    const currentUser = useAuthStore.getState().user; 
 
                     if (!currentUser) return [];
 

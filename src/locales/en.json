@@ -122,7 +122,8 @@
         "transferToAccount": "Select destination account",
         "deleteWarning": "Deleting an account will also delete all associated transactions. You can also transfer them to another account. Are you sure you want to continue?",
         "transferAndDelete": "Transfer and delete",
-        "justDelete": "Delete Account"
+        "justDelete": "Delete Account",
+        "allAccounts": "All Accounts"
     },
     "theme": {
         "titleHeader": "Appearance",

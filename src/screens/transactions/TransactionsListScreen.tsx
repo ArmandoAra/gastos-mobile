@@ -1,16 +1,11 @@
-import { format, parseISO, isSameMonth, isSameYear, isSameDay, set } from 'date-fns';
-import { es, pt, enGB } from "date-fns/locale";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import {
     View,
     TouchableOpacity,
     Text,
     TextInput,
     StyleSheet,
-    Platform,
-    AccessibilityInfo
 } from "react-native";
-import { styles } from "../../theme/styles"; // Estilos globales si los usas
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 
@@ -20,21 +15,15 @@ import InfoPopUp from "../../components/messages/InfoPopUp";
 import { TransactionItemMobile } from "./components/TransactionItem";
 
 // Stores & Interfaces
-import useDataStore from "../../stores/useDataStore";
-import { Transaction, TransactionType } from "../../interfaces/data.interface";
+import { Transaction } from "../../interfaces/data.interface";
 import { formatCurrency } from "../../utils/helpers";
 import FilterFloatingButton from "./components/FilterFloatingButton";
-import useDateStore from "../../stores/useDateStore";
 import { useSettingsStore } from "../../stores/settingsStore";
-import { ThemeColors } from "../../types/navigation";
-import { darkTheme, lightTheme } from '../../theme/colors';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import InfoHeader from "../../components/headers/InfoHeader";
-import { useTranslation } from "react-i18next";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
-import AddTransactionForm from "../../components/forms/AddTransactionForm";
-import { InputNameActive } from "../../interfaces/settings.interface";
+import TransactionForm from '../../components/forms/TransactionForm';
 
 
 type ListItem =
@@ -60,7 +49,7 @@ export function TransactionsScreen() {
         handleSave,
         getGroupTitle
     } = useTransactionsLogic();
-    const { inputNameActive, isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
+    const { isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
 
     // --- RENDERIZADO DE ITEMS ---
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
@@ -195,9 +184,8 @@ export function TransactionsScreen() {
                     />
                 </GestureHandlerRootView>
             </View>
-            {(inputNameActive === InputNameActive.INCOME || inputNameActive === InputNameActive.SPEND) && (
-                <AddTransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
-            )}
+
+            <TransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
             <AddTransactionsButton />
         </SafeAreaView>
     );

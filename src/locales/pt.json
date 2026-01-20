@@ -125,7 +125,8 @@
         "transferToAccount": "Selecionar conta de destino",
         "deleteWarning": "Excluir uma conta também excluirá todas as transações associadas a ela. Você também pode transferi-las para outra conta. Tem certeza de que deseja continuar?",
         "transferAndDelete": "Transferir e excluir",
-        "justDelete": "Excluir Conta"
+        "justDelete": "Excluir Conta",
+        "allAccounts": "Todas as contas"
     },
     "theme": {
         "titleHeader": "Aparência",
