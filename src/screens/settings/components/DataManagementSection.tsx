@@ -20,6 +20,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 
+
+import * as FileSystem from 'expo-file-system/legacy';
 // File System Next API
 import { File, Paths } from 'expo-file-system/next';
 import * as Sharing from 'expo-sharing';
@@ -33,7 +35,7 @@ import useMessage from '../../../stores/useMessage';
 import { MessageType } from '../../../interfaces/message.interface';
 import useBudgetStore from '../../../stores/useBudgetStore';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
-import { set } from 'date-fns';
+
 
 interface DataManagementProps {
     colors: ThemeColors;
@@ -87,6 +89,66 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
     const cloudStyle = useAnimatedStyle(() => ({ transform: [{ translateY: cloudY.value }] }));
     const uploadStyle = useAnimatedStyle(() => ({ transform: [{ translateY: uploadArrowY.value }] }));
 
+    const saveFileToDevice = async (): Promise<boolean> => {
+        if (!user?.id) return false;
+
+        const data = {
+            user,
+            accounts: getUserAccounts(),
+            transactions: getUserTransactions(),
+            budgets: getUserBudgets(),
+            items: getUserItems(),
+            categories: getUserCategories(),
+            exportDate: new Date().toISOString()
+        };
+
+        const jsonData = JSON.stringify(data, null, 2);
+        const fileName = `spendiary-backup-${Date.now()}.json`;
+
+        try {
+            if (Platform.OS === 'android') {
+                const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+                if (!permissions.granted) {
+                    return false; // El usuario canceló
+                }
+
+                const directoryUri = permissions.directoryUri;
+
+                // 2. CREAR EL ARCHIVO
+                // createFileAsync maneja automáticamente si el archivo ya existe (añade (1), (2), etc.)
+                // mimeType 'application/json' es importante para que Android sepa cómo abrirlo.
+                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                    directoryUri,
+                    fileName,
+                    'application/json'
+                );
+
+                // 3. ESCRIBIR EL CONTENIDO
+                await FileSystem.writeAsStringAsync(fileUri, jsonData, {
+                    encoding: FileSystem.EncodingType.UTF8,
+                });
+
+                return true;
+
+            } else {
+                // PARA IOS:
+                // iOS no tiene un "SAF" igual. Lo guardamos en documentos y luego
+                // delegamos al usuario que decida qué hacer (Guardar en Archivos / Compartir).
+                // Nota: En iOS normalmente se usa Sharing.shareAsync después de esto.
+                const fileUri = FileSystem.documentDirectory + fileName;
+                await FileSystem.writeAsStringAsync(fileUri, jsonData, {
+                    encoding: FileSystem.EncodingType.UTF8,
+                });
+
+                // Aquí retornaríamos la URI o true para que el componente llame a Sharing
+                return true;
+            }
+        } catch (error) {
+            console.error('Error en saveFileToDevice:', error);
+            return false;
+        }
+    };
     // --- EXPORTAR ---
     const handleDownloadData = async () => {
         if (!user?.id) return;
@@ -208,13 +270,13 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
             </Text>
 
             <View style={styles.actionsContainer}>
-                {/* EXPORT BUTTON */}
+                {/* SAVE BUTTON */}
                 <TouchableOpacity
-                    onPress={handleDownloadData}
+                    onPress={saveFileToDevice}
                     disabled={isDownloading || isUploading}
                     activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={isDownloading ? t('dataAndBackup.exporting') : t('dataAndBackup.export')}
+                    accessibilityLabel={isDownloading ? t('dataAndBackup.saving') : t('dataAndBackup.save')}
                     accessibilityHint={t('accessibility.export_data', "Exports app data to a backup file")}
                     accessibilityState={{ busy: isDownloading, disabled: isDownloading || isUploading }}
                 >
@@ -230,7 +292,35 @@ export default function DataManagementSection({ colors }: DataManagementProps) {
                                 style={[styles.actionTitle, { color: colors.text }]}
                                 maxFontSizeMultiplier={1.5}
                             >
-                                {isDownloading ? t('dataAndBackup.exporting') : t('dataAndBackup.export')}
+                                {isDownloading ? t('dataAndBackup.saving') : t('dataAndBackup.save')}
+                            </Text>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+
+                {/* EXPORT BUTTON */}
+                <TouchableOpacity
+                    onPress={handleDownloadData}
+                    disabled={isDownloading || isUploading}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={isDownloading ? t('dataAndBackup.Sharing') : t('dataAndBackup.share')}
+                    accessibilityHint={t('accessibility.export_data', "Exports app data to a backup file")}
+                    accessibilityState={{ busy: isDownloading, disabled: isDownloading || isUploading }}
+                >
+                    <View style={[styles.actionBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <Animated.View
+                            style={[styles.iconCircle, cloudStyle, { backgroundColor: colors.surfaceSecondary }]}
+                            importantForAccessibility="no"
+                        >
+                            <MaterialIcons name="share" size={28} color={colors.income} />
+                        </Animated.View>
+                        <View style={styles.textWrapper}>
+                            <Text
+                                style={[styles.actionTitle, { color: colors.text }]}
+                                maxFontSizeMultiplier={1.5}
+                            >
+                                {isDownloading ? t('dataAndBackup.sharing') : t('dataAndBackup.share')}
                             </Text>
                         </View>
                     </View>

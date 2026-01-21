@@ -24,8 +24,9 @@ import { InsightCard } from './subcomponents/InsightCard';
 import { EmptyState } from './subcomponents/EmptyState';
 import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogic';
 import PeriodSelector from './subcomponents/PeriodSelector';
+import { ViewPeriod } from '../../../interfaces/date.interface';
 
-export default function DailyExpenseViewMobile() {
+export default function DailyExpenseViewMobile({ handlePeriodChange }: { handlePeriodChange: (p: ViewPeriod) => void }) {
     const {
         t,
         colors,
@@ -88,7 +89,12 @@ export default function DailyExpenseViewMobile() {
         >
             <PeriodSelector
                 selectedPeriod={currentPeriod}
-                onPeriodChange={setCurrentPeriod}
+                onPeriodChange={(period) => {
+                    // Este lo cambia
+                    setCurrentPeriod(period);
+                    //Este envia el estado al padre
+                    handlePeriodChange(period);
+                }}
                 colors={colors}
             />
             <Animated.View

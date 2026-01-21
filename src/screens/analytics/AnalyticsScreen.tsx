@@ -71,7 +71,7 @@ export default function AnalyticsScreen() {
         { /* Period Selector - Accesible y Escalable */}
 
         {/* 1. Daily View */}
-        <DailyExpenseViewMobile />
+        <DailyExpenseViewMobile handlePeriodChange={handlePeriodChange} />
 
         {/* 2. Heatmap */}
         <ExpenseHeatmap />

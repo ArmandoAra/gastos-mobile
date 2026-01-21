@@ -10,6 +10,7 @@ import { ThemeColors } from '../../types/navigation';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ViewMode, ViewPeriod } from '../../interfaces/date.interface';
 import { useTranslation } from 'react-i18next';
+import DataManagementSection from '../../screens/settings/components/DataManagementSection';
 
 export interface InfoHeaderProps {
   viewMode: ViewMode | ViewPeriod;
@@ -88,16 +89,17 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
             accessibilityLabel={`${translatedSubtitle}, ${dateText}`}
           >
             <Text
-              style={[styles.overviewLabel, { color: colors.textSecondary }]}
+              style={[styles.overviewLabel, { color: colors.text }]}
               maxFontSizeMultiplier={1.5}
             >
-              {translatedSubtitle}
+              {viewMode === 'day' && isSameDay(localSelectedDay, new Date()) ? `${translatedSubtitle} - ${dateText.split(',')[0]}` : translatedSubtitle}
             </Text>
             <Text
               style={[styles.dateDisplay, { color: colors.text }]}
               maxFontSizeMultiplier={1.3} // Limitamos ligeramente para no romper la tarjeta
             >
-              {dateText}
+              {viewMode === 'day' && isSameDay(localSelectedDay, new Date()) ? dateText.split(',').slice(1).join(',') : dateText}
+              {/* {dateText} */}
             </Text>
           </View>
 
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
   overviewLabel: {
     fontSize: 12,
     textTransform: 'uppercase',
-    fontFamily: 'Tinos-Italic',
+    fontFamily: 'FiraSans-Bold',
     letterSpacing: 1,
     marginBottom: 4,
     opacity: 0.8,
