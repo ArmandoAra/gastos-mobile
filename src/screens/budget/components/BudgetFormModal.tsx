@@ -26,9 +26,9 @@ import { useAuthStore } from "../../../stores/authStore";
 
 // IMPORTANTE: Importamos el componente optimizado que creamos antes
 import { BudgetItem } from "./BudgetItem";
-import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { InputNameActive } from "../../../interfaces/settings.interface";
+import { set } from 'date-fns';
 
 export const BudgetFormModal = ({
     visible,
@@ -69,8 +69,8 @@ export const BudgetFormModal = ({
         toggleItemDone,
         toggleFavorite,
     } = useBudgetForm({ visible, onClose, initialData });
-    const { setIsAddOptionsOpen, setInputNameActive } = useSettingsStore();
-
+    const setInputNameActive = useSettingsStore(state => state.setInputNameActive);
+    const setIsAddOptionsOpen = useSettingsStore(state => state.setIsAddOptionsOpen);
 
     const currencySymbol = useAuthStore(state => state.currencySymbol);
     const deleteBudget = useBudgetsStore(state => state.deleteBudget);
@@ -84,7 +84,7 @@ export const BudgetFormModal = ({
         }
     };
 
-    const converToTransaction = () => {
+    const converToTransaction = useCallback(() => {
         const dataToTransact: ToConvertBudget = {
             name,
             totalAmount: totalSpent,
@@ -97,7 +97,7 @@ export const BudgetFormModal = ({
         setIsAddOptionsOpen(true);
         setInputNameActive(InputNameActive.SPEND);
         useBudgetsStore.getState().setToTransactBudget(dataToTransact);
-    };
+    }, [name, totalSpent, selectedCategory, initialData, handleSaveForm, setCategorySelectorOpen, onClose, setIsAddOptionsOpen, setInputNameActive]);
 
     // --- RENDERIZADO DEL HEADER DE LA LISTA ---
     // Contiene todo lo que va arriba de los items repetitivos

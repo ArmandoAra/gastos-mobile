@@ -23,7 +23,6 @@ import { ICON_OPTIONS } from '../../../constants/icons';
 import { useAuthStore } from '../../../stores/authStore';
 import useDataStore from '../../../stores/useDataStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
-import { useTransactionForm } from '../constants/hooks/useTransactionForm';
 import { defaultCategories } from '../../../constants/categories';
 import { InputNameActive } from '../../../interfaces/settings.interface';
 import { ThemeColors } from '../../../types/navigation';
@@ -43,9 +42,9 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
     const { user, currencySymbol } = useAuthStore();
     const { setInputNameActive } = useSettingsStore();
     const { getAccountNameById } = useDataStore();
-    // const { userCategoriesOptions } = useTransactionForm();
 
-    const [isEditOpen, setIsEditOpen] = useState(false);
+    // 1. ELIMINADO: Estado local isEditOpen
+
     const [isWarningOpen, setIsWarningOpen] = useState(false);
 
     // --- Valores Animados ---
@@ -92,8 +91,7 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
         }
     }, []);
 
-    const handleEditPress = useCallback(() => {
-        setIsEditOpen(true);
+    const prepareForEdit = useCallback(() => {
         setInputNameActive(transaction.type === TransactionType.INCOME ? InputNameActive.INCOME : InputNameActive.SPEND);
     }, [transaction.type, setInputNameActive]);
 
@@ -176,7 +174,8 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
                 setIsWarningOpen(true);
                 break;
             case 'activate':
-                setIsEditOpen(true);
+                // Solo preparamos, el onPress del componente hará el resto
+                prepareForEdit();
                 break;
         }
     };
@@ -190,14 +189,12 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
         isExpense,
         t,
         
-        // State
-        isEditOpen,
-        setIsEditOpen,
+        // State (Limpiado)
         isWarningOpen,
         
         // Handlers
         handleLayout,
-        handleEditPress,
+        prepareForEdit, // Exponemos la función de preparación
         performDelete,
         handleCancelDelete,
         handleAccessibilityAction,

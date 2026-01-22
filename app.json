@@ -26,7 +26,6 @@
         "visible": "sticky-immersive"
       },
       "permissions": [
-        "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "USE_BIOMETRIC",
@@ -38,7 +37,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.gastosmobile"
+      "package": "com.armandoaranopla.spendiary"
     },
     "web": {
       "favicon": "./assets/favicon.ico"

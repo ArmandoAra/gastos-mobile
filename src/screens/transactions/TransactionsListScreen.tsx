@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
     View,
     TouchableOpacity,
@@ -25,7 +25,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
 import TransactionForm from '../../components/forms/TransactionForm';
 
-
 type ListItem =
     | { type: 'header'; date: string; total: number; id: string }
     | { type: 'transaction'; data: Transaction };
@@ -47,11 +46,15 @@ export function TransactionsScreen() {
         stickyHeaderIndices,
         handleDelete,
         handleSave,
+        isEditModalOpen,
+        editingTransaction,
+        handleOpenEdit,
+        handleCloseEdit,
         getGroupTitle
     } = useTransactionsLogic();
+
     const { isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
 
-    // --- RENDERIZADO DE ITEMS ---
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
         if (item.type === 'header') {
             const title = getGroupTitle(item.date);
@@ -86,11 +89,11 @@ export function TransactionsScreen() {
             <TransactionItemMobile
                 transaction={item.data}
                 onDelete={handleDelete}
-                onSave={handleSave}
                 colors={colors}
+                onEditPress={handleOpenEdit} 
             />
         );
-    }, [colors, handleDelete, handleSave, viewMode]);
+    }, [colors, handleDelete, handleSave, viewMode, handleOpenEdit, getGroupTitle]);
 
     const keyExtractor = useCallback((item: ListItem) => {
         return item.type === 'header' ? item.id : item.data.id;
@@ -101,10 +104,9 @@ export function TransactionsScreen() {
             <InfoPopUp />
             <InfoHeader viewMode={viewMode} />
 
-            {/* --- CONTROLES Y FILTROS (Refactorizado para Wrap) --- */}
+            {/* --- CONTROLES Y FILTROS --- */}
             <View style={[localStyles.controlsContainer, { borderBottomColor: colors.border }]}>
-
-                {/* Grupo Izquierdo: Botón Filtro + Badges */}
+                {/* Grupo Izquierdo */}
                 <View style={localStyles.filterGroup}>
                     <FilterFloatingButton
                         viewMode={viewMode}
@@ -117,18 +119,10 @@ export function TransactionsScreen() {
                         allAccounts={allAccounts}
                     />
                     <View style={localStyles.badgesContainer}>
-                        <Text
-                            style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}
-                            numberOfLines={1}
-                            maxFontSizeMultiplier={1.5}
-                        >
+                        <Text style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}>
                             {t(`transactions.${viewMode}`)}
                         </Text>
-                        <Text
-                            style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}
-                            numberOfLines={1}
-                            maxFontSizeMultiplier={1.5}
-                        >
+                        <Text style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}>
                             {t(`transactions.${filter}Plural`)}
                         </Text>
                     </View>
@@ -139,7 +133,6 @@ export function TransactionsScreen() {
                     <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} importantForAccessibility="no" />
                     <TextInput
                         style={[localStyles.searchInput, { color: colors.text }]}
-                        // concatenar el tipo de vista al placeholder
                         placeholder={`${t('transactions.searchPlaceholder')} ${t(`transactions.${viewMode}`).toLowerCase()}`}
                         placeholderTextColor={colors.textSecondary}
                         value={searchQuery}
@@ -185,7 +178,21 @@ export function TransactionsScreen() {
                 </GestureHandlerRootView>
             </View>
 
-            <TransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
+            {/* --- MODALES --- */}
+
+            {/* 1. Modal para CREAR (Botón Flotante) */}
+            <TransactionForm
+                isOpen={isAddOptionsOpen}
+                onClose={() => setIsAddOptionsOpen(false)}
+            />
+
+            {/* 2. Modal para EDITAR (Controlado por este componente) */}
+            <TransactionForm
+                isOpen={isEditModalOpen}
+                onClose={handleCloseEdit}
+                transactionToEdit={editingTransaction}
+            />
+
             <AddTransactionsButton />
         </SafeAreaView>
     );
@@ -205,18 +212,17 @@ const localStyles = StyleSheet.create({
         justifyContent: 'space-between',
         gap: 12,
     },
-    // Grupo Izquierdo (Botón Flotante + Badges)
     filterGroup: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        flexShrink: 0, // No se encoge, prioridad al filtro
+        flexShrink: 0,
     },
     badgesContainer: {
         flexDirection: 'column',
-        alignItems: 'flex-start', // Alineado a la izq para texto variable
+        alignItems: 'flex-start',
         gap: 4,
-        maxWidth: 100, // Límite máximo para que no empuje demasiado
+        maxWidth: 100,
     },
     modeLabel: {
         fontFamily: 'FiraSans-Bold',
@@ -227,13 +233,12 @@ const localStyles = StyleSheet.create({
         fontSize: 11,
         overflow: 'hidden',
     },
-    // Grupo Derecho (Búsqueda)
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1, // Toma el espacio restante
-        minWidth: 100, // Si es menor a 200px, baja a la siguiente línea (wrap)
-        minHeight: 44, // Altura táctil accesible
+        flex: 1,
+        minWidth: 100,
+        minHeight: 44,
         paddingHorizontal: 12,
         borderRadius: 12,
         borderWidth: 1,
@@ -241,12 +246,10 @@ const localStyles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 14,
-        paddingVertical: 8, // Área de toque vertical
+        paddingVertical: 8,
         height: '100%',
         fontFamily: 'FiraSans-Regular',
-
     },
-    // Headers de Fecha
     dateHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -266,7 +269,6 @@ const localStyles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'FiraSans-Bold',
     },
-    // Empty State
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',

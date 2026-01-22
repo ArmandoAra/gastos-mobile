@@ -34,6 +34,22 @@ export const useTransactionsLogic = () => {
     // --- NUEVO: Estado para filtro por cuenta ---
     const [accountSelected, setAccountSelected] = useState<string>('all');
 
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+    // === 1. ABRIR EL MODAL ===
+    const handleOpenEdit = useCallback((transaction: Transaction) => {
+        setEditingTransaction(transaction); // Guardamos la transacción a editar
+        setIsEditModalOpen(true);           // Abrimos el modal
+    }, []);
+
+    // === 2. CERRAR EL MODAL ===
+    const handleCloseEdit = useCallback(() => {
+        setIsEditModalOpen(false);
+        // Limpiamos la data después de la animación para evitar parpadeos visuales
+        setTimeout(() => setEditingTransaction(null), 300);
+    }, []);
+
     // Store de Datos
     const {
         transactions,
@@ -203,20 +219,23 @@ export const useTransactionsLogic = () => {
     return {
         // Estado UI
         viewMode,
-        setViewMode,
         filter,
-        setFilter,
         searchQuery,
-        setSearchQuery,
         colors,
         selectedPeriod,
+        accountSelected,
+        allAccounts,
+        isEditModalOpen,
+        editingTransaction,
+        // Setters
+        handleCloseEdit,
+        handleOpenEdit,
+        setViewMode,
+        setFilter,
+        setSearchQuery,
         setSelectedPeriod,
         handlePeriodChange,
-
-        // --- NUEVO: Estado de Cuentas ---
-        accountSelected,
         setAccountSelected,
-        allAccounts,
 
         // Traducción
         t,

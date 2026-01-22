@@ -1,7 +1,7 @@
 // src/i18n.ts
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import * as Localization from 'expo-localization'; // Cambiado
+import * as Localization from 'expo-localization';
 import { createMMKV } from 'react-native-mmkv';
 
 import es from './locales/es.json';

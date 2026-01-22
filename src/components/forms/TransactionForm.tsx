@@ -54,6 +54,8 @@ import CalculatorSheet from './Inputs/CalculatorSheet';
 import CategorySelectorPopover from './Inputs/CategorySelector';
 import InfoPopUp from '../messages/InfoPopUp';
 import { is } from 'date-fns/locale';
+import { updateTransaction } from '../../../../Gastos/frontend/app/actions/db/Gastos_API';
+import { set } from 'date-fns';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -69,15 +71,12 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     const { t } = useTranslation();
     const { user } = useAuthStore();
     const { showMessage } = useMessage();
-    
-    // Store de Datos (Acciones Globales)
-    const { 
-        updateTransaction, 
-        deleteSomeAmountInAccount, 
-        updateAccountBalance, 
-    } = useDataStore();
 
-    // Hook del Formulario (Gestión de estado local del form)
+    // Stores de Cuentas para Actualización de Saldos
+    const updateAccountBalance = useDataStore(state => state.updateAccountBalance);
+    const deleteSomeAmountInAccount = useDataStore(state => state.deleteSomeAmountInAccount);
+    const updateTransaction = useDataStore(state => state.updateTransaction);
+
     const {
         amount,
         description,
@@ -86,7 +85,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         localSelectedDay,
         allAccounts,
         isSubmitting,
-        inputNameActive, // Income vs Expense (estado global de UI)
+        inputNameActive,
         amountInputRef,
         popoverOpen,
         defaultCategoriesOptions,
@@ -97,14 +96,14 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         setSelectedAccount,
         handleClosePopover,
         handleSelectCategory,
-        handleSave: handleSaveCreation, // Renombramos la fn original de creación
+        handleSave: handleSaveCreation, 
         handleCategoryClick,
-        handleClose: resetForm // Función para limpiar el form
+        handleClose: resetForm 
     } = useTransactionForm();
 
     // Store de Presupuestos (Solo para Crear)
-    const dataToTransact = useBudgetsStore(state => state.toTransactBudget);
-    const setDataToTransact = useBudgetsStore(state => state.setToTransactBudget);
+    const toTransactBudget = useBudgetsStore(state => state.toTransactBudget);
+    const setToTransactBudget = useBudgetsStore(state => state.setToTransactBudget);
     const [isReady, setIsReady] = useState(false);
 
     // Estados Locales UI
@@ -144,12 +143,12 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                     AccessibilityInfo.announceForAccessibility(t('accessibility.edit_form_opened', 'Edit transaction form opened'));
                 }
 
-            } else if (dataToTransact) {
+            } else if (toTransactBudget) {
                 // === MODO CREACIÓN (Desde Presupuesto) ===
-                setAmount(dataToTransact.totalAmount.toString());
-                setDescription(dataToTransact.name);
+                setAmount(toTransactBudget.totalAmount.toString());
+                setDescription(toTransactBudget.name);
                 
-                const categoryName = dataToTransact.slug_category_name[0];
+                const categoryName = toTransactBudget.slug_category_name[0];
                 const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
                 const foundCategory = allCategories.find(cat => cat.name === categoryName);
                 
@@ -169,8 +168,9 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
             setIsReady(false);
             setIsLoadingEdit(false);
             setShowCalculator(false);   
+            setToTransactBudget(null);
         }
-    }, [isOpen, transactionToEdit, dataToTransact]);
+    }, [isOpen]);
 
     // Cerrar calculadora si aparece el teclado
     useEffect(() => {
@@ -200,7 +200,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     };
 
     const handleCloseForm = () => {
-        setDataToTransact(null);
+        setToTransactBudget(null);
         setShowCalculator(false);
         onClose(false);
         resetForm(); // Limpia el hook useTransactionForm

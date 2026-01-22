@@ -89,10 +89,6 @@ const VolunteerActivismIcon = createIcon('volunteer-activism');
 const SecurityIcon = createIcon('security');
 const ArrowCircleUpIcon = createIcon('arrow-circle-up');
 
-// =====================================================================
-// 3. INTERFACES Y ENUMS
-// =====================================================================
-
 export enum IconKey {
     spend = "expense",
     income = "income",
@@ -112,10 +108,6 @@ export interface IconsOptions {
     others: IconOption[];
     none: IconOption[];
 }
-
-// =====================================================================
-// 4. OBJETO ICON_OPTIONS (Corregido con las variables definidas arriba)
-// =====================================================================
 
 export const ICON_OPTIONS: IconOption[] = [
     { id: '1', icon: WorkIcon, label: CategoryLabel.Salary, color: COLOR_PICKER_PALETTE[0], },
@@ -179,13 +171,3 @@ export const ICON_OPTIONS: IconOption[] = [
     { id: '59', icon: FitnessCenterIcon, label: CategoryLabel.Gym, color: COLOR_PICKER_PALETTE[58] },
     { id: '60', icon: ArrowCircleUpIcon, label: CategoryLabel.Refund, color: COLOR_PICKER_PALETTE[59] },
 ]
-
-// =====================================================================
-// 5. HELPER FINAL (Tipos corregidos)
-// =====================================================================
-
-// export const transactions_icons: Record<CategoryLabel, { icon: React.ComponentType<IconProps>; color: string }> =
-//     ICON_OPTIONS.income.concat(ICON_OPTIONS.expense, ICON_OPTIONS.others).reduce((acc, curr) => {
-//         acc[curr.label.en] = { icon: curr.icon, color: curr.color[0] };
-//         return acc;
-//     }, {} as Record<CategoryLabel, { icon: React.ComponentType<IconProps>; color: string }>);

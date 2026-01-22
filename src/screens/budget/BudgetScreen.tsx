@@ -8,7 +8,6 @@ import {
     Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 // Componentes
@@ -21,15 +20,13 @@ import { useTransactionsLogic } from '../transactions/hooks/useTransactionsLogic
 import { ExpenseBudget } from '../../interfaces/data.interface';
 import useBudgetsStore from '../../stores/useBudgetStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { InputNameActive } from '../../interfaces/settings.interface';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import TransactionForm from '../../components/forms/TransactionForm';
 
 export function BudgetScreen() {
-    const insets = useSafeAreaInsets();
     const { colors } = useTransactionsLogic();
     const { t } = useTranslation();
-    const { inputNameActive, isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
+    const isAddOptionsOpen = useSettingsStore(state => state.isAddOptionsOpen);
+    const setIsAddOptionsOpen = useSettingsStore(state => state.setIsAddOptionsOpen);
 
     // Accedemos a los presupuestos desde el Store
     const getUserBudgets = useBudgetsStore(state => state.getUserBudgets);
@@ -179,9 +176,8 @@ export function BudgetScreen() {
                 onSave={() => { }}
             />
 
-            {(inputNameActive === InputNameActive.SPEND) && (
-                <TransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
-            )}
+
+            <TransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
         </View>
     );
 }

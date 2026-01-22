@@ -12,23 +12,22 @@ import WarningMessage from './WarningMessage';
 import { Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ThemeColors } from '../../../types/navigation';
 import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
-import TransactionForm from '../../../components/forms/TransactionForm';
+// IMPORT ELIMINADO: TransactionForm ya no se usa aquí
 
 interface TransactionItemProps {
     transaction: Transaction;
-    onSave: (updatedTransaction: Transaction) => Promise<Transaction | null | undefined>;
     onDelete: (id: string, accountId: string, amount: number, type: TransactionType) => void;
+    onEditPress: (transaction: Transaction) => void;
     colors: ThemeColors;
 }
 
 export const TransactionItemMobile = React.memo(({
     transaction,
-    onSave,
     onDelete,
+    onEditPress, // Recibimos la función del padre
     colors,
 }: TransactionItemProps) => {
 
-    // Llamada al Hook que contiene toda la lógica
     const {
         categoryIconData,
         accountName,
@@ -36,11 +35,9 @@ export const TransactionItemMobile = React.memo(({
         formattedAmount,
         isExpense,
         t,
-        isEditOpen,
-        setIsEditOpen,
         isWarningOpen,
         handleLayout,
-        handleEditPress,
+        prepareForEdit, 
         performDelete,
         handleCancelDelete,
         handleAccessibilityAction,
@@ -52,6 +49,12 @@ export const TransactionItemMobile = React.memo(({
     } = useTransactionItemLogic({ transaction, onDelete, colors });
 
     const { IconComponent, color } = categoryIconData;
+
+    // Handler intermedio para coordinar la lógica
+    const handlePress = () => {
+        prepareForEdit(); // 1. Hook: Configura store global (InputNameActive)
+        onEditPress(transaction); // 2. Prop: Avisa al padre para abrir el modal
+    };
 
     return (
         <Animated.View
@@ -82,7 +85,7 @@ export const TransactionItemMobile = React.memo(({
                 >
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={handleEditPress}
+                        onPress={handlePress} // Usamos nuestro handler intermedio
                         style={styles.touchableContent}
                         accessibilityRole="button"
                         accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
@@ -165,11 +168,8 @@ export const TransactionItemMobile = React.memo(({
                     onSubmit={performDelete}
                 />
             )}
-            <TransactionForm
-                isOpen={isEditOpen}
-                onClose={() => setIsEditOpen(false)}
-                transactionToEdit={transaction}
-            />
+
+            {/* COMPONENTE TransactionForm ELIMINADO DE AQUÍ */}
 
         </Animated.View>
     );

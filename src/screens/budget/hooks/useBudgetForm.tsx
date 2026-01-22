@@ -4,11 +4,9 @@ import { useAuthStore } from "../../../stores/authStore";
 import useDataStore from "../../../stores/useDataStore";
 import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
 import { defaultCategories } from "../../../constants/categories";
-import { ExpenseBudget, Item, Category } from "../../../interfaces/data.interface";
+import { ExpenseBudget, Item } from "../../../interfaces/data.interface";
 import { CategoryLabel } from "../../../api/interfaces";
 import useBudgetsStore from "../../../stores/useBudgetStore";
-import { is } from "date-fns/locale";
-import { set } from "date-fns";
 
 interface UseBudgetFormProps {
     visible: boolean;
@@ -56,7 +54,7 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
                 setBudgetedAmount('');
                 setItems([]);
             }
-            itemsInputRefs.current = {}; // Limpiar refs
+            itemsInputRefs.current = {}; 
                 
                 // Lógica para recuperar la categoría (manteniendo tu lógica original)
             const categoryName = initialData?.slug_category_name[0] as CategoryLabel;
