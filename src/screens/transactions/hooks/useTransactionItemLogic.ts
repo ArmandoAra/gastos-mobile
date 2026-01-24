@@ -37,10 +37,11 @@ interface UseTransactionItemLogicProps {
     colors: ThemeColors;
 }
 
+
 export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTransactionItemLogicProps) => {
     const { t } = useTranslation();
     const { user, currencySymbol } = useAuthStore();
-    const { setInputNameActive } = useSettingsStore();
+    const { setInputNameActive, iconsOptions } = useSettingsStore();
     const { getAccountNameById } = useDataStore();
 
     // 1. ELIMINADO: Estado local isEditOpen
@@ -67,13 +68,13 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
             cat => cat.name === categoryName && cat.userId === 'default'
         );
         const found = customCategory || defaultCategory;
-        const iconDefinition = ICON_OPTIONS.find(opt => opt.label === found?.icon);
+        const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === found?.icon);
 
         return {
             IconComponent: iconDefinition?.icon,
             color: found?.color || '#B0BEC5',
         };
-    }, [transaction.slug_category_name, userCategoriesOptions, user?.id]);
+    }, [transaction.slug_category_name, userCategoriesOptions, user?.id, iconsOptions]);
 
     const accountName = useMemo(() => {
         return getAccountNameById(transaction.account_id);

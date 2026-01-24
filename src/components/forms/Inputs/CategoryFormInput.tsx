@@ -32,8 +32,6 @@ import { useSettingsStore } from '../../../stores/settingsStore';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
 import { Category } from '../../../interfaces/data.interface';
 import useMessage from '../../../stores/useMessage';
-import { MessageType } from '../../../interfaces/message.interface';
-import { set } from 'date-fns';
 
 interface CreateCategoryFormProps {
     type: TransactionType;
@@ -52,7 +50,8 @@ export default function CreateCategoryForm({
     
     // 1. OBTENER DATOS DE STORES
     const { user } = useAuthStore();
-    const { theme } = useSettingsStore();
+    const theme = useSettingsStore(state => state.theme);
+    const iconsOptions = useSettingsStore(state => state.iconsOptions);
     const { addCategory } = useCategoriesStore();
     const colors = theme === 'dark' ? darkTheme : lightTheme;
 
@@ -102,7 +101,7 @@ export default function CreateCategoryForm({
     };
 
     // Componente de Icono seleccionado para el preview
-    const SelectedIconComponent = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon)?.icon || null;
+    const SelectedIconComponent = ICON_OPTIONS[iconsOptions].find(icon => icon.label === selectedCategory?.icon)?.icon || null;
 
     return (
         <KeyboardAvoidingView 
@@ -151,9 +150,12 @@ export default function CreateCategoryForm({
                                     >
                                         {SelectedIconComponent ? (
                                             <SelectedIconComponent size={32} color={colors.text} style={{
-                                                backgroundColor: colors.surfaceSecondary,
-                                                borderRadius: 50,
-                                                padding: 5,
+                                                width: iconsOptions === 'painted' ? 60 : 32,
+                                                height: iconsOptions === 'painted' ? 60 : 32,
+                                                backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+                                                borderRadius: iconsOptions === 'painted' ? 0 : 50,
+                                                padding: iconsOptions === 'painted' ? 0 : 4,
+
                                             }} />
                                         ) : (
                                                 <MaterialIcons name="add-photo-alternate" size={32} color={colors.text} style={{
@@ -258,7 +260,7 @@ export default function CreateCategoryForm({
                     <View style={styles.iconGrid}>
                         {Object.values(defaultCategories).flat().map((item: Category) => {
                             const isSelected = selectedCategory?.id === item.id;
-                            const IconComp = ICON_OPTIONS.find(icon => icon.label === item.icon)?.icon || null;
+                            const IconComp = ICON_OPTIONS[iconsOptions].find(icon => icon.label === item.icon)?.icon || null;
                             return (
                                 <TouchableOpacity
                                     key={item.id}
@@ -268,17 +270,21 @@ export default function CreateCategoryForm({
                                     }}
                                     style={[
                                         styles.iconItem,
-                                        { backgroundColor: colors.surface, borderColor: colors.border },
-                                        isSelected && { backgroundColor: selectedColor }
+                                        {
+                                            borderColor: iconsOptions === 'painted' ? 'transparent' : colors.border, padding: iconsOptions === 'painted' ? 0 : 12,
+                                        },
+                                        isSelected && { backgroundColor: selectedColor },
                                     ]}
                                     accessibilityLabel={`${t('common.icon')} ${item.name}`}
                                     accessibilityRole="button"
                                     accessibilityState={{ selected: isSelected }}
                                 >
                                     {IconComp && <IconComp size={24} color={colors.text} style={{
-                                        backgroundColor: colors.surfaceSecondary,
-                                        borderRadius: 50,
-                                        padding: 5,
+                                        width: iconsOptions === 'painted' ? 55 : 32,
+                                        height: iconsOptions === 'painted' ? 55 : 32,
+                                        backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+                                        borderRadius: iconsOptions === 'painted' ? 0 : 50,
+                                        padding: iconsOptions === 'painted' ? 0 : 4,
                                     }} />}
                                 </TouchableOpacity>
                             );
@@ -404,7 +410,6 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 14,
-        fontFamily: 'Tinos-Bold',
         fontFamily: 'FiraSans-Bold',
         textTransform: 'uppercase',
         marginBottom: 12,
@@ -445,7 +450,7 @@ const styles = StyleSheet.create({
     },
     iconItem: {
         width: 58,
-        height: 58, // Si el usuario tiene iconos gigantes en configuración, considera usar minWidth/minHeight
+        height: 58, 
         aspectRatio: 1,
         borderRadius: 250,
         borderWidth: 1,

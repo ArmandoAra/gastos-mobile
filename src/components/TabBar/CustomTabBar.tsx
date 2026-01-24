@@ -10,17 +10,31 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeColors, MainTabParamList } from '../../types/navigation';
-import { SettingsIcon, AnalyticsIcon, SummarizeIcon, BudgetIcon } from '../../constants/icons';
+import { SettingsIcon, AnalyticsIcon, SummarizeIcon, BudgetIcon, SettingsIconPainted, AnalyticsIconPainted, SummarizeIconPainted, BudgetIconPainted, IconsOptions } from '../../constants/icons';
+import { useSettingsStore } from '../../stores/settingsStore';
 
-const { width } = Dimensions.get('window');
 
 interface CustomTabBarProps extends BottomTabBarProps {
   colors: ThemeColors;
 }
 
 // Helper para obtener el COMPONENTE del icono
-const getIconComponent = (routeName: string) => {
-  switch (routeName) {
+const getIconComponent = (routeName: string, iconsOptions: string) => {
+  if (iconsOptions === 'painted') {
+    switch (routeName) {
+      case 'Transactions':
+        return SummarizeIconPainted;
+      case 'Analytics':
+        return AnalyticsIconPainted;
+      case 'Budget':
+        return BudgetIconPainted;
+      case 'Settings':
+        return SettingsIconPainted;
+      default:
+        return null;
+    }
+  } else {
+    switch (routeName) {
     case 'Transactions':
       return SummarizeIcon;
     case 'Analytics':
@@ -32,10 +46,18 @@ const getIconComponent = (routeName: string) => {
     default:
       return null;
   }
+  }
 };
+
+// width: iconsOptions === 'painted' ? 60 : 32,
+//                           height: iconsOptions === 'painted' ? 60 : 32,
+//                           backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+//                           borderRadius: iconsOptions === 'painted' ? 0 : 50,
+//                           padding: iconsOptions === 'painted' ? 0 : 4,
 
 export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation, colors }) => {
   const insets = useSafeAreaInsets();
+  const IconsOptions = useSettingsStore((state) => state.iconsOptions);
 
   return (
     <View style={styles.tabBarContainer}>
@@ -55,7 +77,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
           const routeName = route.name as keyof MainTabParamList;
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-          const IconComponent = getIconComponent(routeName);
+          const IconComponent = getIconComponent(routeName, IconsOptions);
 
           const onPress = () => {
             const event = navigation.emit({
@@ -80,7 +102,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
           
           useEffect(() => {
             Animated.spring(scaleValue, {
-                toValue: isFocused ? 1.1 : 1,
+              toValue: isFocused ? 1.2 : 0.8,
                 friction: 5,
                 useNativeDriver: true,
             }).start();
@@ -101,18 +123,28 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
                 styles.iconContainer,
                 { backgroundColor: isFocused ? colors.text : colors.surface },
                 isFocused ? [{
-                  backgroundColor: colors.text,
-                  borderColor: colors.surface,
+                  backgroundColor: IconsOptions === 'painted' ? 'transparent' : colors.text,
+                  borderColor: IconsOptions === 'painted' ? 'transparent' : colors.surface,
                       elevation: 5 
                 }] : [
-                  { borderColor: colors.border }
+                    {
+                      borderColor: IconsOptions === 'painted' ? 'transparent' : colors.border,
+                      backgroundColor: IconsOptions === 'painted' ? 'transparent' : colors.surface
+                    }
                 ]
               ]}>
                 <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
                   {IconComponent && (
                     <IconComponent 
                       color={isFocused ? colors.surface : colors.text}
-                      size={22}
+
+                      style={{
+                        width: IconsOptions === 'painted' ? 50 : 32,
+                        height: IconsOptions === 'painted' ? 50 : 32,
+                        backgroundColor: IconsOptions === 'painted' ? 'transparent' : colors.surface,
+                        borderRadius: IconsOptions === 'painted' ? 0 : 50,
+                        padding: IconsOptions === 'painted' ? 0 : 4,
+                      }}
                     />
                   )}
                 </Animated.View>

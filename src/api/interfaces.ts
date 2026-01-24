@@ -20,7 +20,6 @@ export enum CategoryLabel  {
     Returns = "Returns",
     Scholarships = "Scholarships",
     Interest = "Interest",
-    OtherIncome = "OtherIncome",
     Food = "Food",
     Groceries = "Groceries",
     Transport = "Transport",
@@ -69,6 +68,13 @@ export enum CategoryLabel  {
     Security = "Security",
     Gym = "Gym",
     Refund = "Refund",
+
+    Clothes = "Clothes",
+    Baby = "Baby",
+    Beauty = "Beauty",
+    Haircut = "Hair",
+    Lost = "Lost",
+    OtherIncome = "OtherIncome"
 }
 
 export enum CategoryLabelSpanish {

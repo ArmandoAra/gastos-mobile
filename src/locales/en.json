@@ -67,7 +67,9 @@
         "selectCategory": "Select category",
         "noIcons": "No icons available",
         "my": "My",
-        "filterAccount": "Filter account"
+        "filterAccount": "Filter account",
+        "selectIcon": "Select icon",
+        "color": "Select color"
     },
     "commonWarnings": {
         "warning": "Warning",
@@ -363,6 +365,9 @@
         "subLabelAnnual": "Annual"
     },
     "icons": {
+        "title": "Select Icon Theme",
+        "material": "Material",
+        "painted": "Painted",
         "Salary": "Salary",
         "Extra": "Extra",
         "Dividends": "Dividends",
@@ -422,7 +427,11 @@
         "Donation": "Donation",
         "Security": "Security",
         "Gym": "Gym",
-        "Refund": "Refund"
+        "Refund": "Refund",
+        "Lost": "Lost",
+        "Baby": "Baby",
+        "Beauty": "Beauty",
+        "Haircut": "Haircut"
 },
 "budget_screen": {
     "empty_state": "No active budgets found",

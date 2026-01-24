@@ -126,7 +126,7 @@
         "deleteWarning": "Eliminar una cuenta también eliminará todas las transacciones asociadas a ella.Tambien puedes transferirlas a otra cuenta. ¿Estás seguro de que deseas continuar?",
         "transferAndDelete": "Transferir y eliminar",
         "justDelete": "Eliminar Cuenta",
-        "allAcounts": "Todas las cuentas"
+        "allAccounts": "Todas las cuentas"
     },
     "theme": {
         "titleHeader": "Apariencia",
@@ -360,6 +360,9 @@
         "timeToAddTransactions": "Es hora de agregar algunas transacciones"
     },
     "icons": {
+        "title": "Seleccionar tema de íconos",
+        "material": "Material",
+        "painted": "Pintado",
         "Salary": "Salario",
         "Extra": "Extra",
         "Dividends": "Dividendos",
@@ -419,7 +422,12 @@
         "Donation": "Donación",
         "Security": "Seguridad",
         "Gym": "Gimnasio",
-        "Refund": "Reembolso"
+        "Refund": "Reembolso",
+        "Lost": "Pérdidas",
+        "Baby": "Bebé",
+        "Beauty": "Belleza",
+        "Haircut": "Corte de pelo",
+        "Clothes": "Ropa"
     },
     "budget_screen": {
         "empty_state": "No hay presupuestos activos",

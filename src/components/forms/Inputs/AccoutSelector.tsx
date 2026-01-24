@@ -76,7 +76,7 @@ export default function AccountSelector({
                         numberOfLines={1} // Mantiene 1 línea pero trunca con ...
                         ellipsizeMode="tail"
                     >
-                        {selectedAccountObj ? selectedAccountObj.name : t('accounts.noSelectedAccount')}
+                        {selectedAccountObj?.name !== 'allAccounts' ? selectedAccountObj?.name : t('accounts.allAccounts')}
                     </Text>
 
                     {selectedAccountObj && (

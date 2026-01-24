@@ -1,4 +1,4 @@
-import { isDate } from "date-fns";
+import { LanguageCode } from "../constants/languages";
 
 
 export enum InputNameActive {
@@ -8,20 +8,27 @@ export enum InputNameActive {
     NONE = 'none',
 }
 
+export type themeOptions = 'light' | 'dark';
+export type iconsThemeOptions = 'material' | 'painted';
 
 export interface SettingsState {
-    theme: 'light' | 'dark';
-    language: string;
-    isDateSelectorOpen: boolean;
-    isAddOptionsOpen: boolean;
-    inputNameActive: InputNameActive;
+    theme: themeOptions;
+    iconsOptions: iconsThemeOptions;
+    language: LanguageCode;
     isPinEnabled: boolean;
+    isBiometricEnabled: boolean;
     isUnlocked: boolean;
+    isAddOptionsOpen: boolean;
+    isDateSelectorOpen: boolean;
+    inputNameActive: InputNameActive;
     setIsAddOptionsOpen: (isOpen: boolean) => void;
     setIsDateSelectorOpen: (isOpen: boolean) => void;
     setInputNameActive: (inputName: InputNameActive) => void;
     setTheme: (theme: 'light' | 'dark') => void;
-    setLanguage: (lang: string) => void;
+    setIconsOptions: (option: 'material' | 'painted') => void;
+    setLanguage: (lang: LanguageCode) => void;
     togglePin: () => void;
+    toggleBiometrics: () => void;
     setUnlocked: (unlocked: boolean) => void;
 }
+

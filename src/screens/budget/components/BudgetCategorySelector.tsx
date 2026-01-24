@@ -53,7 +53,8 @@ export default function BudgetCategorySelector({
   userCategories,
 }: BudgetCategorySelectorProps) {
   const { t } = useTranslation();
-  const { inputNameActive } = useSettingsStore();
+  const inputNameActive = useSettingsStore(state => state.inputNameActive);
+  const iconsOptions = useSettingsStore(state => state.iconsOptions);
   const [iconsKey, setIconsKey] = React.useState<TransactionType>(TransactionType.EXPENSE);
   const [addingNewCategory, setAddingNewCategory] = React.useState<boolean>(false);
   const [selectingMyCategories, setSelectingMyCategories] = React.useState<boolean>(false);
@@ -105,7 +106,7 @@ export default function BudgetCategorySelector({
         >
           {/* Header */}
           <View style={[styles.header, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>{t("transactions.categories")}</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t("transactions.categories")}</Text>
 
             <View style={{ position: 'absolute', left: 25, top: 20 }}>
               <MyCustomCategories colors={colors}
@@ -155,7 +156,7 @@ export default function BudgetCategorySelector({
 
               renderItem={({ item }) => {
                 const isSelected = selectedCategory?.id === item.id;
-                const { icon: IconComponent } = ICON_OPTIONS.filter((icon) => icon.label === item.icon)[0]
+                const { icon: IconComponent } = ICON_OPTIONS[iconsOptions].filter((icon) => icon.label === item.icon)[0]
 
                 return (
                   <View style={styles.gridItemWrapper}>
@@ -175,9 +176,11 @@ export default function BudgetCategorySelector({
                       >
 
                         {IconComponent && <IconComponent size={24} color={colors.text} style={{
-                          backgroundColor: colors.surfaceSecondary,
-                          borderRadius: 50,
-                          padding: 5,
+                          width: iconsOptions === 'painted' ? 60 : 32,
+                          height: iconsOptions === 'painted' ? 60 : 32,
+                          backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+                          borderRadius: iconsOptions === 'painted' ? 0 : 50,
+                          padding: iconsOptions === 'painted' ? 0 : 4,
                         }} />}
                       </View>
 

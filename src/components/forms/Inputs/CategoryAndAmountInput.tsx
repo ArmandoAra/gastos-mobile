@@ -30,6 +30,7 @@ import { Icon } from 'react-native-paper';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
 import { de, is } from 'date-fns/locale';
 import { defaultCategories } from '../../../constants/categories';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 interface CategoryAndAmountInputProps {
     isReady?: boolean;
@@ -52,6 +53,7 @@ export default function CategoryAndAmountInput({
     colors,
     onOpenCalculator
 }: CategoryAndAmountInputProps) {
+    const iconsOptions = useSettingsStore(state => state.iconsOptions);
     const { t } = useTranslation();
     const scale = useSharedValue(1);
 
@@ -64,7 +66,7 @@ export default function CategoryAndAmountInput({
 
 
 
-    const { icon: IconCategory } = ICON_OPTIONS.find(icon => icon.label === selectedCategory?.icon) || {};
+    const { icon: IconCategory } = ICON_OPTIONS[iconsOptions].find(icon => icon.label === selectedCategory?.icon) || {};
 
     return (
         <View style={styles.container}>
@@ -100,13 +102,19 @@ export default function CategoryAndAmountInput({
                             exiting={SlideOutRight.duration(300)}
                             style={animatedIconStyle}>
                             <View
-                                style={[styles.gradient, { borderColor: colors.border, backgroundColor: selectedCategory?.color || colors.primary }]}
+                                style={[styles.gradient, {
+                                    borderColor: iconsOptions === 'painted' ? 'transparent' : colors.border,
+                                    padding: iconsOptions === 'painted' ? 0 : 12,
+                                    backgroundColor: iconsOptions === 'painted' ? 'transparent' : selectedCategory?.color || colors.surface
+                                }]}
                             >
                                 {selectedCategory && IconCategory ? (
-                                    <IconCategory size={24} color={colors.text} style={{
-                                        backgroundColor: colors.surfaceSecondary,
-                                        borderRadius: 50,
-                                        padding: 5,
+                                    <IconCategory color={colors.text} style={{
+                                        width: iconsOptions === 'painted' ? 60 : 32,
+                                        height: iconsOptions === 'painted' ? 60 : 32,
+                                        backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+                                        borderRadius: iconsOptions === 'painted' ? 0 : 50,
+                                        padding: iconsOptions === 'painted' ? 0 : 4,
                                     }} />
                                 ) : (
                                     <MaterialIcons name="category" size={28} color={colors.textSecondary} />
@@ -210,7 +218,6 @@ const styles = StyleSheet.create({
         // Dimensiones flexibles con mínimos para accesibilidad
         minWidth: 48,
         minHeight: 48,
-        padding: 12, // Padding interno asegura que el icono grande no toque bordes
         borderRadius: 50,
         borderWidth: 0.5,
         justifyContent: 'center',

@@ -28,7 +28,6 @@ import { useAuthStore } from "../../../stores/authStore";
 import { BudgetItem } from "./BudgetItem";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { InputNameActive } from "../../../interfaces/settings.interface";
-import { set } from 'date-fns';
 
 export const BudgetFormModal = ({
     visible,

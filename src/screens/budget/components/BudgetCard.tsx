@@ -11,6 +11,7 @@ import { defaultCategories, defaultCategoryNames } from "../../../constants/cate
 import { ThemeColors } from "../../../types/navigation";
 import { useTranslation } from "react-i18next";
 import { filterCategoriesByType } from "../../../utils/categories";
+import { useSettingsStore } from "../../../stores/settingsStore";
 
 export const BudgetCard = ({ 
     item, 
@@ -22,6 +23,7 @@ export const BudgetCard = ({
         colors: ThemeColors
 }) => {
     const { t } = useTranslation();
+    const iconsOptions = useSettingsStore(state => state.iconsOptions);
     const currencySymbol = useAuthStore(state => state.currencySymbol);
     const {userCategoriesOptions} = useTransactionForm();
     const user = useAuthStore(state => state.user);
@@ -45,14 +47,14 @@ export const BudgetCard = ({
         );
 
         const found = customCategory || defaultCategory;
-        const iconDefinition = ICON_OPTIONS.find(opt => opt.label === found?.icon);
+        const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === found?.icon);
 
         return {
             IconComponent: iconDefinition?.icon,
             color: found?.color || '#B0BEC5',
         };
 
-    }, [ item.slug_category_name, userCategoriesOptions, defaultCategories, user?.id]);
+    }, [item.slug_category_name, userCategoriesOptions, defaultCategories, user?.id, iconsOptions]);
 
     const { IconComponent, color } = categoryIconData;
 
@@ -71,9 +73,11 @@ export const BudgetCard = ({
                     </Text>
                     <View style={[styles.iconCircle, { backgroundColor: color || colors.text }]}>
                         {IconComponent ? <IconComponent size={20} color={colors.text} style={{
-                            backgroundColor: colors.surface,
-                            borderRadius: 50,
-                            padding: 1,
+                            width: iconsOptions === 'painted' ? 46 : 22,
+                            height: iconsOptions === 'painted' ? 46 : 22,
+                            backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+                            borderRadius: iconsOptions === 'painted' ? 0 : 50,
+                            padding: iconsOptions === 'painted' ? 0 : 1,
                         }} /> : (
                             <MaterialIcons name="category" size={20} color={colors.text} style={{
                                     backgroundColor: colors.surface,

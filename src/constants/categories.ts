@@ -37,14 +37,15 @@ export const COLOR_PICKER_PALETTE = [
 
 export const defaultCategoryNames: string[] = [
   // Income Categories
-  'Salary', 'Extra', 'Dividends', 'Rentals', 'Sales', 'Gifts', 'Gains', 'Clients', 'Returns', 'Scholarships', 'Interest', 'OtherIncome',
+  'Salary', 'Extra', 'Dividends', 'Rentals', 'Sales', 'Gifts', 'Gains', 'Clients', 'Returns', 'Scholarships', 'Interest', 'Other',
   // Expense Categories
   'Food', 'Groceries', 'Transport', 'Home', 'Health', 'Education', 'Gaming', 'Travel', 'Shopping', 'Fitness', 'Coffee', 'Pets',
-  'Tech', 'Entertainment', 'Music', 'Other',
+  'Tech', 'Entertainment', 'Music', 
   // Other Categories
   'Chart', 'SavingsGoal', 'Exchange', 'CreditCard', 'Currency', 'Payments', 'ATM', 'Furniture', 'Maintenance', 'Shipping',
   'Internet', 'Utilities', 'Idea', 'Investment', 'Company', 'Project', 'Team', 'Retail', 'Art', 'Photography', 'Reading',
-  'Luxury', 'World', 'Nature', 'Subscription', 'Insurance', 'Podcast', 'Gadget', 'Donation', 'Security', 'Gym', 'Refund'
+  'Luxury', 'World', 'Nature', 'Subscription', 'Insurance', 'Podcast', 'Gadget', 'Donation', 'Security', 'Gym', 'Refund',
+  'Lost', 'Baby', 'Beauty', 'Haircut', 'Clothes'
 ];
 
 export const defaultCategories: Category[] = [
@@ -139,8 +140,8 @@ export const defaultCategories: Category[] = [
   },
   {
     id: '12',
-    name: 'OtherIncome',
-    icon: CategoryLabel.OtherIncome,
+    name: 'Clothes',
+    icon: CategoryLabel.Clothes,
     color: COLOR_PICKER_PALETTE[18],
     type: TransactionType.INCOME,
     userId: 'default'
@@ -267,15 +268,6 @@ export const defaultCategories: Category[] = [
     type: TransactionType.EXPENSE,
     userId: 'default'
   },
-  {
-    id: '28',
-    name: 'Other',
-    icon: CategoryLabel.Other,
-    color: COLOR_PICKER_PALETTE[1],
-    type: TransactionType.EXPENSE,
-    userId: 'default'
-  },
-
   // --- OTHERS CATEGORIES ---
   {
     id: '29',
@@ -531,6 +523,54 @@ export const defaultCategories: Category[] = [
     icon: CategoryLabel.Refund,
     color: COLOR_PICKER_PALETTE[29],
     type: TransactionType.EXPENSE,
+    userId: 'default'
+  },
+  {
+    id: '61',
+    name: 'Lost',
+    icon: CategoryLabel.Lost,
+    color: COLOR_PICKER_PALETTE[21],
+    type: TransactionType.EXPENSE,
+    userId: 'default'
+  },
+  {
+    id: '62',
+    name: 'Baby',
+    icon: CategoryLabel.Baby,
+    color: COLOR_PICKER_PALETTE[43],
+    type: TransactionType.EXPENSE,
+    userId: 'default'
+  },
+  {
+    id: '63',
+    name: 'Beauty',
+    icon: CategoryLabel.Beauty,
+    color: COLOR_PICKER_PALETTE[33],
+    type: TransactionType.EXPENSE,
+    userId: 'default'
+  },
+  {
+    id: '64',
+    name: 'Haircut',
+    icon: CategoryLabel.Haircut,
+    color: COLOR_PICKER_PALETTE[55],
+    type: TransactionType.EXPENSE,
+    userId: 'default'
+  },
+  {
+    id: '65',
+    name: 'Other',
+    icon: CategoryLabel.Other,
+    color: COLOR_PICKER_PALETTE[1],
+    type: TransactionType.EXPENSE,
+    userId: 'default'
+  },
+  {
+    id: '66',
+    name: 'OtherIncome',
+    icon: CategoryLabel.OtherIncome,
+    color: COLOR_PICKER_PALETTE[1],
+    type: TransactionType.INCOME,
     userId: 'default'
   }
 ];

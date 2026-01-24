@@ -255,6 +255,7 @@ const localStyles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: 8,
+        paddingLeft: 20,
         paddingHorizontal: 12,
         marginBottom: 8,
         marginTop: 0,

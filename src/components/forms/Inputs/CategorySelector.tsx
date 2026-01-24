@@ -20,7 +20,7 @@ import Animated, {
   ZoomIn,
   ZoomOut,
 } from "react-native-reanimated";
-import { ICON_OPTIONS, IconKey, IconOption } from "../../../constants/icons";
+import { ICON_OPTIONS } from "../../../constants/icons";
 import { ThemeColors } from "../../../types/navigation";
 import { useTranslation } from "react-i18next";
 import { InputNameActive } from "../../../interfaces/settings.interface";
@@ -52,7 +52,8 @@ export default function CategorySelectorPopover({
   userCategories,
 }: CategorySelectorPopoverProps) {
   const { t } = useTranslation();
-  const { inputNameActive } = useSettingsStore();
+  const inputNameActive = useSettingsStore(state => state.inputNameActive);
+  const iconsOptions = useSettingsStore(state => state.iconsOptions);
   const [iconsKey, setIconsKey] = React.useState<TransactionType>(TransactionType.EXPENSE);
   const [addingNewCategory, setAddingNewCategory] = React.useState<boolean>(false);
   const [selectingMyCategories, setSelectingMyCategories] = React.useState<boolean>(false);
@@ -174,7 +175,7 @@ export default function CategorySelectorPopover({
 
               renderItem={({ item }) => {
                 const isSelected = selectedCategory?.id === item.id;
-                const { icon: IconComponent } = ICON_OPTIONS.filter((icon) => icon.label === item.icon)[0]
+                const { icon: IconComponent } = ICON_OPTIONS[iconsOptions].filter((icon) => icon.label === item.icon)[0]
 
                 return (
                   <View style={styles.gridItemWrapper}>
@@ -187,13 +188,19 @@ export default function CategorySelectorPopover({
                       ]}
                     >
                       <View
-                        style={[styles.avatar, { backgroundColor: item.color, borderColor: colors.border }]}
+                        style={[styles.avatar, {
+                          borderColor: iconsOptions === 'painted' ? 'transparent' : colors.border,
+                          padding: iconsOptions === 'painted' ? 0 : 12,
+                          backgroundColor: iconsOptions === 'painted' ? 'transparent' : item.color || colors.surface
+                        }]}
                       >
 
-                        {IconComponent && <IconComponent size={24} color={colors.text} style={{
-                          backgroundColor: colors.surfaceSecondary,
-                          borderRadius: 50,
-                          padding: 5,
+                        {IconComponent && <IconComponent color={colors.text} style={{
+                          width: iconsOptions === 'painted' ? 60 : 32,
+                          height: iconsOptions === 'painted' ? 60 : 32,
+                          backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
+                          borderRadius: iconsOptions === 'painted' ? 0 : 50,
+                          padding: iconsOptions === 'painted' ? 0 : 4,
                         }} />}
                       </View>
 

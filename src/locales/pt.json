@@ -366,6 +366,9 @@
         "subLabelAnnual": "Anual"
     },
     "icons": {
+        "title": "Selecionar tema de ícones",
+        "material": "Material",
+        "painted": "Pintado",
         "Salary": "Salário",
         "Extra": "Extra",
         "Dividends": "Dividendos",
@@ -425,7 +428,11 @@
         "Donation": "Doação",
         "Security": "Segurança",
         "Gym": "Academia",
-        "Refund": "Reembolso"
+        "Refund": "Reembolso",
+        "Lost": "Perdas",
+        "Baby": "Bebê",
+        "Beauty": "Beleza",
+        "Haircut": "Corte de Cabelo"
 },
 "budget_screen": {
     "empty_state": "Nenhum orçamento ativo",

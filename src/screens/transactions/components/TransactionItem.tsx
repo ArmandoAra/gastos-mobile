@@ -5,13 +5,15 @@ import {
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { withDecay } from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import WarningMessage from './WarningMessage';
 import { Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ThemeColors } from '../../../types/navigation';
 import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
+import { IconsOptions } from '../../../constants/icons';
+import { useSettingsStore } from '../../../stores/settingsStore';
 // IMPORT ELIMINADO: TransactionForm ya no se usa aquí
 
 interface TransactionItemProps {
@@ -27,6 +29,8 @@ export const TransactionItemMobile = React.memo(({
     onEditPress, // Recibimos la función del padre
     colors,
 }: TransactionItemProps) => {
+
+    const iconsOptions = useSettingsStore(state => state.iconsOptions);
 
     const {
         categoryIconData,
@@ -86,7 +90,7 @@ export const TransactionItemMobile = React.memo(({
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={handlePress} // Usamos nuestro handler intermedio
-                        style={styles.touchableContent}
+                        style={[styles.touchableContent, { backgroundColor: color + '11' }]}
                         accessibilityRole="button"
                         accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
                         accessibilityHint={t('accessibility.swipe_hint', 'Tap to edit, use actions to delete')}
@@ -96,8 +100,10 @@ export const TransactionItemMobile = React.memo(({
                         {/* 1. Avatar */}
                         <View style={[styles.avatar, { backgroundColor: color }]}>
                             {IconComponent ? (
-                                <IconComponent size={28} color={colors.text} style={{
-                                    backgroundColor: colors.surface,
+                                <IconComponent color={colors.text} style={{
+                                    width: iconsOptions === 'painted' ? 60 : 32,
+                                    height: iconsOptions === 'painted' ? 60 : 32,
+                                    backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
                                     borderRadius: 50,
                                     padding: 4,
                                 }} />
