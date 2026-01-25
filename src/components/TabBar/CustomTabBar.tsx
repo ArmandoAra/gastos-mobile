@@ -49,12 +49,6 @@ const getIconComponent = (routeName: string, iconsOptions: string) => {
   }
 };
 
-// width: iconsOptions === 'painted' ? 60 : 32,
-//                           height: iconsOptions === 'painted' ? 60 : 32,
-//                           backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
-//                           borderRadius: iconsOptions === 'painted' ? 0 : 50,
-//                           padding: iconsOptions === 'painted' ? 0 : 4,
-
 export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation, colors }) => {
   const insets = useSafeAreaInsets();
   const IconsOptions = useSettingsStore((state) => state.iconsOptions);
@@ -141,7 +135,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
                       style={{
                         width: IconsOptions === 'painted' ? 50 : 32,
                         height: IconsOptions === 'painted' ? 50 : 32,
-                        backgroundColor: IconsOptions === 'painted' ? 'transparent' : colors.surface,
+                        backgroundColor: IconsOptions === 'painted' ? 'transparent' : (isFocused ? colors.text : colors.surface),
                         borderRadius: IconsOptions === 'painted' ? 0 : 50,
                         padding: IconsOptions === 'painted' ? 0 : 4,
                       }}
