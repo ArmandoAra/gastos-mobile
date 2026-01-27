@@ -322,7 +322,7 @@ const useDataStore = create<State & Actions>()(
 
                 addTransactionStore: (transaction: Transaction) => {
                     const currentUserId = useAuthStore.getState().user?.id;
-                    console.log("Current User ID:", currentUserId);
+
                     if (!currentUserId) return;
                     const transactionWithId = { ...transaction, user_id: currentUserId };    
                     set(

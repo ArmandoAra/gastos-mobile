@@ -64,11 +64,14 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
         const customCategory = userCategoriesOptions.find(
             cat => cat.name === categoryName && cat.userId === user?.id
         );
+
         const defaultCategory = defaultCategories.find(
             cat => cat.name === categoryName && cat.userId === 'default'
         );
         const found = customCategory || defaultCategory;
+
         const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === found?.icon);
+
 
         return {
             IconComponent: iconDefinition?.icon,

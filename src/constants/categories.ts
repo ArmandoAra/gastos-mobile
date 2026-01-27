@@ -39,7 +39,7 @@ export const defaultCategoryNames: string[] = [
   // Income Categories
   'Salary', 'Extra', 'Dividends', 'Rentals', 'Sales', 'Gifts', 'Gains', 'Clients', 'Returns', 'Scholarships', 'Interest', 'Other',
   // Expense Categories
-  'Food', 'Groceries', 'Transport', 'Home', 'Health', 'Education', 'Gaming', 'Travel', 'Shopping', 'Fitness', 'Coffee', 'Pets',
+  'Food', 'Groceries', 'Transport', 'Home', 'Health', 'Education', 'Gaming', 'Travel', 'Shopping', 'Fitness', 'Coffee', 'Pet',
   'Tech', 'Entertainment', 'Music', 
   // Other Categories
   'Chart', 'SavingsGoal', 'Exchange', 'CreditCard', 'Currency', 'Payments', 'ATM', 'Furniture', 'Maintenance', 'Shipping',

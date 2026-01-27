@@ -125,11 +125,11 @@ export function useTransactionForm() {
         const isIncome = inputNameActive === InputNameActive.INCOME;
         const parsedAmount = Math.abs(parseFloat(amount)); // Aseguramos positivo primero
 
-        // CORRECCIÓN: Si NO es ingreso (es gasto), lo volvemos negativo
         const finalAmount = isIncome ? parsedAmount : -parsedAmount;
         const currentTimeISO = now.toISOString();
 
         const defaultCategoriesSlug: string[] = [
+            selectedCategory.name,
             CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish] || "",
             CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese] || "",
         ];
