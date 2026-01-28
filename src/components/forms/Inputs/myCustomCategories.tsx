@@ -3,13 +3,11 @@ import {
     View, 
     Text, 
     StyleSheet, 
-    Platform,
     Switch,
 } from 'react-native';
 
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
-import { set } from 'date-fns';
 
 
 // --- SUBCOMPONENTE REFACTORIZADO ---
@@ -19,7 +17,7 @@ interface MyCustomCategoriesProps {
     onAction: () => void;
 }
 
-export const MyCustomCategories = ({
+export const MyCustomCategoriesSwitch = ({
     colors,
     value,
     onAction,
@@ -55,10 +53,6 @@ export const MyCustomCategories = ({
     }
 
 const styles = StyleSheet.create({
-    
-
-    
-    // Estilo para el Switch (Vertical / Columna)
     settingItemColumn: {
         flexDirection: 'column',
         width: 80 ,

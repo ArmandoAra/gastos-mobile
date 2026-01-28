@@ -21,6 +21,7 @@ import { ExpenseBudget } from '../../interfaces/data.interface';
 import useBudgetsStore from '../../stores/useBudgetStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import TransactionForm from '../../components/forms/TransactionForm';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
 
 export function BudgetScreen() {
     const { colors } = useTransactionsLogic();
@@ -37,6 +38,8 @@ export function BudgetScreen() {
     // Estado local para el modal
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBudget, setSelectedBudget] = useState<ExpenseBudget | null>(null);
+    const { onScroll } = useScrollDirection();
+
 
     // Lógica de filtrado
     const filteredBudgets = useMemo(() => {
@@ -113,6 +116,7 @@ export function BudgetScreen() {
             <FlatList
                 data={filteredBudgets}
                 keyExtractor={(item) => item.id}
+                onScroll={onScroll}
 
                 // Eliminado numColumns y columnWrapperStyle para que sea una columna vertical estándar
 

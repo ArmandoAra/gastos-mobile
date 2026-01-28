@@ -30,16 +30,20 @@ import AppearanceSection from './components/AppearanceSection';
 import LanguageSection from './components/LanguageSection';
 import SecuritySection from './components/SecuritySection';
 import InfoPopUp from '../../components/messages/InfoPopUp';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
 
 export const SettingsScreen = () => {
     const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+    const { onScroll } = useScrollDirection();
+
 
     return (
         <>
             <InfoPopUp />
         <ScrollView
                 style={[styles.container, { backgroundColor: theme === 'dark' ? colors.background : colors.background }]}
+                onScroll={onScroll}
             showsVerticalScrollIndicator={false}
             >
                 <UserProfileSection colors={colors} />

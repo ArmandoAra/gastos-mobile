@@ -31,7 +31,7 @@ import { useSettingsStore } from "../../../stores/settingsStore";
 import { Category, TransactionType } from "../../../interfaces/data.interface";
 
 import MaterialIcons from "@expo/vector-icons/build/MaterialIcons";
-import { MyCustomCategories } from "../../../components/forms/Inputs/myCustomCategories";
+import { MyCustomCategoriesSwitch } from "../../../components/forms/Inputs/myCustomCategories";
 import CategoryFormInput from "../../../components/forms/Inputs/CategoryFormInput";
 
 
@@ -109,7 +109,7 @@ export default function BudgetCategorySelector({
         <Text style={[styles.headerTitle, { color: colors.text }]}>{t("transactions.categories")}</Text>
 
             <View style={{ position: 'absolute', left: 25, top: 20 }}>
-              <MyCustomCategories colors={colors}
+          <MyCustomCategoriesSwitch colors={colors}
                 value={selectingMyCategories}
                 onAction={handleToggleCategoriesSelection}
               />

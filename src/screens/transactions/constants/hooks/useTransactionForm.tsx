@@ -34,11 +34,10 @@ export function useTransactionForm() {
     const { selectedAccount, allAccounts, setSelectedAccount, addTransactionStore, updateAccountBalance } = useDataStore();
     const { showMessage } = useMessage();
     const { setInputNameActive, inputNameActive } = useSettingsStore();
-    
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
     const { localSelectedDay, setLocalSelectedDay } = useDateStore();
-    const { userCategories } = useCategoriesStore();
+    const { userCategories, deleteCategory } = useCategoriesStore();
     const [anchorEl, setAnchorEl] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
@@ -88,6 +87,15 @@ export function useTransactionForm() {
         setSelectedCategory(category);
         handleClosePopover();
     }, [handleClosePopover]);
+
+    const handleDeleteCategory = useCallback((categoryId: string) => {
+        // Si la categoría eliminada es la seleccionada, cambiar a la primera disponible
+        deleteCategory(categoryId);
+        if (selectedCategory.id === categoryId) {
+            const remainingCategories = allCategories.filter(cat => cat.id !== categoryId);
+            setSelectedCategory(remainingCategories[0] || null);
+        }
+    }, []);
 
     const handleClose = useCallback(() => {
         setInputNameActive(InputNameActive.NONE);
@@ -208,6 +216,7 @@ export function useTransactionForm() {
         setSelectedAccount,
         setSelectedCategory,
         handleCategoryClick,
+        handleDeleteCategory,
         handleClosePopover,
         handleSelectCategory,
         handleSave,

@@ -5,13 +5,22 @@ import {
   StyleSheet,
   Platform,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeColors, MainTabParamList } from '../../types/navigation';
-import { SettingsIcon, AnalyticsIcon, SummarizeIcon, BudgetIcon, SettingsIconPainted, AnalyticsIconPainted, SummarizeIconPainted, BudgetIconPainted, IconsOptions } from '../../constants/icons';
+import {
+  SettingsIcon,
+  AnalyticsIcon,
+  SummarizeIcon,
+  BudgetIcon,
+  SettingsIconPainted,
+  AnalyticsIconPainted,
+  SummarizeIconPainted,
+  BudgetIconPainted
+} from '../../constants/icons';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useTabBarVisibility } from '../../context/TabBarVisibilityContext';
 
 
 interface CustomTabBarProps extends BottomTabBarProps {
@@ -53,16 +62,20 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
   const insets = useSafeAreaInsets();
   const IconsOptions = useSettingsStore((state) => state.iconsOptions);
 
+  const { translateY } = useTabBarVisibility();
+
   return (
-    <View style={styles.tabBarContainer}>
+    <Animated.View
+      style={[styles.tabBarContainer,
+      { transform: [{ translateY }] }
+      ]}>
       <View style={[
         styles.tabBar,
         {
-          backgroundColor: colors.surfaceSecondary,
-          borderWidth: 1,
+          backgroundColor: colors.surfaceSecondary + '80',
           borderTopColor: colors.border,
           paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom,
-          height: 60 + insets.bottom, // Ajusta la altura para que no se vea aplastada
+          height: 80 + insets.bottom,
           marginBottom: Platform.OS === 'ios' ? insets.bottom : 0,
           shadowColor: colors.shadow,
         }
@@ -147,7 +160,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
           );
         })}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

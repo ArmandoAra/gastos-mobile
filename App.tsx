@@ -39,7 +39,8 @@ import { ModernHeader } from './src/components/navigation/ModernHeader';
 import AnalyticsScreen from './src/screens/analytics/AnalyticsScreen';
 import { useTranslation } from 'react-i18next';
 import { BudgetScreen } from './src/screens/budget/BudgetScreen';
-import useDataStore from './src/stores/useDataStore';
+import { TabBarVisibilityProvider } from './src/context/TabBarVisibilityContext';
+
 
 
 // --- Creación de Navigators Tipados ---
@@ -235,12 +236,14 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={paperTheme}>
+        <TabBarVisibilityProvider>
         <NavigationContainer>
           <StatusBar
             barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'}
           />
           <RootNavigator />
         </NavigationContainer>
+        </TabBarVisibilityProvider>
       </PaperProvider>
     </SafeAreaProvider>
   );

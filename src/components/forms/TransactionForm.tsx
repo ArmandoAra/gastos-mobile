@@ -90,6 +90,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         popoverOpen,
         defaultCategoriesOptions,
         userCategoriesOptions,
+        handleDeleteCategory,
         setAmount,
         setDescription,
         setLocalSelectedDay,
@@ -459,6 +460,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                                     popoverOpen={popoverOpen}
                                     handleClosePopover={handleClosePopover}
                                     handleSelectCategory={handleSelectCategory}
+                                    handleDeleteCategory={handleDeleteCategory}
                                     selectedCategory={selectedCategory}
                                     colors={colors}
                                     defaultCategories={defaultCategoriesOptions}

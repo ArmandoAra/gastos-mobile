@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import PeriodSelector from './components/subcomponents/PeriodSelector';
 import ExpenseHeatmap from './components/ExpenseHeatmapMobile';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
 
 // Nota: Quitadas importaciones de Skia/Victory no usadas directamente en este archivo
 // para limpiar el componente padre.
@@ -47,7 +48,10 @@ export default function AnalyticsScreen() {
   const { theme } = useSettingsStore();
   const colors = theme === 'dark' ? darkTheme : lightTheme;
 
+
   const [selectedPeriod, setSelectedPeriod] =  useState<ViewPeriod>('month');
+  const { onScroll } = useScrollDirection();
+
 
 
   const handlePeriodChange = (p: string) => {
@@ -61,11 +65,12 @@ export default function AnalyticsScreen() {
 
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
       <InfoHeader viewMode={selectedPeriod} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
         showsVerticalScrollIndicator={false}
       >
         { /* Period Selector - Accesible y Escalable */}
@@ -79,7 +84,7 @@ export default function AnalyticsScreen() {
         <View style={{ height: insets.bottom + 40 }} />
 
     </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

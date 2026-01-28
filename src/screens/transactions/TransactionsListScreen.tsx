@@ -21,9 +21,10 @@ import FilterFloatingButton from "./components/FilterFloatingButton";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import InfoHeader from "../../components/headers/InfoHeader";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
 import TransactionForm from '../../components/forms/TransactionForm';
+import { useScrollDirection } from "../../hooks/useScrollDirection";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ListItem =
     | { type: 'header'; date: string; total: number; id: string }
@@ -54,6 +55,8 @@ export function TransactionsScreen() {
     } = useTransactionsLogic();
 
     const { isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
+    const { onScroll } = useScrollDirection();
+    const insets = useSafeAreaInsets();
 
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
         if (item.type === 'header') {
@@ -100,7 +103,7 @@ export function TransactionsScreen() {
     }, []);
 
     return (
-        <SafeAreaView style={[localStyles.container, { backgroundColor: colors.surface }]}>
+        <View style={[localStyles.container, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
             <InfoPopUp />
             <InfoHeader viewMode={viewMode} />
 
@@ -163,6 +166,7 @@ export function TransactionsScreen() {
                         renderItem={renderItem}
                         keyExtractor={keyExtractor}
                         style={{ height: 150 }}
+                        onScroll={onScroll}
                         stickyHeaderIndices={stickyHeaderIndices}
                         contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 8 }}
                         keyboardDismissMode="on-drag"
@@ -194,7 +198,7 @@ export function TransactionsScreen() {
             />
 
             <AddTransactionsButton />
-        </SafeAreaView>
+        </View>
     );
 }
 
