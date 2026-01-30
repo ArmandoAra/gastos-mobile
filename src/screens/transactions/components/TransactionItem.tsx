@@ -12,7 +12,6 @@ import WarningMessage from './WarningMessage';
 import { Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ThemeColors } from '../../../types/navigation';
 import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
-import { IconsOptions } from '../../../constants/icons';
 import { useSettingsStore } from '../../../stores/settingsStore';
 // IMPORT ELIMINADO: TransactionForm ya no se usa aquí
 
@@ -174,8 +173,6 @@ export const TransactionItemMobile = React.memo(({
                     onSubmit={performDelete}
                 />
             )}
-
-            {/* COMPONENTE TransactionForm ELIMINADO DE AQUÍ */}
 
         </Animated.View>
     );

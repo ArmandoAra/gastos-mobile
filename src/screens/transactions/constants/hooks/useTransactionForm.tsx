@@ -182,7 +182,7 @@ export function useTransactionForm() {
             updateAccountBalance(
                 selectedAccount,
                 Math.abs(parseFloat(amount)),
-                transactionType
+                transactionType,
             );
 
             showMessage(MessageType.SUCCESS, t("messagesInfo.transactionAdded"));

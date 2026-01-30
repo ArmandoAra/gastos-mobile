@@ -268,7 +268,7 @@ export const defaultCategories: Category[] = [
     type: TransactionType.EXPENSE,
     userId: 'default'
   },
-  // --- OTHERS CATEGORIES ---
+
   {
     id: '29',
     name: 'Chart',

@@ -27,6 +27,7 @@ import { defaultCategories } from '../../../constants/categories';
 import { InputNameActive } from '../../../interfaces/settings.interface';
 import { ThemeColors } from '../../../types/navigation';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
+import { t } from 'i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
@@ -53,6 +54,10 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
     const itemHeight = useSharedValue<number | null>(null);
     const opacity = useSharedValue(1);
     const marginBottom = useSharedValue(8);
+    const isExpense = transaction.type === TransactionType.EXPENSE;
+    const formattedDate = format(new Date(transaction.date), 'dd/MM/yyyy - HH:mm');
+    const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
+
 
     const userCategoriesOptions = useMemo(() => {
         return useCategoriesStore.getState().userCategories || []; 
@@ -60,32 +65,47 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
 
     // --- Lógica de Datos (Memoizada) ---
     const categoryIconData = useMemo(() => {
+        // buscar el icono y el color de la categoria entre las categorias por defecto y las del usuario
+
+
+        // Sacamos el nombre original de la categoria de la transaccion, lo mismo si es personalizada o por defecto, esta se guarda en slug_category_name[0]
         const categoryName = transaction.slug_category_name[0] as CategoryLabel;
+
+        // Buscar en categorias personalizadas, por el nombre y el userId
         const customCategory = userCategoriesOptions.find(
             cat => cat.name === categoryName && cat.userId === user?.id
         );
 
-        const defaultCategory = defaultCategories.find(
-            cat => cat.name === categoryName && cat.userId === 'default'
-        );
-        const found = customCategory || defaultCategory;
+        // Si se encuentra una categoria personalizada, usar su icono y color directamente y retornarla
+        if (customCategory) {
+            const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === customCategory?.icon); // Usar el icono guardado en la transacción
 
-        const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === found?.icon);
+            return {
+                IconComponent: iconDefinition?.icon,
+                color: customCategory?.color || '#B0BEC5',
+            };
+        }
+
+        // De no encontrar la categoria en las personalizadas, buscar en las categorias por defecto y devolver el icono y el nombre que va a ser el slug
+
+        const defaultCategory = defaultCategories.find(
+            cat => cat.icon === transaction.category_icon_name && cat.userId === 'default' 
+        );
+
+        // const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === found?.icon);
+
+        const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === defaultCategory?.icon); // Usar el icono guardado en la transacción
 
 
         return {
             IconComponent: iconDefinition?.icon,
-            color: found?.color || '#B0BEC5',
+            color: defaultCategory?.color || '#B0BEC5',
         };
-    }, [transaction.slug_category_name, userCategoriesOptions, user?.id, iconsOptions]);
+    }, [transaction.slug_category_name, userCategoriesOptions, iconsOptions]);
 
     const accountName = useMemo(() => {
         return getAccountNameById(transaction.account_id);
     }, [transaction.account_id, getAccountNameById]);
-
-    const isExpense = transaction.type === TransactionType.EXPENSE;
-    const formattedDate = format(new Date(transaction.date), 'dd/MM/yyyy - HH:mm');
-    const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
 
     // --- Handlers de UI ---
     const handleLayout = useCallback((event: LayoutChangeEvent) => {

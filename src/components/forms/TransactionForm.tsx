@@ -30,9 +30,9 @@ import useBudgetsStore from '../../stores/useBudgetStore';
 import useMessage from '../../stores/useMessage';
 
 import { InputNameActive } from '../../interfaces/settings.interface';
-import { Transaction, TransactionType } from '../../interfaces/data.interface';
+import { Category, Transaction, TransactionType } from '../../interfaces/data.interface';
 import { MessageType } from '../../interfaces/message.interface';
-import {  CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
+import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
 
 // Hooks
 import { useTransactionForm } from '../../screens/transactions/constants/hooks/useTransactionForm';
@@ -53,9 +53,7 @@ import { TransactionHeaderTitle } from '../headers/TransactionsHeaderInput';
 import CalculatorSheet from './Inputs/CalculatorSheet';
 import CategorySelectorPopover from './Inputs/CategorySelector';
 import InfoPopUp from '../messages/InfoPopUp';
-import { is } from 'date-fns/locale';
-import { updateTransaction } from '../../../../Gastos/frontend/app/actions/db/Gastos_API';
-import { set } from 'date-fns';
+import { defaultCategories } from '../../constants/categories';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -65,11 +63,10 @@ interface TransactionFormProps {
 
 export default function TransactionForm({ isOpen, onClose, transactionToEdit }: TransactionFormProps) {
     // --- 1. CONFIGURACIÓN & HOOKS ---
-    const { theme } = useSettingsStore();
+    const { theme, iconsOptions } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
-    const { user } = useAuthStore();
     const { showMessage } = useMessage();
 
     // Stores de Cuentas para Actualización de Saldos
@@ -106,6 +103,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     const toTransactBudget = useBudgetsStore(state => state.toTransactBudget);
     const setToTransactBudget = useBudgetsStore(state => state.setToTransactBudget);
     const [isReady, setIsReady] = useState(false);
+    const { user } = useAuthStore();
 
     // Estados Locales UI
     const [showCalculator, setShowCalculator] = useState(false);
@@ -125,20 +123,36 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                 setSelectedAccount(transactionToEdit.account_id);
                 setLocalSelectedDay(new Date(transactionToEdit.date));
 
-                // Buscar y setear la categoría correcta
-                const categoryName = transactionToEdit.slug_category_name[0];
-                const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
-                
-                // Prioridad: Custom (usuario) -> Default
+
+                // Buscar en categorias personalizadas, por el nombre y el userId
                 const customCategory = userCategoriesOptions.find(
-                    cat => cat.name === categoryName && cat.userId === user?.id
+                    cat => cat.name === transactionToEdit.slug_category_name[0] && cat.userId === user?.id
                 );
-                const defaultCategory = defaultCategoriesOptions.find(
-                    cat => cat.name === categoryName
+
+                // Chequear si el slug corresponde a una categoria por defecto para saber si se ha borrado la categoria personalizada
+                const wasACustomCategory = defaultCategories.find(
+                    cat => cat.icon === transactionToEdit.slug_category_name[0] && cat.userId === 'default'
                 );
-                
-                const foundCategory = customCategory || defaultCategory || allCategories[0];
-                handleSelectCategory(foundCategory);
+
+
+                if (!customCategory && wasACustomCategory) {
+                    const defaultCategory = defaultCategories.find(
+                        cat => cat.icon === transactionToEdit.category_icon_name && cat.userId === 'default'
+                    );
+                    handleSelectCategory(defaultCategory || defaultCategoriesOptions[0]);
+                } else {
+                    // Creamos un modelo de categoria temporal por si el usuario ha borrado la categoria personalizada
+                    let customCategoryTemp: Category = {
+                        id: 'temp-id',
+                        name: transactionToEdit.slug_category_name[0],
+                        icon: transactionToEdit.category_icon_name as CategoryLabel,
+                        color: '#B0BEC5',
+                        type: transactionToEdit.type,
+                        userId: user?.id || 'unknown'
+                    };
+
+                    handleSelectCategory(customCategory || customCategoryTemp);
+                }
 
                 if (Platform.OS !== 'web') {
                     AccessibilityInfo.announceForAccessibility(t('accessibility.edit_form_opened', 'Edit transaction form opened'));
@@ -151,7 +165,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                 
                 const categoryName = toTransactBudget.slug_category_name[0];
                 const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
-                const foundCategory = allCategories.find(cat => cat.name === categoryName);
+                const foundCategory = allCategories.find(cat => cat.icon === categoryName);
                 
                 if (foundCategory) handleSelectCategory(foundCategory);
             
@@ -264,7 +278,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                     : Math.abs(finalAmountVal),
                 description: description.trim(),
                 date: finalDate.toISOString(),
-                category_icon_name: selectedCategory.name,
+                category_icon_name: selectedCategory.icon,
                 slug_category_name: isNewCategory ? [
                     selectedCategory.name as string,
                     ...defaultCategoriesSlug

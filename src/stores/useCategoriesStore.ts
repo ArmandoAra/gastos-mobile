@@ -4,8 +4,7 @@ import { createMMKV } from 'react-native-mmkv';
 import * as uuid from 'uuid';
 
 // Importa tus interfaces y enums aquí
-import { Category, TransactionType } from '../interfaces/data.interface'; 
-import { use } from 'react';
+import { Category, TransactionType } from '../interfaces/data.interface';
 import { useAuthStore } from './authStore';
 
 // ============================================
