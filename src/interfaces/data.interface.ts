@@ -1,5 +1,6 @@
-import { CategoryLabel } from "../api/interfaces";
+
 import { COLOR_PICKER_PALETTE } from "../constants/categories";
+import { CategoryLabel } from "./categories.interface";
 
 export interface User {
     id: string;
@@ -45,6 +46,7 @@ export interface Transaction {
     description: string;
     amount: number;
     type: TransactionType;
+    categoryId?: string;
     category_icon_name: string;
     slug_category_name: string[];
     date: string;
@@ -58,6 +60,7 @@ export interface Category {
     icon: CategoryLabel;
     color: typeof COLOR_PICKER_PALETTE[number];
     type: TransactionType;
+    isActive: boolean;
     userId: string;
 }
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     View,
     TouchableOpacity,
@@ -57,6 +57,10 @@ export function TransactionsScreen() {
     const { isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
     const { onScroll } = useScrollDirection();
     const insets = useSafeAreaInsets();
+
+    useEffect(() => {
+        console.log(listData[2]);
+    }, [listData]);
 
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
         if (item.type === 'header') {

@@ -190,6 +190,8 @@ const App = () => {
   const themeMode = useSettingsStore(state => state.theme);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
+
+
   useEffect(() => {
     async function loadFonts() {
       try {

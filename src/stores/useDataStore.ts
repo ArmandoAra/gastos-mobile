@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage, devtools, StateStorage } from 'zustand/middleware'
 import { createMMKV } from 'react-native-mmkv' // 1. Importar MMKV
-import { Account, Transaction, TransactionType } from '../interfaces/data.interface'
+import { Account, Category, Transaction, TransactionType } from '../interfaces/data.interface'
 import * as uuid from 'uuid';
 import { useAuthStore } from './authStore';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { migrateTransactions } from '../migrations/migrateTransactions';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -34,7 +35,7 @@ const zustandStorage: StateStorage = {
 // TIPOS (Sin cambios)
 // ============================================
 
-type PersistedState = {
+export type PersistedState = {
     balance: number | undefined
     selectedAccount: string
     allAccounts: Account[]
@@ -404,7 +405,41 @@ const useDataStore = create<State & Actions>()(
                 name: 'data-storage',
                 // 4. USAR EL STORAGE DE MMKV
                 storage: createJSONStorage(() => zustandStorage), 
-                version: 1,
+                version: 2,
+
+                migrate: (persistedState: any, version: number) => {
+                    console.log(`Intentando migrar desde versión ${version} a 2...`);
+
+                    // Ejecutar si la versión guardada es menor a la actual (2)
+                    if (version < 2) {
+                        try {
+                            // Intento sucio de obtener el otro store. 
+                            // ADVERTENCIA: Esto puede devolver [] si el otro store no ha cargado.
+                            let userCategories: Category[] = [];
+                            try {
+                                const catStore = require('../stores/useCategoriesStore').useCategoriesStore.getState();
+                                userCategories = catStore.userCategories || [];
+                            } catch (e) {
+                                console.warn("No se pudo cargar CategoriesStore durante la migración", e);
+                            }
+
+                            const newTransactions = migrateTransactions(persistedState, userCategories);
+
+                            return {
+                                ...persistedState,
+                                transactions: newTransactions,
+                                // Asegúrate de migrar otros campos si cambiaron
+                            };
+                        } catch (error) {
+                            console.error("Error fatal en migración:", error);
+                            return persistedState; // En caso de error, devolver estado sin tocar para no perder datos
+                        }
+                    }
+
+                    return persistedState;
+                },
+
+
                 partialize: (state) => ({
                     selectedAccount: state.selectedAccount,
                     allAccounts: state.allAccounts,

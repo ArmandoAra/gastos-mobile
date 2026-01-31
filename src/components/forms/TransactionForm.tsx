@@ -32,7 +32,7 @@ import useMessage from '../../stores/useMessage';
 import { InputNameActive } from '../../interfaces/settings.interface';
 import { Category, Transaction, TransactionType } from '../../interfaces/data.interface';
 import { MessageType } from '../../interfaces/message.interface';
-import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../api/interfaces';
+
 
 // Hooks
 import { useTransactionForm } from '../../screens/transactions/constants/hooks/useTransactionForm';
@@ -54,6 +54,7 @@ import CalculatorSheet from './Inputs/CalculatorSheet';
 import CategorySelectorPopover from './Inputs/CategorySelector';
 import InfoPopUp from '../messages/InfoPopUp';
 import { defaultCategories } from '../../constants/categories';
+import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/categories.interface';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -63,7 +64,7 @@ interface TransactionFormProps {
 
 export default function TransactionForm({ isOpen, onClose, transactionToEdit }: TransactionFormProps) {
     // --- 1. CONFIGURACIÓN & HOOKS ---
-    const { theme, iconsOptions } = useSettingsStore();
+    const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();

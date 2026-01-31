@@ -6,6 +6,7 @@ import * as uuid from 'uuid';
 // Importa tus interfaces y enums aquí
 import { Category, TransactionType } from '../interfaces/data.interface';
 import { useAuthStore } from './authStore';
+import { migrateCategories } from '../migrations/migrateCategories';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -65,6 +66,7 @@ type Actions = {
     
     // Delete
     deleteCategory: (id: string) => void;
+    disableCategory: (id: string) => void;
     deleteAllCategories: () => void;
 
     // === Loading & Error ===
@@ -150,7 +152,13 @@ const useCategoriesStore = create<State & Actions>()(
                         'updateCategory'
                     );
                 },
-
+                disableCategory: (id: string) => {
+                    set((state) => ({
+                        userCategories: state.userCategories.map(cat =>
+                            cat.id === id ? { ...cat, isActive: false } : cat
+                        )
+                    }));
+                },
                 deleteCategory: (id: string) => {
                     set(
                         (state) => ({
@@ -212,9 +220,34 @@ const useCategoriesStore = create<State & Actions>()(
             }),
             {
                 name: 'categories-storage',
-                // Usamos el adaptador MMKV
                 storage: createJSONStorage(() => zustandStorage),
-                version: 1,
+
+                // 2. CORRECCIÓN: Subimos la versión a 2 para forzar que entre al 'if'
+                version: 2,
+
+                migrate: (persistedState: any, version) => {
+                    console.log(`Verificando migración de categorías. Versión actual: ${version}`);
+
+                    if (version < 2) {
+                        try {
+                            const newCategories = migrateCategories(persistedState);
+
+                            return {
+                                ...persistedState,
+                                userCategories: newCategories
+                            };
+                        } catch (error) {
+                            console.error("Error migrando categorías:", error);
+                            // En caso de error, devolvemos el estado como estaba para no perder datos
+                            return persistedState;
+                        }
+                    }
+
+                    // 3. CORRECCIÓN CRÍTICA: Siempre retornar el estado si no hay migración
+                    return persistedState;
+
+
+                },
                 // Solo persistimos el array de categorías
                 partialize: (state) => ({
                     userCategories: state.userCategories,

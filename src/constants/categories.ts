@@ -1,4 +1,4 @@
-import { CategoryLabel } from "../api/interfaces";
+import { CategoryLabel } from "../interfaces/categories.interface";
 import {  Category, TransactionType } from "../interfaces/data.interface";
 
 export const CATEGORY_COLORS = [
@@ -47,6 +47,7 @@ export const defaultCategoryNames: string[] = [
   'Luxury', 'World', 'Nature', 'Subscription', 'Insurance', 'Podcast', 'Gadget', 'Donation', 'Security', 'Gym', 'Refund',
   'Lost', 'Baby', 'Beauty', 'Haircut', 'Clothes'
 ];
+
 
 export const defaultCategories: Category[] = [
   // --- INCOME CATEGORIES ---

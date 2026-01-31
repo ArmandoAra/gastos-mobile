@@ -1,10 +1,10 @@
 import React from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
-import { CategoryLabel } from '../api/interfaces';
 import { COLOR_PICKER_PALETTE } from './categories';
 import { Image } from 'expo-image';
 import { List } from 'react-native-paper';
 import { useSettingsStore } from '../stores/settingsStore';
+import { CategoryLabel } from '../interfaces/categories.interface';
 
 
 // =====================================================================

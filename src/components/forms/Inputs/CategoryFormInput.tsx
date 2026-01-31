@@ -25,11 +25,10 @@ import * as uuid from 'uuid';
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { COLOR_PICKER_PALETTE, defaultCategories } from '../../../constants/categories';
 import { ICON_OPTIONS } from '../../../constants/icons';
-import { TransactionType } from '../../../types/schemas';
 import { useAuthStore } from '../../../stores/authStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
-import { Category } from '../../../interfaces/data.interface';
+import { Category, TransactionType } from '../../../interfaces/data.interface';
 
 interface CreateCategoryFormProps {
     type: TransactionType;
@@ -106,11 +105,10 @@ export default function CreateCategoryForm({
         if (isEditMode && categoryToEdit) {
             // === MODO ACTUALIZAR ===
             const updatedCat: Category = {
-                ...categoryToEdit, // Mantenemos ID original
+                ...categoryToEdit, 
                 name: name.trim(),
                 icon: selectedIconItem?.icon || categoryToEdit.icon,
                 color: selectedColor,
-                // type y userId no deberían cambiar usualmente
             };
             updateCategory(categoryToEdit.id, updatedCat);
         } else {

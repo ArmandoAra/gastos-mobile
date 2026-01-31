@@ -17,7 +17,6 @@ import { Gesture } from 'react-native-gesture-handler';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../../utils/helpers';
-import { CategoryLabel } from '../../../api/interfaces';
 import { Transaction, TransactionType } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
 import { useAuthStore } from '../../../stores/authStore';
@@ -27,7 +26,7 @@ import { defaultCategories } from '../../../constants/categories';
 import { InputNameActive } from '../../../interfaces/settings.interface';
 import { ThemeColors } from '../../../types/navigation';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
-import { t } from 'i18next';
+import { CategoryLabel } from '../../../interfaces/categories.interface';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;

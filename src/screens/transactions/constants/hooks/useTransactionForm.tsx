@@ -9,18 +9,18 @@ import { InputNameActive } from "../../../../interfaces/settings.interface";
 import { useSettingsStore } from "../../../../stores/settingsStore";
 import useDataStore from "../../../../stores/useDataStore";
 import { IconKey } from "../../../../constants/icons";
-import { Transaction, TransactionType } from "../../../../types/schemas";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "../../../../stores/authStore";
 import { useTranslation } from "react-i18next";
-import { Category } from "../../../../interfaces/data.interface";
-import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../api/interfaces";
-import { defaultCategories } from '../../../../constants/categories';
+import { Category, Transaction, TransactionType } from "../../../../interfaces/data.interface";
+// import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../api/interfaces";
 import { filterCategoriesByType } from "../../../../utils/categories";
 import useCategoriesStore from "../../../../stores/useCategoriesStore";
 import { se } from "date-fns/locale";
 import { LanguageCode, languages } from "../../../../constants/languages";
+import { defaultCategories } from "../../../../constants/categories";
+import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../interfaces/categories.interface";
 
 
 const INITIAL_FORM_STATE = {
@@ -37,7 +37,7 @@ export function useTransactionForm() {
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
     const { localSelectedDay, setLocalSelectedDay } = useDateStore();
-    const { userCategories, deleteCategory } = useCategoriesStore();
+    const { userCategories, disableCategory } = useCategoriesStore();
     const [anchorEl, setAnchorEl] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
@@ -90,7 +90,7 @@ export function useTransactionForm() {
 
     const handleDeleteCategory = useCallback((categoryId: string) => {
         // Si la categoría eliminada es la seleccionada, cambiar a la primera disponible
-        deleteCategory(categoryId);
+        disableCategory(categoryId);
         if (selectedCategory.id === categoryId) {
             const remainingCategories = allCategories.filter(cat => cat.id !== categoryId);
             setSelectedCategory(remainingCategories[0] || null);
@@ -155,6 +155,7 @@ export function useTransactionForm() {
             description: description.trim() || (language === LanguageCode.EN ? selectedCategory.name : defaultDescription),
             amount: finalAmount,
             type: isIncome ? TransactionType.INCOME : TransactionType.EXPENSE,
+            categoryId: selectedCategory.id,
             category_icon_name: selectedCategory.icon,
             slug_category_name: isNewCategory ? [selectedCategory.name as string, ...defaultCategoriesSlug] : defaultCategoriesSlug,
             date: transactionDate.toISOString(),
