@@ -24,6 +24,7 @@ import { ThemeColors } from '../../../types/navigation';
 import { useAuthStore } from '../../../stores/authStore';
 import WarningAccountDeleteMessage from './WarningAccountDeleteMessage';
 import { useTranslation } from 'react-i18next';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 interface AccountManagementProps {
     colors: ThemeColors;
@@ -31,6 +32,7 @@ interface AccountManagementProps {
 
 export default function AccountManagementSection({ colors }: AccountManagementProps) {
     const { t } = useTranslation();
+    const language = useSettingsStore((state) => state.language);
 
     const { allAccounts, updateAccount, syncAccountsWithTransactions } = useDataStore();
     const { currencySymbol } = useAuthStore();

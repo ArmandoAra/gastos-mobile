@@ -1,9 +1,10 @@
 import React, { memo } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { MaterialIcons } from "@expo/vector-icons";
 import { ThemeColors } from '../../../types/navigation'; // Ajusta tus rutas de importación
 import { Item } from '../../../interfaces/data.interface'; // Ajusta tus rutas
+import { formatCurrency } from '../../../utils/helpers';
 
 interface BudgetItemProps {
     item: Item;
@@ -122,7 +123,7 @@ const BudgetItemComponent = ({
                     style={[styles.itemTotal, { color: colors.text }]}
                     maxFontSizeMultiplier={2}
                 >
-                    {currencySymbol}{(item.price * item.quantity).toFixed(2)}
+                    {currencySymbol}{formatCurrency(item.price * item.quantity)}
                 </Text>
             </View>
         </Animated.View>

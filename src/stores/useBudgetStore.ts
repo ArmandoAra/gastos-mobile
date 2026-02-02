@@ -2,11 +2,10 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, devtools, StateStorage } from 'zustand/middleware';
 import { createMMKV } from 'react-native-mmkv';
 import * as uuid from 'uuid';
-import { ExpenseBudget, Item } from '../interfaces/data.interface';
-import { getUser } from '../../../Gastos/frontend/app/lib/dal';
+import { Category, ExpenseBudget, Item } from '../interfaces/data.interface';
 import { useAuthStore } from './authStore';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import { set } from 'date-fns';
+import { migrateBudgets } from '../migrations/migrateBudgets';
+
 
 export const budgetsStorage = createMMKV({
     id: 'budgets-storage',
@@ -302,6 +301,38 @@ const useBudgetsStore = create<State & Actions>()(
             }),
             {
                 name: 'budgets-storage',
+                version: 1.3,
+                migrate: (persistedState: any, version: number) => {
+                    console.log(`Intentando migrar desde versión ${version} a 2...`);
+
+                    // Ejecutar si la versión guardada es menor a la actual (2)
+                    if (version < 3) {
+                        try {
+                            // Intento sucio de obtener el otro store. 
+                            // ADVERTENCIA: Esto puede devolver [] si el otro store no ha cargado.
+                            let userCategories: Category[] = [];
+                            try {
+                                const categoriesStore = require('./useCategoriesStore').default;
+                                userCategories = categoriesStore.getState().getUserCategories();
+                            } catch (e) {
+                                console.warn("No se pudo cargar CategoriesStore durante la migración", e);
+                            }
+
+                            const newBudgets = migrateBudgets(persistedState, userCategories);
+
+                            return {
+                                ...persistedState,
+                                budgets: newBudgets,
+                                // Asegúrate de migrar otros campos si cambiaron
+                            };
+                        } catch (error) {
+                            console.error("Error fatal en migración:", error);
+                            return persistedState; // En caso de error, devolver estado sin tocar para no perder datos
+                        }
+                    }
+
+                    return persistedState;
+                },
                 storage: createJSONStorage(() => zustandStorage),
                 partialize: (state) => ({ budgets: state.budgets }),
                 onRehydrateStorage: () => (state) => {

@@ -58,10 +58,6 @@ export function TransactionsScreen() {
     const { onScroll } = useScrollDirection();
     const insets = useSafeAreaInsets();
 
-    useEffect(() => {
-        console.log(listData[2]);
-    }, [listData]);
-
     const renderItem = useCallback(({ item }: { item: ListItem }) => {
         if (item.type === 'header') {
             const title = getGroupTitle(item.date);

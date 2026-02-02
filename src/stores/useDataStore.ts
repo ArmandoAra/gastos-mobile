@@ -405,7 +405,7 @@ const useDataStore = create<State & Actions>()(
                 name: 'data-storage',
                 // 4. USAR EL STORAGE DE MMKV
                 storage: createJSONStorage(() => zustandStorage), 
-                version: 2,
+                version: 1.3,
 
                 migrate: (persistedState: any, version: number) => {
                     console.log(`Intentando migrar desde versión ${version} a 2...`);
@@ -417,8 +417,8 @@ const useDataStore = create<State & Actions>()(
                             // ADVERTENCIA: Esto puede devolver [] si el otro store no ha cargado.
                             let userCategories: Category[] = [];
                             try {
-                                const catStore = require('../stores/useCategoriesStore').useCategoriesStore.getState();
-                                userCategories = catStore.userCategories || [];
+                                const categoriesStore = require('./useCategoriesStore').default;
+                                userCategories = categoriesStore.getState().getUserCategories();
                             } catch (e) {
                                 console.warn("No se pudo cargar CategoriesStore durante la migración", e);
                             }

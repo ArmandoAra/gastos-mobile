@@ -74,7 +74,7 @@ export default function CalculatorSheet({ colors, value, onChange, onClose }: Ca
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderTopColor: colors.border }]}>
+        <View style={[styles.container, { backgroundColor: colors.surfaceSecondary }]}>
             {BUTTONS.map((row, rowIndex) => (
                 <View key={rowIndex} style={styles.row}>
                     {row.map((btn) => {
@@ -103,7 +103,7 @@ export default function CalculatorSheet({ colors, value, onChange, onClose }: Ca
                                         styles.text, 
                                         { color: isOperator  ? colors.text : colors.surface, fontSize: isOperator ? 24 : 22 }
                                     ]}>
-                                        {btn}
+                                                {btn === '.' ? "," : btn}
                                     </Text>
                                 )}
                             </TouchableOpacity>
@@ -117,22 +117,22 @@ export default function CalculatorSheet({ colors, value, onChange, onClose }: Ca
 
 const styles = StyleSheet.create({
     container: {
-        height: 280, 
+        height: 350, 
         width: '100%',
-        padding: 6,
-        borderTopWidth: 1,
+        paddingHorizontal: 6,
+        paddingVertical: 16,
         marginBottom: 30,// Espacio para el home indicator en iOS
-        gap: 6,
+        gap: 10,
     },
     row: {
         flex: 1,
         flexDirection: 'row',
-        gap: 6,
+        gap: 10,
     },
     button: {
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 28,
+        borderRadius: 50,
         elevation: 1,
         // Sombra suave para iOS
         shadowColor: "#000",

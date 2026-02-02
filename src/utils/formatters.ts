@@ -3,17 +3,6 @@ import { es, enUS, ptBR } from 'date-fns/locale';
 
 const locales = { es, en: enUS, pt: ptBR };
 
-export function formatCurrency(
-    amount: number,
-    currency: string = 'BRL',
-    locale: string = 'pt-BR'
-): string {
-    return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-    }).format(amount);
-}
-
 export function formatDate(
     dateString: string,
     formatStr: string = 'PP',
@@ -34,3 +23,5 @@ export function formatRelativeDate(dateString: string, locale: string = 'es'): s
 
     return formatDate(dateString, 'PP', locale);
 }
+
+// export function 

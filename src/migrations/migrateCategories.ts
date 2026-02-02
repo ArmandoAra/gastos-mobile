@@ -15,6 +15,6 @@ export const migrateCategories = (persistedState: any): Category[] => {
         ...oldCat,
         // Agregamos la propiedad nueva. 
         // Usamos '??' (Nullish coalescing) que es más seguro que verificar undefined
-        isActive: oldCat.isActive ?? true, 
+        isActive: true, 
     }));
 }

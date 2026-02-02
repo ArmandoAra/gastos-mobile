@@ -55,6 +55,9 @@ import CategorySelectorPopover from './Inputs/CategorySelector';
 import InfoPopUp from '../messages/InfoPopUp';
 import { defaultCategories } from '../../constants/categories';
 import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/categories.interface';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import useCategoriesStore from '../../stores/useCategoriesStore';
+import { de } from 'date-fns/locale';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -104,7 +107,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     const toTransactBudget = useBudgetsStore(state => state.toTransactBudget);
     const setToTransactBudget = useBudgetsStore(state => state.setToTransactBudget);
     const [isReady, setIsReady] = useState(false);
-    const { user } = useAuthStore();
+    const { getUserCategories } = useCategoriesStore();
 
     // Estados Locales UI
     const [showCalculator, setShowCalculator] = useState(false);
@@ -124,36 +127,14 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                 setSelectedAccount(transactionToEdit.account_id);
                 setLocalSelectedDay(new Date(transactionToEdit.date));
 
+                const customCategory = getUserCategories()
+                const allCategories: Category[] = [...defaultCategories, ...customCategory];
 
-                // Buscar en categorias personalizadas, por el nombre y el userId
-                const customCategory = userCategoriesOptions.find(
-                    cat => cat.name === transactionToEdit.slug_category_name[0] && cat.userId === user?.id
-                );
+                // buscar la categoria que coincida con el id guardado en la transaccion
+                const matchCategory = allCategories.find(cat => cat.id === transactionToEdit.categoryId);
 
-                // Chequear si el slug corresponde a una categoria por defecto para saber si se ha borrado la categoria personalizada
-                const wasACustomCategory = defaultCategories.find(
-                    cat => cat.icon === transactionToEdit.slug_category_name[0] && cat.userId === 'default'
-                );
+                handleSelectCategory(matchCategory || allCategories[0]);
 
-
-                if (!customCategory && wasACustomCategory) {
-                    const defaultCategory = defaultCategories.find(
-                        cat => cat.icon === transactionToEdit.category_icon_name && cat.userId === 'default'
-                    );
-                    handleSelectCategory(defaultCategory || defaultCategoriesOptions[0]);
-                } else {
-                    // Creamos un modelo de categoria temporal por si el usuario ha borrado la categoria personalizada
-                    let customCategoryTemp: Category = {
-                        id: 'temp-id',
-                        name: transactionToEdit.slug_category_name[0],
-                        icon: transactionToEdit.category_icon_name as CategoryLabel,
-                        color: '#B0BEC5',
-                        type: transactionToEdit.type,
-                        userId: user?.id || 'unknown'
-                    };
-
-                    handleSelectCategory(customCategory || customCategoryTemp);
-                }
 
                 if (Platform.OS !== 'web') {
                     AccessibilityInfo.announceForAccessibility(t('accessibility.edit_form_opened', 'Edit transaction form opened'));
@@ -279,6 +260,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                     : Math.abs(finalAmountVal),
                 description: description.trim(),
                 date: finalDate.toISOString(),
+                categoryId: selectedCategory.id,
                 category_icon_name: selectedCategory.icon,
                 slug_category_name: isNewCategory ? [
                     selectedCategory.name as string,
@@ -480,7 +462,6 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                                     colors={colors}
                                     defaultCategories={defaultCategoriesOptions}
                                     userCategories={userCategoriesOptions}
-                                    // anchorEl={anchorEl} // Si tu popover lo requiere
                                 />
                             )}
 

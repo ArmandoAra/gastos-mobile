@@ -7,6 +7,7 @@ import * as uuid from 'uuid';
 import { Category, TransactionType } from '../interfaces/data.interface';
 import { useAuthStore } from './authStore';
 import { migrateCategories } from '../migrations/migrateCategories';
+import { getUser } from '../../../Gastos/frontend/app/lib/dal';
 
 // ============================================
 // CONFIGURACIÓN MMKV
@@ -120,6 +121,16 @@ const useCategoriesStore = create<State & Actions>()(
                     );
                 },
 
+                getAllCategories: () => {
+                    return get().userCategories;
+                },
+
+                getUserCategories: () => {
+                    const userId = useAuthStore.getState().user?.id;
+                    if (!userId) return [];
+                    return get().userCategories.filter((cat) => cat.userId === userId && cat.isActive);
+                },
+
                 // Crea una categoría generando el ID automáticamente
                 createCategory: async (categoryData: Omit<Category, 'id'>) => {
                     set({ fetching: true });
@@ -180,12 +191,6 @@ const useCategoriesStore = create<State & Actions>()(
                     return get().userCategories.find((cat) => cat.id === id);
                 },
 
-                getUserCategories: () => {
-                    const userId = useAuthStore.getState().user?.id;
-                    if (!userId) return [];
-                    return get().userCategories.filter((cat) => cat.userId === userId);
-                },
-
                 getCategoriesByType: (type: TransactionType) => {
                     return get().userCategories.filter((cat) => cat.type === type);
                 },
@@ -223,7 +228,7 @@ const useCategoriesStore = create<State & Actions>()(
                 storage: createJSONStorage(() => zustandStorage),
 
                 // 2. CORRECCIÓN: Subimos la versión a 2 para forzar que entre al 'if'
-                version: 2,
+                version: 1.3,
 
                 migrate: (persistedState: any, version) => {
                     console.log(`Verificando migración de categorías. Versión actual: ${version}`);

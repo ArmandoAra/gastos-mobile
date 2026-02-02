@@ -72,12 +72,18 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
       <View style={[
         styles.tabBar,
         {
-          backgroundColor: colors.surfaceSecondary + '80',
+          backgroundColor: colors.surfaceSecondary,
           borderTopColor: colors.border,
-          paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom,
-          height: 80 + insets.bottom,
-          marginBottom: Platform.OS === 'ios' ? insets.bottom : 0,
+          height: 60 + insets.bottom,
+          paddingHorizontal: 20,
+          width: '90%',
+          marginBottom: 20,
           shadowColor: colors.shadow,
+          borderRadius: 50,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 10,
         }
       ]}>
         {state.routes.map((route, index) => {
@@ -176,7 +182,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    paddingTop: 10,
+    // paddingTop: 10,
 
     justifyContent: 'space-around',
     alignItems: 'center',

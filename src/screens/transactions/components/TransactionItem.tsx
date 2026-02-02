@@ -97,7 +97,7 @@ export const TransactionItemMobile = React.memo(({
                         onAccessibilityAction={handleAccessibilityAction}
                     >
                         {/* 1. Avatar */}
-                        <View style={[styles.avatar, { backgroundColor: color }]}>
+                        <View style={[styles.avatar, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface }]}>
                             {IconComponent ? (
                                 <IconComponent color={colors.text} style={{
                                     width: iconsOptions === 'painted' ? 60 : 32,

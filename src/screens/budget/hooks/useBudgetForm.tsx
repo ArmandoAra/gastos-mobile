@@ -5,8 +5,8 @@ import useDataStore from "../../../stores/useDataStore";
 import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
 import { defaultCategories } from "../../../constants/categories";
 import { ExpenseBudget, Item } from "../../../interfaces/data.interface";
-import { CategoryLabel } from "../../../api/interfaces";
 import useBudgetsStore from "../../../stores/useBudgetStore";
+import { CategoryLabel } from "../../../interfaces/categories.interface";
 
 interface UseBudgetFormProps {
     visible: boolean;
@@ -154,6 +154,7 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
             budgetedAmount: parseFloat(budgetedAmount) || 0,
             items: items,
             updated_at: new Date().toISOString(),
+            categoryId: selectedCategory ? selectedCategory.id : defaultCategories[0].id,
             slug_category_name: selectedCategory ? [selectedCategory.name] : (initialData?.slug_category_name || []),
             category_icon_name: selectedCategory ? selectedCategory.icon : (initialData?.category_icon_name || 'shopping-cart'),
             favorite: initialData?.favorite || false,
@@ -165,6 +166,7 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
             const updatedBudget: ExpenseBudget = {
                 ...initialData, // Mantiene ID, fechas originales, etc.
                 ...commonData,
+                categoryId: selectedCategory ? selectedCategory.id : defaultCategories[0].id,
                 favorite: isFavorite,
                 spentAmount: totalSpent,
             };

@@ -17,8 +17,7 @@ import { Category, Transaction, TransactionType } from "../../../../interfaces/d
 // import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../api/interfaces";
 import { filterCategoriesByType } from "../../../../utils/categories";
 import useCategoriesStore from "../../../../stores/useCategoriesStore";
-import { se } from "date-fns/locale";
-import { LanguageCode, languages } from "../../../../constants/languages";
+import { LanguageCode } from "../../../../constants/languages";
 import { defaultCategories } from "../../../../constants/categories";
 import { CategoryLabelPortuguese, CategoryLabelSpanish } from "../../../../interfaces/categories.interface";
 
@@ -37,10 +36,11 @@ export function useTransactionForm() {
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
     const { localSelectedDay, setLocalSelectedDay } = useDateStore();
-    const { userCategories, disableCategory } = useCategoriesStore();
+    const { getUserCategories, disableCategory } = useCategoriesStore();
     const [anchorEl, setAnchorEl] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
+    const userCategories: Category[] = getUserCategories();
 
     const defaultCategoriesOptions: Category[] = filterCategoriesByType(defaultCategories, inputNameActive);
     const userCategoriesOptions: Category[] = filterCategoriesByType(userCategories, inputNameActive); // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
@@ -95,7 +95,7 @@ export function useTransactionForm() {
             const remainingCategories = allCategories.filter(cat => cat.id !== categoryId);
             setSelectedCategory(remainingCategories[0] || null);
         }
-    }, []);
+    }, [selectedCategory, allCategories]);
 
     const handleClose = useCallback(() => {
         setInputNameActive(InputNameActive.NONE);
@@ -162,7 +162,7 @@ export function useTransactionForm() {
             created_at: currentTimeISO,
             updated_at: currentTimeISO,
         };
-    }, [localSelectedDay, inputNameActive, amount, description, selectedCategory, selectedAccount, user?.id]);
+    }, [localSelectedDay, inputNameActive, amount, description, selectedCategory.id, selectedAccount, user?.id]);
 
     const handleSave = useCallback(async () => {
         // 1. Validar antes de procesar

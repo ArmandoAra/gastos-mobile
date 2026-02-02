@@ -35,7 +35,6 @@ import { useScrollDirection } from '../../hooks/useScrollDirection';
 export const SettingsScreen = () => {
     const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-    const { onScroll } = useScrollDirection();
 
 
     return (
@@ -43,7 +42,6 @@ export const SettingsScreen = () => {
             <InfoPopUp />
         <ScrollView
                 style={[styles.container, { backgroundColor: theme === 'dark' ? colors.background : colors.background }]}
-                onScroll={onScroll}
             showsVerticalScrollIndicator={false}
             >
                 <UserProfileSection colors={colors} />

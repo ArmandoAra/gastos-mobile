@@ -1,17 +1,16 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { Category, ExpenseBudget, Item } from "../../../interfaces/data.interface";
+import { ExpenseBudget, Item } from "../../../interfaces/data.interface";
 import { ICON_OPTIONS } from "../../../constants/icons";
-import { CategoryLabel } from "../../../api/interfaces";
 import { useMemo } from "react";
-import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
 import { useAuthStore } from "../../../stores/authStore";
 import { defaultCategories, defaultCategoryNames } from "../../../constants/categories";
 import { ThemeColors } from "../../../types/navigation";
 import { useTranslation } from "react-i18next";
-import { filterCategoriesByType } from "../../../utils/categories";
 import { useSettingsStore } from "../../../stores/settingsStore";
+import { formatCurrency } from "../../../utils/helpers";
+import useCategoriesStore from "../../../stores/useCategoriesStore";
 
 export const BudgetCard = ({ 
     item, 
@@ -25,7 +24,7 @@ export const BudgetCard = ({
     const { t } = useTranslation();
     const iconsOptions = useSettingsStore(state => state.iconsOptions);
     const currencySymbol = useAuthStore(state => state.currencySymbol);
-    const {userCategoriesOptions} = useTransactionForm();
+    const { userCategories } = useCategoriesStore();
     const user = useAuthStore(state => state.user);
     const progress = item.budgetedAmount > 0 ? (item.spentAmount / item.budgetedAmount) : 0;
     const isOverBudget = item.spentAmount > item.budgetedAmount;
@@ -37,24 +36,19 @@ export const BudgetCard = ({
     const remainingItems = (item.items?.length || 0) - MAX_ITEMS_TO_SHOW;
 
     const categoryIconData = useMemo(() => {
-        const categoryName = item.slug_category_name[0] as CategoryLabel;
+        const allCategories = [...defaultCategories, ...userCategories];
 
-        const customCategory = userCategoriesOptions.find(
-            cat => cat.name === categoryName && cat.userId === user?.id
-        );
-        const defaultCategory = defaultCategories.find(
-            cat => cat.name === categoryName && cat.userId === 'default'
-        );
+        // buscar la categoria que coincida con el id guardado en la transaccion
+        const matchCategory = allCategories.find(cat => cat.id === item.categoryId);
 
-        const found = customCategory || defaultCategory;
-        const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === found?.icon);
+        const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === matchCategory?.icon);
 
         return {
             IconComponent: iconDefinition?.icon,
-            color: found?.color || '#B0BEC5',
+            color: matchCategory?.color || '#B0BEC5',
         };
 
-    }, [item.slug_category_name, userCategoriesOptions, defaultCategories, user?.id, iconsOptions]);
+    }, [item.slug_category_name, userCategories, defaultCategories, user?.id, iconsOptions]);
 
     const { IconComponent, color } = categoryIconData;
 
@@ -71,7 +65,7 @@ export const BudgetCard = ({
                     <Text style={{ marginRight: 8, color: colors.textSecondary }}>
                         {defaultCategoryNames.some(name => name === item.slug_category_name[0]) ? t(`icons.${item.slug_category_name[0]}`) : item.slug_category_name[0]}
                     </Text>
-                    <View style={[styles.iconCircle, { backgroundColor: color || colors.text }]}>
+                    <View style={[styles.iconCircle, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : color }]}>
                         {IconComponent ? <IconComponent size={20} color={colors.text} style={{
                             width: iconsOptions === 'painted' ? 46 : 22,
                             height: iconsOptions === 'painted' ? 46 : 22,
@@ -117,10 +111,10 @@ export const BudgetCard = ({
                 {/* Footer con Totales */}
                 <View style={styles.cardFooter}>
                     <Text style={[styles.amountText, { color: isOverBudget ? colors.error : colors.income }]}>
-                        {currencySymbol}{item.spentAmount.toFixed(2)}
+                        {currencySymbol} {formatCurrency(item.spentAmount)}
                     </Text>
                     <Text style={[styles.targetText, { color: isOverBudget ? colors.error : '#60a5fa' }]}>
-                        / {currencySymbol}{item.budgetedAmount.toFixed(2)}
+                        / {currencySymbol} {formatCurrency(item.budgetedAmount)}
                     </Text>
                 </View>
 

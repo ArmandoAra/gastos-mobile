@@ -2,12 +2,13 @@ import React, { RefObject } from 'react';
 import { 
     View, 
     Text, 
-    TextInput, 
+    // TextInput, // Ya no lo necesitamos en el render
     TouchableOpacity, 
     StyleSheet, 
     Keyboard,
     AccessibilityInfo,
-    Platform
+    Platform,
+    Pressable
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { 
@@ -26,18 +27,19 @@ import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
 import { Category } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
-import { Icon } from 'react-native-paper';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
-import { de, is } from 'date-fns/locale';
 import { defaultCategories } from '../../../constants/categories';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { formatCurrency } from '../../../utils/helpers';
 
 interface CategoryAndAmountInputProps {
     isReady?: boolean;
     selectedCategory: Category | null;
     amount: string;
     setAmount: (value: string) => void;
-    amountInputRef?: RefObject<TextInput | null>;
+    // Aunque ya no usamos TextInput, mantengo el tipo RefObject por si lo usas en el padre,
+    // pero idealmente deberías quitarlo de las props si no se usa para focus.
+    amountInputRef?: any; 
     handleCategoryClick: (event: any) => void;
     colors: ThemeColors;
     onOpenCalculator: () => void;
@@ -64,28 +66,33 @@ export default function CategoryAndAmountInput({
         transform: [{ scale: scale.value }]
     }));
 
-
-
     const { icon: IconCategory } = ICON_OPTIONS[iconsOptions].find(icon => icon.label === selectedCategory?.icon) || {};
+
+    const handleAmountPress = () => {
+        // Aseguramos que cualquier teclado previo se cierre
+        Keyboard.dismiss();
+        onOpenCalculator();
+        if (Platform.OS !== 'web') {
+            AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened', 'Calculator keyboard opened'));
+        }
+    };
+
+    // Helper para saber si hay valor o mostramos placeholder
+    const hasAmount = amount && amount.length > 0;
 
     return (
         <View style={styles.container}>
             {/* 1. SELECCIÓN DE CATEGORÍA */}
             <View style={styles.categoryColumn}>
-                {isReady && <Animated.View
-                    entering={FadeIn.delay(200)}
-                >
-                <Text
-                    style={[styles.label, { color: colors.textSecondary }]}
-                    maxFontSizeMultiplier={1.5} // Evita que labels auxiliares rompan el layout
-                    numberOfLines={1}
-                >
-                    {t('transactions.category', 'CATEGORY')}
-                </Text>
-                </Animated.View>
-
-                }
-
+                {isReady && <Animated.View entering={FadeIn.delay(200)}>
+                    <Text
+                        style={[styles.label, { color: colors.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                    >
+                        {t('transactions.category', 'CATEGORY')}
+                    </Text>
+                </Animated.View>}
                 
                 <TouchableOpacity
                     activeOpacity={0.8}
@@ -120,25 +127,21 @@ export default function CategoryAndAmountInput({
                                     <MaterialIcons name="category" size={28} color={colors.textSecondary} />
                                 )}
                             </View>
-                        </Animated.View>
-                        }
-
+                        </Animated.View>}
                     </Animated.View>
                 </TouchableOpacity>
             </View>
 
-            {/* 2. ENTRADA DE MONTO */}
+            {/* 2. ENTRADA DE MONTO (Ahora es solo visualización) */}
             <View style={styles.amountColumn}>
-                {isReady && <Animated.View
-                    entering={FadeIn.delay(300)}
-                >
-                <Text
-                    style={[styles.label, { color: colors.textSecondary }]}
-                    maxFontSizeMultiplier={1.5}
-                    numberOfLines={1}
-                >
-                    {t('transactions.amount', 'AMOUNT')}* ({amount.length}/12)
-                </Text>
+                {isReady && <Animated.View entering={FadeIn.delay(300)}>
+                    <Text
+                        style={[styles.label, { color: colors.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                    >
+                        {t('transactions.amount', 'AMOUNT')}*
+                    </Text>
                 </Animated.View>}
 
                 {isReady && <Animated.View
@@ -148,51 +151,36 @@ export default function CategoryAndAmountInput({
                         { backgroundColor: colors.surface, borderColor: colors.border }
                     ]}
                 >
-                    <TextInput
-                        ref={amountInputRef}
-                        value={amount}
-                        onChangeText={setAmount}
-                        placeholder="0.00"
-                        maxLength={12}
-                        placeholderTextColor={colors.textSecondary}
-                        keyboardType="decimal-pad"
-                        style={[styles.input, { color: colors.text, fontFamily: 'FiraSans-Bold' }]}
-                        // Accesibilidad
-                        accessibilityLabel={t('accessibility.amount_input', 'Amount input')}
-                        // Escalado dinámico
-                        allowFontScaling={true} // Permitir que el input crezca
-                    />
-
-                    {/* BOTÓN CALCULADORA */}
-                    <TouchableOpacity
-                        onPress={() => {
-                            Keyboard.dismiss();
-                            onOpenCalculator();
-                            if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened', 'Calculator keyboard opened'));
-                        }}
-                        style={[styles.calcButton, { backgroundColor: colors.text }]} // Alto contraste
+                    {/* Usamos Pressable como contenedor interactivo principal */}
+                    <Pressable
+                        onPress={handleAmountPress}
+                        style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
                         accessibilityRole="button"
-                        accessibilityLabel={t('accessibility.open_calculator', 'Open Calculator')}
-                        accessibilityHint={t('accessibility.calculator_hint', 'Opens a numeric keypad with basic math functions')}
+                        accessibilityLabel={`${t('transactions.amount')}, ${hasAmount ? amount : '0'}`}
+                        accessibilityHint={t('accessibility.open_calculator', 'Double tap to open calculator')}
                     >
-                        <MaterialIcons
-                            name="calculate"
-                            size={28} 
-                            color={colors.surface}
-                        />
-                    </TouchableOpacity>
+                        <Text
+                            style={[
+                                styles.textDisplay,
+                                {
+                                    color: hasAmount ? colors.text : colors.textSecondary,
+                                    // Si quieres simular un cursor parpadeando, podrías agregar una View extra aquí
+                                }
+                            ]}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit={true} // Útil si el número es muy largo
+                            minimumFontScale={0.5}
+                        >
+                            {hasAmount ? formatCurrency(amount) : "0,00"}
+                        </Text>
+                    </Pressable>
 
-
-                </Animated.View>
-                }
-
+                </Animated.View>}
             </View>
             <Animated.View />
         </View>
     );
 }
-
-
 
 const styles = StyleSheet.create({
     container: {
@@ -206,16 +194,14 @@ const styles = StyleSheet.create({
     categoryColumn: {
         minHeight: 90,
         alignItems: 'center',
-        flexShrink: 0, // No se encoge
-        maxWidth: 80, // Limita el ancho para que no empuje el input
+        flexShrink: 0,
+        maxWidth: 80,
     },
     iconContainer: {
-        // Wrapper para sombras si se desea en el futuro
         minWidth: 48,
         minHeight: 48,
     },
     gradient: {
-        // Dimensiones flexibles con mínimos para accesibilidad
         minWidth: 48,
         minHeight: 48,
         borderRadius: 50,
@@ -231,20 +217,22 @@ const styles = StyleSheet.create({
         flex: 1, 
     },
     inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
         minHeight: 58,
         borderRadius: 18,
         borderWidth: 1.5,
         paddingLeft: 16,
         paddingRight: 6,
+        overflow: 'hidden',
+        justifyContent: 'center',
     },
-    input: {
+    // NUEVO ESTILO: Reemplaza al estilo 'input' anterior
+    textDisplay: {
         flex: 1,
-        fontSize: 22, // Fuente base grande
+        fontSize: 22,
         fontFamily: 'FiraSans-Bold',
-        minHeight: 44, // Altura táctil mínima
-        paddingVertical: 0, // Reset padding
+        // Alineación vertical para que parezca un input
+        textAlignVertical: 'center',
+        paddingVertical: 0,
     },
     calcButton: {
         width: 46,
@@ -253,7 +241,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
-        // Asegura que el botón no se deforme
         aspectRatio: 1,
     },
 

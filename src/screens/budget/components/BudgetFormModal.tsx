@@ -28,6 +28,7 @@ import { useAuthStore } from "../../../stores/authStore";
 import { BudgetItem } from "./BudgetItem";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { InputNameActive } from "../../../interfaces/settings.interface";
+import { formatCurrency } from "../../../utils/helpers";
 
 export const BudgetFormModal = ({
     visible,
@@ -144,7 +145,7 @@ export const BudgetFormModal = ({
                             style={[styles.displayTotal, { color: totalSpent > (parseFloat(budgetedAmount) || 0) ? colors.expense : colors.text }]}
                             accessibilityLabel={`${t('budget_form.accessibility.calculated_total')} ${totalSpent.toFixed(2)}`}
                         >
-                            {currencySymbol}{totalSpent.toFixed(2)}
+                            {currencySymbol}{formatCurrency(totalSpent)}
                         </Text>
                     </View>
                 </View>

@@ -1,5 +1,7 @@
+import { enUS, es, ptBR } from "date-fns/locale";
+import { LanguageCode } from "../constants/languages";
 
-
+const locales = { es, en: enUS, pt: ptBR };
 const minYear = 1900;
 const maxYear = 2100;
 
@@ -101,16 +103,30 @@ export function calculateIncomesAndExpensesAmount(transactions: Transaction[]): 
  * @returns string formateado
  */
 export const formatCurrency = (amount: number | string): string => {
+    // 1. Convertir a número
     const numericValue = typeof amount === 'string' ? parseFloat(amount) : amount;
 
-    // Si el valor no es un número válido, retornamos 0.00
-    if (isNaN(numericValue)) return "0.00";
+    // 2. Validación de seguridad
+    if (isNaN(numericValue) || numericValue === null || numericValue === undefined) {
+        return "0,00";
+    }
 
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(numericValue);
+    // 3. Trabajamos con el valor ABSOLUTO para evitar problemas con el signo '-' en el regex
+    //    y usamos toFixed(2) para obtener "1234.50"
+    const fixedValue = Math.abs(numericValue).toFixed(2);
+
+    // 4. Separamos parte entera ("1234") y decimal ("50")
+    const [integerPart, decimalPart] = fixedValue.split('.');
+
+    // 5. Aplicamos el regex de miles SOLO a la parte entera
+    //    Esto convierte "1234" en "1.234"
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // 6. Unimos con la coma
+    return `${formattedInteger},${decimalPart}`;
 };
+
+export 
 
 interface DateTextParams {
     month?: number | null;

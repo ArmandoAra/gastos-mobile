@@ -82,6 +82,7 @@ export interface ExpenseBudget {
     account_id: string;
     user_id: string;
     name: string;
+    categoryId: string;
     slug_category_name: string[];
     category_icon_name: string;
     items: Item[];

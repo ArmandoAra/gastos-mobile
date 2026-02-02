@@ -24,7 +24,7 @@ export const useTransactionsLogic = () => {
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const { t } = useTranslation();
     const { localSelectedDay } = useDateStore();
-    const [selectedPeriod, setSelectedPeriod] =  useState<ViewPeriod>('month');
+    const [selectedPeriod, setSelectedPeriod] = useState<ViewPeriod>('day');
 
     // Estados Locales
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -96,12 +96,10 @@ export const useTransactionsLogic = () => {
 
             result = result.filter(transaction => {
                 const description = (transaction.description || '').toLowerCase();
-                const category = (transaction.category_icon_name || '').toLowerCase();
                 const slugCategories = transaction.slug_category_name || [];
 
                 return (
                     description.includes(query) ||
-                    category.includes(query) ||
                     slugCategories.some(slug => slug.toLowerCase().includes(query) || slug.includes(capitalizedQuery))
                 );
             });

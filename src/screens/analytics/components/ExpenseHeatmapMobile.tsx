@@ -15,6 +15,8 @@ import { styles } from './styles';
 import { weekDaysShort } from '../../../constants/date';
 import { es, pt, enGB } from 'date-fns/locale';
 import { useExpenseHeatmapLogic } from '../hooks/useExpenseHeatmapLogic';
+import { formatCurrency } from '../../../utils/helpers';
+import CloseModalButton from './subcomponents/CloseModalButton';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -60,7 +62,7 @@ export default function ExpenseHeatmap() {
       key={i}
       style={localStyles.txRow}
       accessible={true}
-      accessibilityLabel={`${t.description || t.category_icon_name}, ${currencySymbol} ${Math.abs(t.amount).toFixed(2)}`}
+      accessibilityLabel={`${t.description || t.category_icon_name}, ${currencySymbol} ${formatCurrency(Math.abs(t.amount))}`}
     >
       <Text style={[localStyles.txName, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
         {t.description || t.category_icon_name}
@@ -71,7 +73,7 @@ export default function ExpenseHeatmap() {
         adjustsFontSizeToFit
         minimumFontScale={0.8}
       >
-        {currencySymbol}{Math.abs(t.amount).toFixed(0)}
+        -{currencySymbol} {formatCurrency(Math.abs(t.amount))}
       </Text>
     </View>
   ), [colors, currencySymbol]);
@@ -103,7 +105,7 @@ export default function ExpenseHeatmap() {
           <View
             style={[localStyles.totalBadge, { backgroundColor: colors.surfaceSecondary }]}
             accessible={true}
-            accessibilityLabel={`${t('common.total')}: ${currencySymbol} ${totalDisplay.toFixed(0)}`}
+            accessibilityLabel={`${t('common.total')}: ${currencySymbol} ${formatCurrency(totalDisplay)}`}
           >
             <Text
               style={[localStyles.totalText, { color: colors.text }]}
@@ -112,7 +114,7 @@ export default function ExpenseHeatmap() {
               minimumFontScale={0.7}
               maxFontSizeMultiplier={1.4}
             >
-              -{currencySymbol} {totalDisplay.toFixed(0)}
+              -{currencySymbol} {formatCurrency(totalDisplay)}
             </Text>
           </View>
         </View>
@@ -344,7 +346,7 @@ export default function ExpenseHeatmap() {
                         }
                       ]}
                       accessibilityRole="button"
-                      accessibilityLabel={`${cat.category} ${cell.label}: ${currencySymbol}${cell.amount}`}
+                      accessibilityLabel={`${cat.category} ${cell.label}: ${currencySymbol}${formatCurrency(cell.amount)}`}
                     />
                   ))}
                 </View>
@@ -380,7 +382,7 @@ export default function ExpenseHeatmap() {
         <TouchableOpacity 
           style={localStyles.modalOverlay} 
           activeOpacity={1} 
-          onPress={handleCloseModal}
+          // onPress={handleCloseModal}
         >
           <Animated.View 
             entering={ZoomIn.duration(300)}
@@ -396,7 +398,7 @@ export default function ExpenseHeatmap() {
                 </Text>
               </View>
               <Text style={[localStyles.modalAmount, { color: colors.expense }]} maxFontSizeMultiplier={1.3}>
-                {currencySymbol}{selectedCell?.value.toFixed(2)}
+                -{currencySymbol} {formatCurrency(Math.abs(selectedCell?.value || 0))}
               </Text>
             </View>
 
@@ -410,16 +412,7 @@ export default function ExpenseHeatmap() {
               )}
             </ScrollView>
             
-            <TouchableOpacity 
-              onPress={handleCloseModal}
-              style={[localStyles.closeBtn, { backgroundColor: colors.surfaceSecondary }]}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <Text style={[localStyles.closeText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
-                {t('common.close')}
-              </Text>
-            </TouchableOpacity>
+            <CloseModalButton handleCloseModal={handleCloseModal} colors={colors} t={t} />
           </Animated.View>
         </TouchableOpacity>
       </Modal>
@@ -588,10 +581,4 @@ const localStyles = StyleSheet.create({
   txName: { fontSize: 14, flex: 1, marginRight: 8, lineHeight: 18 },
   txVal: { fontSize: 14, fontFamily: 'FiraSans-Bold', lineHeight: 18 },
   noTx: { fontSize: 14, fontStyle: 'italic', textAlign: 'center', marginTop: 20, lineHeight: 18 },
-  closeBtn: {
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  closeText: { fontSize: 16, fontFamily: 'FiraSans-Bold', lineHeight: 20 },
 });

@@ -3,13 +3,10 @@ import {
     View,
     Text,
     ScrollView,
-    Dimensions,
     TouchableOpacity,
     Modal,
     FlatList,
     StyleSheet,
-    AccessibilityInfo,
-    Platform
 } from 'react-native';
 import Animated, {
     FadeIn,
@@ -19,12 +16,15 @@ import Animated, {
 import { PieChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { isTablet, styles } from './styles';
-import { StatCard } from './subcomponents/StatsCard';
+import { StatCard, TopCategories } from './subcomponents/StatsCard';
 import { InsightCard } from './subcomponents/InsightCard';
 import { EmptyState } from './subcomponents/EmptyState';
 import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogic';
 import PeriodSelector from './subcomponents/PeriodSelector';
 import { ViewPeriod } from '../../../interfaces/date.interface';
+import { formatCurrency } from '../../../utils/helpers';
+import CloseModalButton from './subcomponents/CloseModalButton';
+import { format } from 'date-fns';
 
 export default function DailyExpenseViewMobile({ handlePeriodChange }: { handlePeriodChange: (p: ViewPeriod) => void }) {
     const {
@@ -46,15 +46,15 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
         handleCloseModal
     } = useDailyExpenseLogic();
 
-    const pieRadius = isSmallScreen ? 120 : isTablet ? 140 : 85;
-    const pieInnerRadius = isSmallScreen ? 50 : isTablet ? 80 : 60;
+    const pieRadius = useMemo(() => isSmallScreen ? 120 : isTablet ? 140 : 85, [isSmallScreen]);
+    const pieInnerRadius = useMemo(() => isSmallScreen ? 50 : isTablet ? 80 : 60, [isSmallScreen]);
 
     // Render optimizado de transacciones en modal
     const renderModalTransaction = useCallback(({ item }: { item: any }) => (
         <View
             style={[localStyles.transactionRow, { borderBottomColor: colors.border }]}
             accessible={true}
-            accessibilityLabel={`${item.description || t('common.noDescription')}, ${currencySymbol} ${Math.abs(item.amount).toFixed(2)}, ${new Date(item.date).toLocaleDateString()}`}
+            accessibilityLabel={`${item.description || t('common.noDescription')}, ${currencySymbol} ${formatCurrency(Math.abs(item.amount))}, ${new Date(item.date).toLocaleDateString()}`}
         >
             <View style={localStyles.txInfoContainer}>
                 <Text
@@ -74,7 +74,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
             >
-                -{currencySymbol} {Math.abs(item.amount).toFixed(2)}
+                -{currencySymbol} {formatCurrency(Math.abs(item.amount))}
             </Text>
         </View>
     ), [colors, currencySymbol, t]);
@@ -111,48 +111,59 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                     accessible={false}
                 >
                     <StatCard
-                        label={t('common.expenses')}
-                        value={`-${currencySymbol} ${stats.totalExpenses.toFixed(0)}`}
-                        sub={`${stats.expenseCount} ${t('overviews.tsx')}`}
-                        colorBgAndHeader={colors.expense}
-                        colorText={colors.text}
-                        colorSubText={colors.textSecondary}
-                        colorBorder={colors.border}
-                        icon="arrow-down"
-                        isTablet={isTablet}
+                        data={{
+                            label: t('common.expenses'),
+                            value: -stats.totalExpenses,
+                            sub: `${stats.expenseCount} ${t('overviews.tsx')}`,
+                            colorBgAndHeader: colors.error,
+                            colorText: colors.text,
+                            colorSubText: colors.textSecondary,
+                            colorBorder: colors.border,
+                            icon: "arrow-down",
+                            isTablet: isTablet,
+                            currentSymbol: currencySymbol
+                        }}
                     />
                     <StatCard
-                        label={t('common.incomes')}
-                        value={`${currencySymbol} ${stats.totalIncome.toFixed(0)}`}
-                        sub={`${stats.incomeCount} ${t('overviews.tsx')}`}
-                        colorBgAndHeader={colors.income}
-                        colorText={colors.text}
-                        colorSubText={colors.textSecondary}
-                        colorBorder={colors.border}
-                        icon="arrow-up"
-                        isTablet={isTablet}
+                        data={{
+                            label: t('common.incomes'),
+                            value: stats.totalIncome,
+                            sub: `${stats.incomeCount} ${t('overviews.tsx')}`,
+                            colorBgAndHeader: colors.income,
+                            colorText: colors.text,
+                            colorSubText: colors.textSecondary,
+                            colorBorder: colors.border,
+                            icon: "arrow-up",
+                            isTablet: isTablet,
+                            currentSymbol: currencySymbol
+                        }}
                     />
-                    <StatCard
-                        label={t('common.balance')}
-                        value={`${stats.balance >= 0 ? '+' : '-'}${currencySymbol} ${Math.abs(stats.balance).toFixed(0)}`}
-                        sub={stats.balance >= 0 ? t('overviews.surPlus') : t('overviews.deficit')}
-                        colorBgAndHeader={stats.balance >= 0 ? colors.accent : colors.warning}
-                        colorText={colors.text}
-                        colorSubText={colors.textSecondary}
-                        colorBorder={colors.border}
-                        icon="wallet"
-                        isTablet={isTablet}
+                    <StatCard 
+                        data={{
+                            label: t('common.balance'),
+                            value: stats.balance,
+                            sub: `${stats.balance >= 0 ? '+' : '-'}${currencySymbol} ${formatCurrency(Math.abs(stats.balance))}`,
+                            colorBgAndHeader: (stats.balance) >= 0 ? colors.income : colors.error,
+                            colorText: colors.text,
+                            colorSubText: colors.textSecondary,
+                            colorBorder: colors.border,
+                            icon: "wallet",
+                            isTablet: isTablet,
+                            currentSymbol: currencySymbol
+                        }}
                     />
-                    <StatCard
-                        label={t('common.topCat')}
-                        value={t(`icons.${stats.topCategory.category}`, stats.topCategory.category) || 'N/A'}
-                        sub={`${currencySymbol} ${stats.topCategory.amount.toFixed(0)}`}
-                        colorBgAndHeader={colors.accentSecondary}
-                        colorText={colors.text}
-                        colorSubText={colors.textSecondary}
-                        colorBorder={colors.border}
-                        icon="pie-chart"
-                        isTablet={isTablet}
+                    <StatCard data={{
+                        label: t('common.topCat'),
+                        value: stats.topCategory ? stats.topCategory.amount : 0,
+                        sub: `${stats.topCategory ? (stats.topCategory.amount >= 0 ? '+' : '-') : ''}${currencySymbol} ${stats.topCategory ? formatCurrency(Math.abs(stats.topCategory.amount)) : '0.00'}`,
+                        colorBgAndHeader: colors.accentSecondary,
+                        colorText: colors.text,
+                        colorSubText: colors.textSecondary,
+                        colorBorder: colors.border,
+                        icon: "pie-chart",
+                        isTablet: isTablet,
+                        currentSymbol: currencySymbol
+                    }}
                     />
                 </View>
 
@@ -181,14 +192,15 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                                     style={[
                                                         localStyles.chartCenterValue,
                                                         { color: colors.text },
-                                                        isSmallScreen && localStyles.chartCenterValueSmall
+                                                        isSmallScreen && localStyles.chartCenterValueSmall,
+                                                        { backgroundColor: colors.error + "30", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 24 }
                                                     ]}
                                                     numberOfLines={1}
                                                     adjustsFontSizeToFit
                                                     minimumFontScale={0.7}
                                                     allowFontScaling={false}
                                                 >
-                                                    -{currencySymbol} {stats.totalExpenses.toFixed(0)}
+                                                    {formatCurrency(stats.totalExpenses)}
                                                 </Text>
                                                 <Text style={[localStyles.chartCenterLabel, { color: colors.text }]} allowFontScaling={false}>
                                                     {t('common.total')}
@@ -260,7 +272,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                                         adjustsFontSizeToFit
                                                         minimumFontScale={0.8}
                                                     >
-                                                        {currencySymbol} {item.value.toFixed(2)}
+                                                        -{currencySymbol} {formatCurrency(item.value)}
                                                     </Text>
                                                 </View>
                                                 <View style={localStyles.catProgressRow}>
@@ -279,7 +291,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                                         />
                                                     </View>
                                                     <Text style={[localStyles.catPercent, { color: colors.text }]}>
-                                                        {percentage}%
+                                                        {percentage.replace('.', ',')}%
                                                     </Text>
                                                 </View>
                                             </TouchableOpacity>
@@ -302,7 +314,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                 <InsightCard
                                     label={t('overviews.largestTransaction')}
                                     title={`${t('common.expense')} - ${t(`icons.${stats.largestTransaction.category_icon_name}`, stats.largestTransaction.category_icon_name)}`}
-                                    value={`-${currencySymbol} ${Math.abs(stats.largestTransaction.amount).toFixed(2)}`}
+                                    value={`-${currencySymbol} ${formatCurrency(stats.largestTransaction.amount)}`}
                                     color={colors.warning}
                                     isSmallScreen={isSmallScreen}
                                     amountColor={colors.text}
@@ -312,7 +324,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                 <InsightCard
                                     label={t('overviews.weekendExpense')}
                                     title={`${t('overviews.this')} ${dateInfo.dayOfWeek}`}
-                                    value={`${currencySymbol} ${stats.totalExpenses.toFixed(2)}`}
+                                    value={`${currencySymbol} ${formatCurrency(stats.totalExpenses)}`}
                                     color={colors.accentSecondary}
                                     isSmallScreen={isSmallScreen}
                                     amountColor={colors.text}
@@ -322,7 +334,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                 <InsightCard
                                     label={t('overviews.deficitAlert')}
                                     title={`${t('common.expenses')} > ${t('common.incomes')}`}
-                                    value={`-${currencySymbol} ${Math.abs(stats.balance).toFixed(2)}`}
+                                    value={`-${currencySymbol} ${formatCurrency(Math.abs(stats.balance))}`}
                                     color={colors.error}
                                     isSmallScreen={isSmallScreen}
                                     amountColor={colors.text}
@@ -362,22 +374,13 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                         {t(`icons.${modalData?.categoryName}`, modalData?.categoryName || '')}
                                     </Text>
                                 </View>
-                                <TouchableOpacity
-                                    onPress={handleCloseModal}
-                                    accessible={true}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={t('common.close', 'Close')}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    <Ionicons name="close-circle" size={28} color={colors.textSecondary} />
-                                </TouchableOpacity>
                             </View>
 
                             {/* Total Modal */}
                             <View
                                 style={localStyles.modalSummary}
                                 accessible={true}
-                                accessibilityLabel={`${t('overviews.totalSpent')} ${currencySymbol} ${modalData?.totalAmount.toFixed(2)}`}
+                                accessibilityLabel={`${t('overviews.totalSpent')} ${currencySymbol} ${formatCurrency(modalData?.totalAmount || 0)}`}
                             >
                                 <Text style={[localStyles.modalTotalLabel, { color: colors.textSecondary }]}>
                                     {t('overviews.totalSpent')}
@@ -388,7 +391,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                     adjustsFontSizeToFit
                                     minimumFontScale={0.7}
                                 >
-                                    -{currencySymbol} {modalData?.totalAmount.toFixed(2)}
+                                    -{currencySymbol} {formatCurrency(modalData?.totalAmount || 0)}
                                 </Text>
                             </View>
 
@@ -404,6 +407,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                 maxToRenderPerBatch={10}
                                 windowSize={5}
                             />
+                            <CloseModalButton handleCloseModal={handleCloseModal} colors={colors} t={t} />
                         </View>
                     </View>
                 </Modal>

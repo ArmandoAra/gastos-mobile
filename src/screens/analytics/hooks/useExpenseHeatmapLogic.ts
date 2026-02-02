@@ -67,9 +67,6 @@ export const useExpenseHeatmapLogic = () => {
             return Math.max(...Object.values(groups), 1);
         } else {
             // Para categorías buscamos la transacción o agrupación más grande
-            // Nota: Tu lógica original usaba map(t => abs(amount)), que es el valor de transacción individual más alto.
-            // Si quisieras el "Total de categoría por periodo" más alto, habría que agrupar primero. 
-            // Mantengo tu lógica original aquí:
             return Math.max(...expenseTransactions.map(t => Math.abs(t.amount)), 1); 
         }
     }, [expenseTransactions, heatmapType, viewMode]);
@@ -114,7 +111,7 @@ export const useExpenseHeatmapLogic = () => {
     const categoryData = useMemo(() => {
         if (heatmapType !== 'category') return null;
         
-        const categories = Array.from(new Set(expenseTransactions.map(t => t.category_icon_name)));
+        const categories = Array.from(new Set(expenseTransactions.map(t => t.slug_category_name[0])));
         const periods = viewMode === 'year' 
             ? Array.from({ length: 12 }, (_, i) => ({ label: format(new Date(year, i, 1), 'MMM'), index: i }))
             : Array.from({ length: getDaysInMonth(localSelectedDay) }, (_, i) => ({ label: `${i + 1}`, index: i + 1 }));
@@ -123,7 +120,7 @@ export const useExpenseHeatmapLogic = () => {
             const data = periods.map(p => {
                 const txs = expenseTransactions.filter(t => {
                     const d = new Date(t.date);
-                    const isCat = t.category_icon_name === cat;
+                    const isCat = t.slug_category_name[0] === cat;
                     const isPeriod = viewMode === 'year'
                         ? d.getMonth() === p.index
                         : d.getDate() === p.index;
@@ -132,7 +129,16 @@ export const useExpenseHeatmapLogic = () => {
                 });
 
                 const labelData = (viewMode === 'year') ? monthsShort[language][p.index] : p.label;
-                return { label: labelData, amount: txs.reduce((s, t) => s + Math.abs(t.amount), 0) + txs.reduce((sum, t) => sum + Math.abs(t.amount), 0), transactions: txs };
+                return {
+                    label: labelData,
+                    // ❌ ERROR ORIGINAL: Estabas sumando el reduce dos veces
+                    // amount: txs.reduce((s, t) => s + Math.abs(t.amount), 0) + txs.reduce((sum, t) => sum + Math.abs(t.amount), 0),
+
+                    // ✅ CORRECCIÓN: Deja solo un reduce
+                    amount: txs.reduce((sum, t) => sum + Math.abs(t.amount), 0),
+
+                    transactions: txs
+                };
                 // Nota: Corrección menor en tu reduce original, simplificado arriba:
                 // return { label: labelData, amount: txs.reduce((s, t) => s + Math.abs(t.amount), 0), transactions: txs };
             });
