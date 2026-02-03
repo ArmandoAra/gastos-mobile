@@ -35,15 +35,21 @@ export function useTransactionForm() {
     const { setInputNameActive, inputNameActive } = useSettingsStore();
     const [amount, setAmount] = useState(INITIAL_FORM_STATE.amount);
     const [description, setDescription] = useState(INITIAL_FORM_STATE.description);
-    const { localSelectedDay, setLocalSelectedDay } = useDateStore();
-    const { getUserCategories, disableCategory } = useCategoriesStore();
+    const localSelectedDay = useDateStore(state => state.localSelectedDay);
+    const setLocalSelectedDay = useDateStore(state => state.setLocalSelectedDay);
+    const getUserCategories = useCategoriesStore(state => state.getUserCategories);
+    const disableCategory = useCategoriesStore(state => state.disableCategory);
+    const getActivesUserCategories = useCategoriesStore(state => state.getActivesUserCategories);
     const [anchorEl, setAnchorEl] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
     const userCategories: Category[] = getUserCategories();
+    const { addCategory } = useCategoriesStore();
+    const activeCategories: Category[] = getActivesUserCategories();
 
     const defaultCategoriesOptions: Category[] = filterCategoriesByType(defaultCategories, inputNameActive);
-    const userCategoriesOptions: Category[] = filterCategoriesByType(userCategories, inputNameActive); // Aquí se podrían cargar las categorías del usuario desde un store si es necesario
+    const userCategoriesOptions: Category[] = filterCategoriesByType(userCategories, inputNameActive);
+    const userActivesCategoriesOptions: Category[] = filterCategoriesByType(activeCategories, inputNameActive);
     const allCategories = [...defaultCategoriesOptions, ...userCategoriesOptions];
 
     // Determinar icono
@@ -88,13 +94,15 @@ export function useTransactionForm() {
         handleClosePopover();
     }, [handleClosePopover]);
 
-    const handleDeleteCategory = useCallback((categoryId: string) => {
+
+    const handleDisableCategory = useCallback((categoryId: string) => {
         // Si la categoría eliminada es la seleccionada, cambiar a la primera disponible
         disableCategory(categoryId);
         if (selectedCategory.id === categoryId) {
             const remainingCategories = allCategories.filter(cat => cat.id !== categoryId);
             setSelectedCategory(remainingCategories[0] || null);
         }
+
     }, [selectedCategory, allCategories]);
 
     const handleClose = useCallback(() => {
@@ -211,13 +219,14 @@ export function useTransactionForm() {
         popoverOpen,
         defaultCategoriesOptions,
         userCategoriesOptions,
+        userActivesCategoriesOptions,
         setAmount,
         setDescription,
         setLocalSelectedDay,
         setSelectedAccount,
         setSelectedCategory,
         handleCategoryClick,
-        handleDeleteCategory,
+        handleDisableCategory,
         handleClosePopover,
         handleSelectCategory,
         handleSave,

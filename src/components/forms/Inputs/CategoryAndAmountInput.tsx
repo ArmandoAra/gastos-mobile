@@ -49,8 +49,6 @@ export default function CategoryAndAmountInput({
     isReady,
     selectedCategory,
     amount = '',
-    setAmount,
-    amountInputRef,
     handleCategoryClick,
     colors,
     onOpenCalculator

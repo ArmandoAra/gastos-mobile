@@ -11,13 +11,13 @@ import {
     TouchableWithoutFeedback,
     FlatList // <--- Importamos FlatList
 } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors } from '../../../types/navigation';
-import { ExpenseBudget, Item } from "../../../interfaces/data.interface";
-import BudgetCategorySelector from "./BudgetCategorySelector";
-import { useBudgetForm } from "../hooks/useBudgetForm";
+import { Category, ExpenseBudget, Item } from "../../../interfaces/data.interface";
+// import BudgetCategorySelector from "./BudgetCategorySelector";
+import * as useBudgetForm from "../hooks/useBudgetForm";
 import WarningMessage from "../../transactions/components/WarningMessage";
 import useBudgetsStore, { ToConvertBudget } from "../../../stores/useBudgetStore";
 import { useTranslation } from "react-i18next";
@@ -29,6 +29,10 @@ import { BudgetItem } from "./BudgetItem";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { InputNameActive } from "../../../interfaces/settings.interface";
 import { formatCurrency } from "../../../utils/helpers";
+import CategorySelectorPopover from "../../../components/forms/Inputs/CategorySelector";
+import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
+import useCategoriesStore from "../../../stores/useCategoriesStore";
+import useDataStore from "../../../stores/useDataStore";
 
 export const BudgetFormModal = ({
     visible,
@@ -53,14 +57,14 @@ export const BudgetFormModal = ({
         budgetedAmount, setBudgetedAmount,
         items,
         totalSpent,
-        categorySelectorOpen, setCategorySelectorOpen,
+        categorySelectorOpen, 
         dynamicIconSize,
         fontScale,
-        userCategoriesOptions,
         defaultCategoriesOptions,
         selectedCategory,
         isFavorite,
         itemsInputRefs,
+        setCategorySelectorOpen,
         handleSelectCategory,
         handleAddItem,
         updateItem,
@@ -68,9 +72,12 @@ export const BudgetFormModal = ({
         handleSaveForm,
         toggleItemDone,
         toggleFavorite,
-    } = useBudgetForm({ visible, onClose, initialData });
+    } = useBudgetForm.useBudgetForm({ visible, onClose, initialData });
     const setInputNameActive = useSettingsStore(state => state.setInputNameActive);
     const setIsAddOptionsOpen = useSettingsStore(state => state.setIsAddOptionsOpen);
+    const { handleDisableCategory, userActivesCategoriesOptions } = useTransactionForm();
+
+
 
     const currencySymbol = useAuthStore(state => state.currencySymbol);
     const deleteBudget = useBudgetsStore(state => state.deleteBudget);
@@ -329,29 +336,17 @@ export const BudgetFormModal = ({
                         )}
 
                         {/* 3. SELECTOR DE CATEGORÍA (Se muestra por encima de la lista) */}
-                        {categorySelectorOpen && (
-                            <View style={styles.categorySelectorContainer}>
-                                <BudgetCategorySelector
-                                    closeCategorySelector={() => setCategorySelectorOpen(false)}
-                                    handleSelectCategory={handleSelectCategory}
-                                    selectedCategory={selectedCategory}
-                                    colors={colors}
-                                    defaultCategories={defaultCategoriesOptions}
-                                    userCategories={userCategoriesOptions}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setCategorySelectorOpen(false)}
-                                    style={[styles.closeSelectorBtn, { backgroundColor: colors.text }]}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={t('budget_form.category_selector.close')}
-                                >
-                                    <Text style={{ color: colors.surfaceSecondary, fontFamily: 'FiraSans-Bold' }}>{t('budget_form.category_selector.close')}</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
+                        <CategorySelectorPopover
+                            selectedCategory={selectedCategory}
+                            popoverOpen={categorySelectorOpen}
+                            handleClosePopover={() => setCategorySelectorOpen(false)}
+                            handleSelectCategory={handleSelectCategory}
+                            handleDisableCategory={handleDisableCategory}
+                            colors={colors}
+                            defaultCategories={defaultCategoriesOptions}
+                            userActivesCategories={userActivesCategoriesOptions}
+                        />
 
-                        {/* 4. FLATLIST PRINCIPAL */}
-                        {/* Se deshabilita el scroll si el selector de categorías está abierto para evitar conflictos */}
                         <FlatList
                             data={items}
                             keyExtractor={(item) => item.id}

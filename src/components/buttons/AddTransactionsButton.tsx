@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,7 +6,6 @@ import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withTiming,
-    withSpring,
     FadeInDown,
     FadeOutDown,
     ZoomIn,
@@ -16,7 +15,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { InputNameActive } from '../../interfaces/settings.interface';
-import AddTransactionForm from '../forms/AddTransactionForm';
 import useDataStore from '../../stores/useDataStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
@@ -24,57 +22,154 @@ import { useTranslation } from 'react-i18next';
 import useBudgetsStore from '../../stores/useBudgetStore';
 
 const FAB_SIZE = 62;
+const ANIMATION_DURATION = 250;
+const BACKDROP_OPACITY = 0.35;
+
+// ==========================================
+// Componente Hijo: InputOption (Memoizado)
+// ==========================================
+
+interface InputOptionProps {
+    title: string;
+    iconName: keyof typeof MaterialIcons.glyphMap;
+    gradientColors: [string, string];
+    index: number;
+    onPress: () => void;
+}
+
+const InputOption = React.memo<InputOptionProps>(({
+    title,
+    iconName,
+    gradientColors,
+    onPress,
+    index
+}) => {
+    return (
+        <Animated.View
+            entering={FadeInDown
+                .delay(index * 50)
+                .springify()
+                .damping(12)
+                .mass(0.8)
+            }
+            exiting={FadeOutDown.duration(150)}
+            style={styles.cardContainer}
+        >
+            <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={onPress}
+                style={styles.touchableOption}
+            >
+                {/* Texto */}
+                <View style={styles.textWrapper}>
+                    <Text style={styles.cardText}>{title}</Text>
+                </View>
+
+                {/* Icono */}
+                <LinearGradient
+                    colors={gradientColors}
+                    style={styles.avatarNoShadow}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                >
+                    <MaterialIcons name={iconName} size={20} color="#FFF" />
+                </LinearGradient>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+});
+
+InputOption.displayName = 'InputOption';
+
+// ==========================================
+// Componente Principal
+// ==========================================
 
 export default function AddTransactionsButton() {
     const { theme } = useSettingsStore();
     const { t } = useTranslation();
-    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-    const { isAddOptionsOpen, setIsAddOptionsOpen, setInputNameActive, isDateSelectorOpen, inputNameActive } = useSettingsStore();
-    const { allAccounts = [],
+    const colors: ThemeColors = useMemo(
+        () => theme === 'dark' ? darkTheme : lightTheme,
+        [theme]
+    );
+
+    const {
+        isAddOptionsOpen,
+        setIsAddOptionsOpen,
+        setInputNameActive,
+        isDateSelectorOpen
+    } = useSettingsStore();
+
+    const {
+        allAccounts = [],
         setSelectedAccount,
         selectedAccount
     } = useDataStore();
+
     const [isOpen, setIsOpen] = React.useState(false);
     const setDataToTransact = useBudgetsStore(state => state.setToTransactBudget);
 
-
-    // Shared Value para la rotación (0 a 1)
+    // Shared Value para la rotación
     const animationProgress = useSharedValue(0);
 
     // Sincronizar animación con estado
     useEffect(() => {
-        animationProgress.value = withTiming(isAddOptionsOpen ? 1 : 0, { duration: 250 });
-    }, [isAddOptionsOpen]);
+        animationProgress.value = withTiming(
+            isOpen ? 1 : 0,
+            { duration: ANIMATION_DURATION }
+        );
+    }, [isOpen]);
 
     // Lógica de selección de cuenta por defecto
     useEffect(() => {
-        // if (allAccounts === undefined) return;
         if (allAccounts.length === 0) {
-            if (selectedAccount !== null && selectedAccount !== '') setSelectedAccount('');
+            if (selectedAccount !== null && selectedAccount !== '') {
+                setSelectedAccount('');
+            }
             return;
         }
-        const currentAccountExists = allAccounts.some(acc => acc.id === selectedAccount);
+
+        const currentAccountExists = allAccounts.some(
+            acc => acc.id === selectedAccount
+        );
+
         if (!currentAccountExists || !selectedAccount) {
             setSelectedAccount(allAccounts[0].id);
         }
-    }, [allAccounts, selectedAccount]);
+    }, [allAccounts, selectedAccount, setSelectedAccount]);
 
-    const handleToggleOptions = () => {
-        !isOpen && setDataToTransact(null); // Limpiar datos si se abre el menú(Por medidas de seguridad por si queda rastro de un presupuesto)
+    // Handlers optimizados
+    const handleToggleOptions = useCallback(() => {
+        if (!isOpen) {
+            setDataToTransact(null);
+        }
         setIsOpen(!isOpen);
-    };
+    }, [isOpen, setDataToTransact]);
 
-    const handleClose = () => {
-        setIsAddOptionsOpen(false);
-    };
+    // ✅ FUNCIÓN PARA CERRAR EL MODAL AL TOCAR FUERA
+    const handleBackdropPress = useCallback(() => {
+        setIsOpen(false);
+    }, []);
 
-    // Estilo animado para el FAB (Rotación y cambio de color de fondo)
+    const handleSelectIncome = useCallback(() => {
+        setIsOpen(false);
+        setInputNameActive(InputNameActive.INCOME);
+        setIsAddOptionsOpen(true);
+    }, [setInputNameActive, setIsAddOptionsOpen]);
+
+    const handleSelectExpense = useCallback(() => {
+        setIsOpen(false);
+        setInputNameActive(InputNameActive.SPEND);
+        setIsAddOptionsOpen(true);
+    }, [setInputNameActive, setIsAddOptionsOpen]);
+
+    // Estilo animado para el FAB
     const fabAnimatedStyle = useAnimatedStyle(() => {
-        const rotate = animationProgress.value * 45; // 0 a 45 grados
+        const rotate = animationProgress.value * 45;
         const backgroundColor = interpolateColor(
             animationProgress.value,
             [0, 1],
-            [colors.text, colors.surface] // De oscuro a claro (o según tu tema)
+            [colors.text, colors.surface]
         );
 
         return {
@@ -83,18 +178,31 @@ export default function AddTransactionsButton() {
         };
     });
 
+    // Estilos memoizados
+    const backdropStyle = useMemo(() => [
+        styles.backdrop,
+        { backgroundColor: `rgba(0,0,0,${BACKDROP_OPACITY})` }
+    ], []);
+
+    const fabStyle = useMemo(() => [
+        styles.fab,
+        fabAnimatedStyle
+    ], [fabAnimatedStyle]);
+
     return (
         <>
-
             {/* --- BACKDROP (FONDO OSCURO) --- */}
             {isOpen && (
                 <Animated.View
-                    style={styles.backdrop}
+                    style={backdropStyle}
                     entering={FadeIn.duration(200)}
                     exiting={FadeOut.duration(200)}
                 >
-                    {/* Usamos Pressable para detectar el clic fuera y cerrar */}
-                    <Pressable style={styles.backdropPressable} onPress={handleClose} />
+                    {/* ✅ PRESSABLE PARA CERRAR AL TOCAR FUERA */}
+                    <Pressable
+                        style={styles.backdropPressable}
+                        onPress={handleBackdropPress}
+                    />
                 </Animated.View>
             )}
 
@@ -103,28 +211,20 @@ export default function AddTransactionsButton() {
                 <View style={styles.optionsContainer} pointerEvents="box-none">
                     <View style={styles.optionsWrapper}>
                         {/* Opción 1: Ingreso */}
-                        <InputOptionsNoShadow
+                        <InputOption
                             title={t('common.addIncome')}
                             iconName="trending-up"
                             gradientColors={['#10b981', '#34d399']}
-                            onPress={() => {
-                                setIsOpen(false);
-                                setInputNameActive(InputNameActive.INCOME);
-                                setIsAddOptionsOpen(true);
-                            }}
-                            index={1} // Invertimos indices para que el de arriba salga ultimo o primero segun gusto
+                            onPress={handleSelectIncome}
+                            index={1}
                         />
 
                         {/* Opción 2: Gasto */}
-                        <InputOptionsNoShadow
+                        <InputOption
                             title={t('common.addExpense')}
                             iconName="trending-down"
                             gradientColors={['#ec4899', '#f43f5e']}
-                            onPress={() => {
-                                setIsOpen(false);
-                                setInputNameActive(InputNameActive.SPEND);
-                                setIsAddOptionsOpen(true);
-                            }}
+                            onPress={handleSelectExpense}
                             index={0}
                         />
                     </View>
@@ -134,7 +234,6 @@ export default function AddTransactionsButton() {
             {/* --- BOTÓN FLOTANTE (FAB) --- */}
             {!isDateSelectorOpen && (
                 <Animated.View
-                    layout={ZoomIn}
                     entering={ZoomIn.springify()}
                     style={styles.fabContainer}
                 >
@@ -142,7 +241,7 @@ export default function AddTransactionsButton() {
                         activeOpacity={0.9}
                         onPress={handleToggleOptions}
                     >
-                        <Animated.View style={[styles.fab, fabAnimatedStyle]}>
+                        <Animated.View style={fabStyle}>
                             <MaterialIcons
                                 name="add"
                                 size={28}
@@ -156,63 +255,14 @@ export default function AddTransactionsButton() {
     );
 }
 
-// ==========================================
-// Componente Hijo: InputOptions
-// ==========================================
-
-interface InputOptionsProps {
-    title: string;
-    iconName: keyof typeof MaterialIcons.glyphMap;
-    gradientColors: [string, string];
-    index: number;
-    onPress: () => void;
-}
-
-const InputOptionsNoShadow = ({ title, iconName, gradientColors, onPress, index }: InputOptionsProps) => {
-
-    // Animación de entrada: Slide hacia arriba + Fade In
-    return (
-        <Animated.View
-            entering={FadeInDown
-                .delay(index * 50) // Pequeño delay escalonado
-                .springify()
-                .damping(12)
-                .mass(0.8)
-            }
-            exiting={FadeOutDown.duration(150)} // Salida rápida hacia abajo
-            style={styles.cardContainer}
-        >
-            <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={onPress}
-                style={styles.touchableOption}
-            >
-                {/* Texto a la izquierda */}
-                <View style={styles.textWrapper}>
-                    <Text style={styles.cardText}>{title}</Text>
-                </View>
-
-                {/* Icono a la derecha */}
-                <LinearGradient
-                    colors={gradientColors}
-                    style={styles.avatarNoShadow}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                >
-                    <MaterialIcons name={iconName} size={20} color="#FFF" />
-                </LinearGradient>
-            </TouchableOpacity>
-        </Animated.View>
-    );
-};
-
 const styles = StyleSheet.create({
-    // El Backdrop cubre toda la pantalla
+    // Backdrop cubre toda la pantalla
     backdrop: {
-        ...StyleSheet.absoluteFillObject, // Ocupa todo el espacio (top: 0, left: 0, etc)
-        backgroundColor: 'rgba(0,0,0,0.35)', // Oscurece el fondo
-        zIndex: 1000, // Alto, pero menos que el FAB y las opciones
-        elevation: 1, // Para Android
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 1000,
+        ...Platform.select({
+            android: { elevation: 1 },
+        }),
     },
     backdropPressable: {
         flex: 1,
@@ -223,10 +273,10 @@ const styles = StyleSheet.create({
     // Contenedor de opciones
     optionsContainer: {
         position: 'absolute',
-        bottom: 210, // Un poco arriba del FAB
-        right: 38,   // Alineado con el FAB
-        zIndex: 1300, // Por encima del backdrop
-        alignItems: 'flex-end', // Alinea el contenido a la derecha
+        bottom: 210,
+        right: 38,
+        zIndex: 1300,
+        alignItems: 'flex-end',
     },
     optionsWrapper: {
         gap: 16,
@@ -236,9 +286,9 @@ const styles = StyleSheet.create({
     // Contenedor del FAB
     fabContainer: {
         position: 'absolute',
-        bottom: 120, // Más pegado al borde inferior (estándar Material Design)
+        bottom: 120,
         right: 24,
-        zIndex: 1301, // El elemento más alto, siempre clicable
+        zIndex: 1301,
     },
     fab: {
         width: FAB_SIZE,
@@ -247,7 +297,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
-            android: { elevation: 6 },
+            android: {
+                elevation: 6
+            },
             ios: {
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -267,7 +319,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        gap: 12, // Espacio entre texto e icono
+        gap: 12,
     },
     textWrapper: {
         backgroundColor: '#FFF',
@@ -275,8 +327,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 8,
         ...Platform.select({
-            android: { elevation: 2 },
-            ios: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2 }
+            android: {
+                elevation: 2
+            },
+            ios: {
+                shadowColor: '#000',
+                shadowOpacity: 0.1,
+                shadowRadius: 2
+            }
         })
     },
     cardText: {
@@ -291,8 +349,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
-            android: { elevation: 4 },
-            ios: { shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 2 } }
+            android: {
+                elevation: 4
+            },
+            ios: {
+                shadowColor: '#000',
+                shadowOpacity: 0.2,
+                shadowRadius: 3,
+                shadowOffset: { width: 0, height: 2 }
+            }
         })
     }
 });

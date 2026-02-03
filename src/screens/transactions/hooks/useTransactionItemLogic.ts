@@ -39,7 +39,7 @@ interface UseTransactionItemLogicProps {
 
 export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTransactionItemLogicProps) => {
     const { t } = useTranslation();
-    const { user, currencySymbol } = useAuthStore();
+    const { currencySymbol } = useAuthStore();
     const { setInputNameActive, iconsOptions } = useSettingsStore();
     const { getAccountNameById } = useDataStore();
     const { getUserCategories } = useCategoriesStore();
@@ -65,12 +65,11 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
 
         // buscar la categoria que coincida con el id guardado en la transaccion
         const matchCategory = allCategories.find(cat => cat.id === transaction.categoryId);
-
         const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === matchCategory?.icon);
-
         return {
             IconComponent: iconDefinition?.icon,
             color: matchCategory?.color || '#B0BEC5',
+            displayName: matchCategory?.name || ''
         };
     }, [transaction.slug_category_name, iconsOptions]);
 

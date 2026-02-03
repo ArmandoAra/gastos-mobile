@@ -59,6 +59,7 @@ type Actions = {
     // Read / Getters
     getCategoryById: (id: string) => Category | undefined;
     getUserCategories: () => Category[];
+    getActivesUserCategories: () => Category[];
     getCategoriesByType: (type: TransactionType) => Category[];
     getCategoriesByUserIdAndType: (userId: string, type: TransactionType) => Category[];
     
@@ -126,6 +127,12 @@ const useCategoriesStore = create<State & Actions>()(
                 },
 
                 getUserCategories: () => {
+                    const userId = useAuthStore.getState().user?.id;
+                    if (!userId) return [];
+                    return get().userCategories.filter((cat) => cat.userId === userId);
+                },
+
+                getActivesUserCategories: () => {
                     const userId = useAuthStore.getState().user?.id;
                     if (!userId) return [];
                     return get().userCategories.filter((cat) => cat.userId === userId && cat.isActive);

@@ -10,7 +10,7 @@ export const CategoryIconSelector = ({ handleCategorySelector, selectedCategory,
         <TouchableOpacity 
             onPress={handleCategorySelector} 
             activeOpacity={0.8}
-            style={{ minWidth: 48, minHeight: 48, justifyContent: 'center', alignItems: 'center' }} // Hit slop natural
+            style={{ minWidth: 48, minHeight: 48, justifyContent: 'center', alignItems: 'center' }} 
             accessibilityRole="button"
             accessibilityLabel="Seleccionar icono de categoría"
         >

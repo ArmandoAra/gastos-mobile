@@ -46,11 +46,12 @@ export const BudgetCard = ({
         return {
             IconComponent: iconDefinition?.icon,
             color: matchCategory?.color || '#B0BEC5',
+            displayName: matchCategory?.name || ''
         };
 
-    }, [item.slug_category_name, userCategories, defaultCategories, user?.id, iconsOptions]);
+    }, [item.categoryId, userCategories, defaultCategories, user?.id, iconsOptions]);
 
-    const { IconComponent, color } = categoryIconData;
+    const { IconComponent, color, displayName } = categoryIconData;
 
     return (
         <Animated.View 
@@ -63,7 +64,7 @@ export const BudgetCard = ({
                         {item.name || "No title"}
                     </Text>
                     <Text style={{ marginRight: 8, color: colors.textSecondary }}>
-                        {defaultCategoryNames.some(name => name === item.slug_category_name[0]) ? t(`icons.${item.slug_category_name[0]}`) : item.slug_category_name[0]}
+                        {defaultCategoryNames.some(name => name === displayName) ? t(`icons.${displayName}`) : displayName}
                     </Text>
                     <View style={[styles.iconCircle, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : color }]}>
                         {IconComponent ? <IconComponent size={20} color={colors.text} style={{
@@ -154,7 +155,8 @@ const styles = StyleSheet.create({
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 8,
+        marginBottom: 20,
+        gap: 6,
     },
     cardTitle: {
         fontFamily: 'FiraSans-Bold',

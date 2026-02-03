@@ -4,26 +4,20 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
   FlatList,
-  Dimensions,
-  Platform,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
-  FadeIn,
-  FadeOut,
+
   interpolateColor,
-  SlideInDown,
+
   SlideInUp,
   SlideOutUp,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  ZoomIn,
-  ZoomOut,
+
 } from "react-native-reanimated";
-import { ICON_OPTIONS, IconKey, IconOption } from "../../../constants/icons";
+import { ICON_OPTIONS } from "../../../constants/icons";
 import { ThemeColors } from "../../../types/navigation";
 import { useTranslation } from "react-i18next";
 import { InputNameActive } from "../../../interfaces/settings.interface";
@@ -45,8 +39,8 @@ interface BudgetCategorySelectorProps {
 }
 
 export default function BudgetCategorySelector({
-    closeCategorySelector,
   selectedCategory,
+  closeCategorySelector,
   handleSelectCategory,
   colors,
   defaultCategories,

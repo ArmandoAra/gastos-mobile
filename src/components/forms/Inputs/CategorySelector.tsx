@@ -19,7 +19,6 @@ import Animated, {
   withRepeat,
   withSequence,
   Easing,
-  runOnJS,
 } from "react-native-reanimated";
 import { ICON_OPTIONS } from "../../../constants/icons";
 import { ThemeColors } from "../../../types/navigation";
@@ -300,21 +299,21 @@ interface CategorySelectorPopoverProps {
   handleClosePopover: () => void;
   selectedCategory: Category | null;
   handleSelectCategory: (category: Category) => void;
-  handleDeleteCategory: (categoryId: string) => void;
+  handleDisableCategory: (categoryId: string) => void;
   colors: ThemeColors;
   defaultCategories: Category[];
-  userCategories: Category[];
+  userActivesCategories: Category[];
 }
 
 export default function CategorySelectorPopover({
+  selectedCategory,
   popoverOpen,
   handleClosePopover,
-  selectedCategory,
   handleSelectCategory,
-  handleDeleteCategory,
+  handleDisableCategory,
   colors,
   defaultCategories,
-  userCategories,
+  userActivesCategories,
 }: CategorySelectorPopoverProps) {
   const { t } = useTranslation();
   const inputNameActive = useSettingsStore((state) => state.inputNameActive);
@@ -330,7 +329,7 @@ export default function CategorySelectorPopover({
   const { iconsKey, enrichedCategories } = useCategoryLogic(
     inputNameActive,
     defaultCategories,
-    userCategories,
+    userActivesCategories,
     selectingMyCategories,
     iconsOptions,
     t
@@ -453,7 +452,7 @@ export default function CategorySelectorPopover({
         categoryLabel={item.categoryLabel}
         IconComponent={item.IconComponent}
         onSelect={handleItemSelect}
-        onDelete={handleDeleteCategory}
+        onDelete={handleDisableCategory}
         onEdit={handleEditClick}
         onLongPress={handleItemLongPress}
       />
@@ -465,7 +464,7 @@ export default function CategorySelectorPopover({
       iconsOptions,
       colors,
       handleItemSelect,
-      handleDeleteCategory,
+      handleDisableCategory,
       handleEditClick,
       handleItemLongPress,
     ]

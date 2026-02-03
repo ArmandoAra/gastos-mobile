@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 
 // Stores & Interfaces
 import { useSettingsStore } from '../../stores/settingsStore';
-import { useAuthStore } from '../../stores/authStore';
 import useDataStore from '../../stores/useDataStore';
 import useBudgetsStore from '../../stores/useBudgetStore';
 import useMessage from '../../stores/useMessage';
@@ -89,9 +88,10 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         inputNameActive,
         amountInputRef,
         popoverOpen,
-        defaultCategoriesOptions,
         userCategoriesOptions,
-        handleDeleteCategory,
+        userActivesCategoriesOptions,
+        defaultCategoriesOptions,
+        handleDisableCategory,
         setAmount,
         setDescription,
         setLocalSelectedDay,
@@ -457,11 +457,11 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                                     popoverOpen={popoverOpen}
                                     handleClosePopover={handleClosePopover}
                                     handleSelectCategory={handleSelectCategory}
-                                    handleDeleteCategory={handleDeleteCategory}
+                                    handleDisableCategory={handleDisableCategory}
                                     selectedCategory={selectedCategory}
                                     colors={colors}
                                     defaultCategories={defaultCategoriesOptions}
-                                    userCategories={userCategoriesOptions}
+                                    userActivesCategories={userActivesCategoriesOptions}
                                 />
                             )}
 

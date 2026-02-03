@@ -13,6 +13,7 @@ import { Transaction, TransactionType } from '../../../interfaces/data.interface
 import { ThemeColors } from '../../../types/navigation';
 import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { defaultCategoryNames } from '../../../constants/categories';
 // IMPORT ELIMINADO: TransactionForm ya no se usa aquí
 
 interface TransactionItemProps {
@@ -51,7 +52,7 @@ export const TransactionItemMobile = React.memo(({
         accessibilityActions
     } = useTransactionItemLogic({ transaction, onDelete, colors });
 
-    const { IconComponent, color } = categoryIconData;
+    const { IconComponent, color, displayName } = categoryIconData;
 
     // Handler intermedio para coordinar la lógica
     const handlePress = () => {
@@ -89,7 +90,7 @@ export const TransactionItemMobile = React.memo(({
                     <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={handlePress} // Usamos nuestro handler intermedio
-                        style={[styles.touchableContent, { backgroundColor: color + '11' }]}
+                        style={[styles.touchableContent, { backgroundColor: color + '10' }]}
                         accessibilityRole="button"
                         accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
                         accessibilityHint={t('accessibility.swipe_hint', 'Tap to edit, use actions to delete')}
@@ -99,7 +100,9 @@ export const TransactionItemMobile = React.memo(({
                         {/* 1. Avatar */}
                         <View style={[styles.avatar, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface }]}>
                             {IconComponent ? (
-                                <IconComponent color={colors.text} style={{
+                                <IconComponent
+                                    color={colors.text}
+                                    style={{
                                     width: iconsOptions === 'painted' ? 60 : 32,
                                     height: iconsOptions === 'painted' ? 60 : 32,
                                     backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
@@ -126,7 +129,7 @@ export const TransactionItemMobile = React.memo(({
                                         style={[styles.chipText, { color: colors.textSecondary }]}
                                         numberOfLines={1}
                                     >
-                                        {t(`icons.${transaction.slug_category_name[0]}`, transaction.slug_category_name[0])}
+                                        {defaultCategoryNames.some(name => name === displayName) ? t(`icons.${displayName}`) : displayName}
                                     </Text>
                                 </View>
                             </View>
