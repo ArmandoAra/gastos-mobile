@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import {
     View,
     TouchableOpacity,
@@ -7,7 +7,6 @@ import {
     StyleSheet,
 } from "react-native";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list";
 
 // Componentes
 import AddTransactionsButton from "../../components/buttons/AddTransactionsButton";
@@ -25,10 +24,12 @@ import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
 import TransactionForm from '../../components/forms/TransactionForm';
 import { useScrollDirection } from "../../hooks/useScrollDirection";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTabBarVisibility } from "../../context/TabBarVisibilityContext";
+import { ListItem } from "../../interfaces/items.interface";
+import { AnimatedFlashList } from "../../components/animatedFlashList/AnimatedFlashList";
 
-type ListItem =
-    | { type: 'header'; date: string; total: number; id: string }
-    | { type: 'transaction'; data: Transaction };
+
+
 
 export function TransactionsScreen() {
     const {
@@ -65,12 +66,12 @@ export function TransactionsScreen() {
 
             return (
                 <View
-                    style={[localStyles.dateHeader, { backgroundColor: colors.surfaceSecondary }]}
+                    style={[localStyles.dateHeader, { backgroundColor: colors.text }]}
                     accessibilityRole="header"
                     accessibilityLabel={`${title}, total ${totalFormatted}`}
                 >
                     <Text
-                        style={[localStyles.dateHeaderText, { color: colors.text }]}
+                        style={[localStyles.dateHeaderText, { color: colors.surface }]}
                         maxFontSizeMultiplier={1.5}
                     >
                         {title}
@@ -161,12 +162,14 @@ export function TransactionsScreen() {
             {/* --- LISTA --- */}
             <View style={{ flex: 1 }}>
                 <GestureHandlerRootView style={{ flex: 1 }}>
-                    <FlashList
+                    <AnimatedFlashList
                         data={listData}
                         renderItem={renderItem}
                         keyExtractor={keyExtractor}
                         style={{ height: 150 }}
+                        // 3. Conectamos el handler
                         onScroll={onScroll}
+                        scrollEventThrottle={16} // Importante para suavidad
                         stickyHeaderIndices={stickyHeaderIndices}
                         contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 8 }}
                         keyboardDismissMode="on-drag"
@@ -205,10 +208,9 @@ export function TransactionsScreen() {
 const localStyles = StyleSheet.create({
     container: {
         flex: 1,
+        paddingHorizontal: 12,
     },
     controlsContainer: {
-        paddingHorizontal: 8,
-        borderBottomWidth: 0.5,
         paddingVertical: 12,
         flexDirection: 'row',
         flexWrap: 'wrap',

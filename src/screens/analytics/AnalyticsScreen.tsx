@@ -1,46 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
   StyleSheet,
-  Dimensions,
   Platform,
   AccessibilityInfo
 } from 'react-native';
 
-// Date-fns
-import { 
-  format, 
-  startOfMonth, 
-  endOfMonth, 
-  parseISO, 
-  startOfWeek, 
-  endOfWeek, 
-  startOfYear, 
-  endOfYear 
-} from 'date-fns';
-import { es } from 'date-fns/locale';
-
 // Stores & Components
-import useDataStore from '../../stores/useDataStore';
-import ExpenseHeatmapMobile from './components/ExpenseHeatmapMobile';
 import DailyExpenseViewMobile from './components/DailyExpenseView';
 import InfoHeader from '../../components/headers/InfoHeader';
 import { ViewPeriod } from '../../interfaces/date.interface';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../theme/colors';
-import useDateStore from '../../stores/useDateStore';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import PeriodSelector from './components/subcomponents/PeriodSelector';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ExpenseHeatmap from './components/ExpenseHeatmapMobile';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 
-// Nota: Quitadas importaciones de Skia/Victory no usadas directamente en este archivo
-// para limpiar el componente padre.
-
+// 1. IMPORTANTE: Usamos Animated de Reanimated
+import Animated from 'react-native-reanimated';
 
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
@@ -48,11 +26,10 @@ export default function AnalyticsScreen() {
   const { theme } = useSettingsStore();
   const colors = theme === 'dark' ? darkTheme : lightTheme;
 
+  const [selectedPeriod, setSelectedPeriod] = useState<ViewPeriod>('month');
 
-  const [selectedPeriod, setSelectedPeriod] =  useState<ViewPeriod>('month');
+  // 2. Obtenemos el handler nativo
   const { onScroll } = useScrollDirection();
-
-
 
   const handlePeriodChange = (p: string) => {
     const newPeriod = p as ViewPeriod;
@@ -62,18 +39,23 @@ export default function AnalyticsScreen() {
     }
   };
 
-
-
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
       <InfoHeader viewMode={selectedPeriod} />
 
-      <ScrollView
+      {/* 3. CAMBIO CLAVE: Usar Animated.ScrollView */}
+      <Animated.ScrollView
         contentContainerStyle={styles.scrollContent}
+
+        // Conectamos el handler
         onScroll={onScroll}
+
+        // IMPORTANTE: 16ms = 60fps. Sin esto, el evento se dispara lento en Android.
+        scrollEventThrottle={16}
+
         showsVerticalScrollIndicator={false}
       >
-        { /* Period Selector - Accesible y Escalable */}
+        { /* Period Selector */}
 
         {/* 1. Daily View */}
         <DailyExpenseViewMobile handlePeriodChange={handlePeriodChange} />
@@ -81,9 +63,10 @@ export default function AnalyticsScreen() {
         {/* 2. Heatmap */}
         <ExpenseHeatmap />
 
-        <View style={{ height: insets.bottom + 40 }} />
+        {/* Espacio para que el contenido no quede tapado por la barra de navegación */}
+        <View style={{ height: insets.bottom + 80 }} />
 
-    </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -91,31 +74,30 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 12,
   },
+  // ... resto de tus estilos (se mantienen igual)
   periodSelectorWrapper: {
     paddingHorizontal: 12,
     paddingBottom: 8,
-    borderBottomWidth: 0.5,
   },
-  // Contenido flex-wrap para escalabilidad
   periodSelectorContent: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // CLAVE: Permite que los botones bajen si la fuente es gigante
+    flexWrap: 'wrap',
     gap: 8,
-    justifyContent: 'center', // Centrado si sobran espacios o hacen wrap
+    justifyContent: 'center',
   },
   periodBtn: {
-    // Flex grow ayuda a llenar espacios, minWidth asegura tocabilidad
     flexGrow: 1,
-    flexBasis: '20%', // Base aproximada para 4 items
+    flexBasis: '20%',
     minWidth: 70,
-    minHeight: 44, // Altura táctil mínima recomendada
+    minHeight: 44,
     paddingVertical: 8,
     paddingHorizontal: 4,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1, // Cambiado a 1 para mejor visibilidad en bordes
+    borderWidth: 1,
   },
   periodText: {
     fontFamily: 'FiraSans-Bold',
@@ -125,11 +107,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 8,
   },
-  sectionContainer: {
-    // marginBottom: 60,
-    // No forzamos altura, dejamos que el hijo decida
-  },
-  // Estilos legacy mantenidos por si acaso, aunque no usados directamente en el JSX actual
+  sectionContainer: {},
   balanceCard: { margin: 16, padding: 16, borderRadius: 16, elevation: 2 },
   balanceLabel: { marginBottom: 8 },
   balanceAmount: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },

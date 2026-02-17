@@ -1,36 +1,26 @@
-import React, { createContext, useContext, useRef } from 'react';
-import { Animated } from 'react-native';
+import React, { createContext, useContext, useCallback } from 'react';
+import { useSharedValue, withTiming, SharedValue, useDerivedValue } from 'react-native-reanimated';
 
 interface TabBarVisibilityContextType {
-  translateY: Animated.Value;
-  showTabBar: () => void;
-  hideTabBar: () => void;
+  translateY: SharedValue<number>;
+  setTabBarVisible: (visible: boolean) => void;
 }
 
 const TabBarVisibilityContext = createContext<TabBarVisibilityContextType | undefined>(undefined);
 
 export const TabBarVisibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Inicializamos en 0 (visible)
-  const translateY = useRef(new Animated.Value(0)).current;
+  // SharedValue vive en el UI Thread
+  const translateY = useSharedValue(0);
 
-  const showTabBar = () => {
-    Animated.timing(translateY, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const hideTabBar = () => {
-    Animated.timing(translateY, {
-      toValue: 150, // Un valor suficiente para bajar la barra fuera de pantalla
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
-  };
+  // Función para controlar la visibilidad (puede ser llamada desde JS o UI Thread)
+  const setTabBarVisible = useCallback((visible: boolean) => {
+    'worklet'; // Esto permite que sea llamada desde el hilo de UI
+    const target = visible ? 0 : 150; // 150 u otra altura de tu TabBar
+    translateY.value = withTiming(target, { duration: 250 });
+  }, []);
 
   return (
-    <TabBarVisibilityContext.Provider value={{ translateY, showTabBar, hideTabBar }}>
+    <TabBarVisibilityContext.Provider value={{ translateY, setTabBarVisible }}>
       {children}
     </TabBarVisibilityContext.Provider>
   );

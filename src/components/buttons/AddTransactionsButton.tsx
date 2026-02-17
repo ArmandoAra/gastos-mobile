@@ -20,6 +20,7 @@ import { darkTheme, lightTheme } from '../../theme/colors';
 import { ThemeColors } from '../../types/navigation';
 import { useTranslation } from 'react-i18next';
 import useBudgetsStore from '../../stores/useBudgetStore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const FAB_SIZE = 62;
 const ANIMATION_DURATION = 250;
@@ -88,13 +89,13 @@ InputOption.displayName = 'InputOption';
 export default function AddTransactionsButton() {
     const { theme } = useSettingsStore();
     const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
     const colors: ThemeColors = useMemo(
         () => theme === 'dark' ? darkTheme : lightTheme,
         [theme]
     );
 
     const {
-        isAddOptionsOpen,
         setIsAddOptionsOpen,
         setInputNameActive,
         isDateSelectorOpen
@@ -208,7 +209,7 @@ export default function AddTransactionsButton() {
 
             {/* --- OPCIONES DEL MENÚ --- */}
             {isOpen && (
-                <View style={styles.optionsContainer} pointerEvents="box-none">
+                <View style={[styles.optionsContainer, { bottom: insets.bottom + 160 }]} pointerEvents="box-none">
                     <View style={styles.optionsWrapper}>
                         {/* Opción 1: Ingreso */}
                         <InputOption
@@ -235,7 +236,7 @@ export default function AddTransactionsButton() {
             {!isDateSelectorOpen && (
                 <Animated.View
                     entering={ZoomIn.springify()}
-                    style={styles.fabContainer}
+                    style={[styles.fabContainer, { bottom: insets.bottom + 70 }]}
                 >
                     <TouchableOpacity
                         activeOpacity={0.9}
@@ -286,7 +287,6 @@ const styles = StyleSheet.create({
     // Contenedor del FAB
     fabContainer: {
         position: 'absolute',
-        bottom: 120,
         right: 24,
         zIndex: 1301,
     },

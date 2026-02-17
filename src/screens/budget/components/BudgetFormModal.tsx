@@ -11,11 +11,11 @@ import {
     TouchableWithoutFeedback,
     FlatList // <--- Importamos FlatList
 } from "react-native";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemeColors } from '../../../types/navigation';
-import { Category, ExpenseBudget, Item } from "../../../interfaces/data.interface";
+import { ExpenseBudget, Item } from "../../../interfaces/data.interface";
 // import BudgetCategorySelector from "./BudgetCategorySelector";
 import * as useBudgetForm from "../hooks/useBudgetForm";
 import WarningMessage from "../../transactions/components/WarningMessage";
@@ -31,8 +31,6 @@ import { InputNameActive } from "../../../interfaces/settings.interface";
 import { formatCurrency } from "../../../utils/helpers";
 import CategorySelectorPopover from "../../../components/forms/Inputs/CategorySelector";
 import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
-import useCategoriesStore from "../../../stores/useCategoriesStore";
-import useDataStore from "../../../stores/useDataStore";
 
 export const BudgetFormModal = ({
     visible,
@@ -381,7 +379,7 @@ export const BudgetFormModal = ({
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, paddingHorizontal: 12 },
     fullScreenSheet: { flex: 1 },
 
     // Header con layout flexible

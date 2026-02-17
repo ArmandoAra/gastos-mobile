@@ -91,9 +91,9 @@ export default function PeriodSelector({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 2,
     // Opcional: Borde inferior sutil
-    borderBottomWidth: 1, 
   },
   content: {
     flexDirection: 'row',

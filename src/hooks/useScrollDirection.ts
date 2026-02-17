@@ -1,49 +1,51 @@
-import { useRef } from 'react';
-import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+// hooks/useScrollDirection.ts
+import { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useTabBarVisibility } from '../context/TabBarVisibilityContext';
 
 export const useScrollDirection = () => {
-  const { showTabBar, hideTabBar } = useTabBarVisibility();
+  // Obtenemos la función del contexto (asegúrate de que el contexto use Reanimated como vimos antes)
+  const { setTabBarVisible } = useTabBarVisibility();
   
-  const offset = useRef(0);
-  const scrollValue = useRef(0); // Acumulador para detectar intención
+  // Guardamos el último offset y el estado actual en el UI Thread
+  const lastContentOffset = useSharedValue(0);
+  const isTabBarVisible = useSharedValue(true);
 
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentOffset = event.nativeEvent.contentOffset.y;
-    const dif = currentOffset - offset.current;
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      // Obtenemos la posición actual Y
+      const currentOffsetY = event.contentOffset.y;
 
-    // 1. ZONA SEGURA SUPERIOR:
-    // Si estamos muy cerca del topo (ej: 0 a 50px), SIEMPRE mostramos la barra.
-    // Esto evita que se esconda apenas empiezas a bajar.
-    if (currentOffset <= 50) {
-      showTabBar();
-      offset.current = currentOffset;
-      return;
-    }
+      // Calculamos la diferencia
+      const diff = currentOffsetY - lastContentOffset.value;
 
-    // 2. DETECCIÓN DE DIRECCIÓN Y UMBRAL
-    if (dif < 0) {
-      // --- Hacia ARRIBA ---
-      // Generalmente, al subir queremos ver el menú INMEDIATAMENTE para navegar.
-      // Puedes ponerle un pequeño umbral si quieres (ej: dif < -5)
-      if (dif < -5) {
-        showTabBar();
+      // 1. ZONA SEGURA SUPERIOR (Rebote o inicio)
+      // Si estamos en el tope (0-50px), siempre mostrar
+      if (currentOffsetY <= 50) {
+        if (!isTabBarVisible.value) {
+          isTabBarVisible.value = true;
+          setTabBarVisible(true);
+        }
+        // Actualizamos referencia y salimos
+        lastContentOffset.value = currentOffsetY;
+        return;
       }
-    } else {
-      // --- Hacia ABAJO ---
-      // Aquí aplicamos la lógica de "esperar un poco" o "segundo toque".
-      // Solo ocultamos si el desplazamiento en este evento fue significativo
-      // O si la velocidad es alta.
-      
-      // Si el usuario baja lento (leyendo), no escondemos (dif < 10).
-      // Si el usuario hace un swipe fuerte (dif > 10), escondemos.
-      if (dif > 20) { 
-        hideTabBar();
-      }
-    }
 
-    offset.current = currentOffset;
-  };
+      // 2. DETECCIÓN DE DIRECCIÓN
+      // Hacia ABAJO (diff > 0) y pasamos umbral de 20px
+      if (diff > 20 && isTabBarVisible.value) {
+        isTabBarVisible.value = false;
+        setTabBarVisible(false);
+      } 
+      // Hacia ARRIBA (diff < 0) y pasamos umbral de 5px
+      else if (diff < -5 && !isTabBarVisible.value) {
+        isTabBarVisible.value = true;
+        setTabBarVisible(true);
+      }
+
+      // Guardamos la posición para el siguiente frame
+      lastContentOffset.value = currentOffsetY;
+    },
+  });
 
   return { onScroll };
 };

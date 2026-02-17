@@ -3,8 +3,8 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  Platform,
-  Animated,
+  // 1. RENOMBRAMOS la librería nativa para evitar conflictos
+  Animated as RNAnimated,
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import {
 } from '../../constants/icons';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useTabBarVisibility } from '../../context/TabBarVisibilityContext';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 
 interface CustomTabBarProps extends BottomTabBarProps {
@@ -59,31 +60,33 @@ const getIconComponent = (routeName: string, iconsOptions: string) => {
 };
 
 export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation, colors }) => {
-  const insets = useSafeAreaInsets();
   const IconsOptions = useSettingsStore((state) => state.iconsOptions);
+  const insets = useSafeAreaInsets();
 
+  // 3. Obtenemos el valor compartido
   const { translateY } = useTabBarVisibility();
 
+  // 4. Creamos el estilo animado para ocultar/mostrar la barra
+  const animatedTabBarStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
   return (
+    // 5. Aplicamos el estilo animado al contenedor principal
     <Animated.View
-      style={[styles.tabBarContainer,
-      { transform: [{ translateY }] }
+      style={[
+        styles.tabBarContainer,
+        animatedTabBarStyle // <--- Aquí va el estilo de Reanimated
       ]}>
+
       <View style={[
         styles.tabBar,
         {
           backgroundColor: colors.surfaceSecondary,
-          borderTopColor: colors.border,
-          height: 60 + insets.bottom,
-          paddingHorizontal: 20,
-          width: '90%',
-          marginBottom: 20,
-          shadowColor: colors.shadow,
-          borderRadius: 50,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 10,
+          height: insets.bottom + 60,
+          paddingBottom: insets.bottom - 6,
         }
       ]}>
         {state.routes.map((route, index) => {
@@ -111,10 +114,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
             });
           };
 
-          const scaleValue = useRef(new Animated.Value(1)).current;
+          // 6. Usamos RNAnimated (la nativa renombrada) para la lógica interna de los iconos
+          const scaleValue = useRef(new RNAnimated.Value(1)).current;
           
           useEffect(() => {
-            Animated.spring(scaleValue, {
+            RNAnimated.spring(scaleValue, {
               toValue: isFocused ? 1.2 : 0.8,
                 friction: 5,
                 useNativeDriver: true,
@@ -146,7 +150,8 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
                     }
                 ]
               ]}>
-                <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+                {/* 7. Usamos RNAnimated.View aquí dentro */}
+                <RNAnimated.View style={{ transform: [{ scale: scaleValue }] }}>
                   {IconComponent && (
                     <IconComponent 
                       color={isFocused ? colors.surface : colors.text}
@@ -160,7 +165,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
                       }}
                     />
                   )}
-                </Animated.View>
+                </RNAnimated.View>
               </View>
             </TouchableOpacity>
           );
@@ -182,13 +187,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    // paddingTop: 10,
-
     justifyContent: 'space-around',
-    alignItems: 'center',
-    // width: width * 0.92,
-    height: 60,
-    // borderRadius: 35,
     paddingHorizontal: 10,
   },
   tabItem: {

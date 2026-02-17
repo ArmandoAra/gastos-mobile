@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useEffect } from 'react';
 import { 
     View, 
     Text, 
@@ -65,6 +65,8 @@ export default function CategoryAndAmountInput({
     }));
 
     const { icon: IconCategory } = ICON_OPTIONS[iconsOptions].find(icon => icon.label === selectedCategory?.icon) || {};
+
+
 
     const handleAmountPress = () => {
         // Aseguramos que cualquier teclado previo se cierre
@@ -169,7 +171,7 @@ export default function CategoryAndAmountInput({
                             adjustsFontSizeToFit={true} // Útil si el número es muy largo
                             minimumFontScale={0.5}
                         >
-                            {hasAmount ? formatCurrency(amount) : "0,00"}
+                            {hasAmount ? amount : "0,00"}
                         </Text>
                     </Pressable>
 

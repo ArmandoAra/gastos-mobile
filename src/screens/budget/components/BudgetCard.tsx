@@ -66,7 +66,7 @@ export const BudgetCard = ({
                     <Text style={{ marginRight: 8, color: colors.textSecondary }}>
                         {defaultCategoryNames.some(name => name === displayName) ? t(`icons.${displayName}`) : displayName}
                     </Text>
-                    <View style={[styles.iconCircle, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : color }]}>
+                    <View style={[styles.iconCircle, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : color, borderRadius: 25 }]}>
                         {IconComponent ? <IconComponent size={20} color={colors.text} style={{
                             width: iconsOptions === 'painted' ? 46 : 22,
                             height: iconsOptions === 'painted' ? 46 : 22,
