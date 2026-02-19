@@ -5,6 +5,7 @@
         "namePlaceholder": "Enter your name",
         "pin": "PIN",
         "pinPlaceholder": "Enter your PIN (minimum 4 digits)",
+        "setupProfileSubtitle": "Keep your expenses organized and secure.",
         "email": "Email",
         "password": "Password",
         "register": "Register",

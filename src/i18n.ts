@@ -13,12 +13,11 @@ const storage = createMMKV({ id: 'settings-storage' });
 
 const languageDetector = {
   type: 'languageDetector' as const,
-  async: false, // MMKV es síncrono, mejoramos el rendimiento
+  async: false,
   detect: () => {
     const saved = storage.getString('user-language');
     if (saved) return saved;
 
-    // Expo Localization: toma el primer idioma del dispositivo
     const locales = Localization.getLocales();
     return locales[0]?.languageCode ?? LanguageCode.ES;
   },

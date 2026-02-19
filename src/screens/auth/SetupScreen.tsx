@@ -25,12 +25,10 @@ import { SpendiaryLogo } from '../../components/headers/SpendiaryLogo';
 const getScaledSize = (size: number) => size * PixelRatio.getFontScale();
 
 export const SetupScreen = () => {
-  // 1. Theme Hooks
   const { theme } = useSettingsStore();
   const colors = theme === 'dark' ? darkTheme : lightTheme;
   const { t } = useTranslation();
 
-  // 2. Local State
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
   const [biometric, setBiometric] = useState(false);
@@ -66,7 +64,7 @@ export const SetupScreen = () => {
       style={{ flex: 1 }}
     >
       <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={[styles.container, { backgroundColor: colors.surface }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -75,20 +73,12 @@ export const SetupScreen = () => {
           style={styles.headerContainer}
           accessibilityRole="header"
         >
-          <View style={[styles.iconCircle, { backgroundColor: colors.surfaceSecondary }]}>
-            <Image
-              style={styles.image}
-              source={require('../../../assets/icon.png')}
-              contentFit="cover"
-              accessible={false} // Imagen decorativa
-            />
-          </View>
 
-          <SpendiaryLogo colors={colors} size="medium" />
+          <SpendiaryLogo colors={colors} size="large" />
 
           <Text
             style={[styles.subtitle, { color: colors.textSecondary }]}
-            maxFontSizeMultiplier={1.4}
+            maxFontSizeMultiplier={1.2}
           >
             {t('auth.setupProfileSubtitle', "Let's set up your local profile")}
           </Text>
@@ -222,38 +212,24 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
-    justifyContent: 'center', // Centrado vertical si hay espacio
+    justifyContent: 'center', 
     alignItems: 'center',
-    paddingBottom: 40 // Espacio extra para scroll
+    paddingBottom: 40 
   },
   headerContainer: {
     alignItems: 'center',
     width: '100%',
     marginBottom: 20
   },
-  image: {
-    flex: 1,
-    borderRadius: 40,
-    width: '100%',
-    // backgroundColor: '#0553', // Opcional
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16
-  },
   subtitle: {
-    fontSize: 16,
-    marginBottom: 20, // Reducido un poco
+    fontSize: 12,
+    marginBottom: 20,
     textAlign: 'center',
-    marginTop: 8
+    width: "70%"
   },
   formContainer: {
     width: '100%',
-    maxWidth: 500, // Limite para tablets
+    maxWidth: 500,
     marginBottom: 30,
   },
   inputGroup: {
@@ -268,12 +244,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase'
   },
   input: {
+    textAlign: 'center',
     borderWidth: 0.5,
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 24,
     fontSize: 16,
-    minHeight: 56 // Altura táctil mínima
+    minHeight: 56 
   },
   pinInput: {
     fontSize: 20,
@@ -289,7 +266,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderRadius: 24,
     marginTop: 10,
-    minHeight: 60 // Altura táctil
+    minHeight: 60 
   },
   switchContent: {
     flexDirection: 'row',
@@ -300,7 +277,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 16,
     fontFamily: 'FiraSans-Bold',
-    flexShrink: 1 // Permite que el texto se ajuste si es largo
+    flexShrink: 1
   },
   button: {
     flexDirection: 'row',

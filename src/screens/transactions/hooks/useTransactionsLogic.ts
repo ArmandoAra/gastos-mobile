@@ -27,7 +27,7 @@ export const useTransactionsLogic = () => {
     const [selectedPeriod, setSelectedPeriod] = useState<ViewPeriod>('day');
 
     // Estados Locales
-    const [viewMode, setViewMode] = useState<ViewMode>('month');
+    const [viewMode, setViewMode] = useState<ViewMode>('day');
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 

@@ -1,119 +1,207 @@
-import React, { use } from 'react';
-import { Text, View, StyleSheet, Platform, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ThemeColors } from '../../types/navigation'; // Ajusta tu import de tipos
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withRepeat,
+    withTiming,
+    withSequence,
+    FadeInDown,
+    ZoomIn
+} from 'react-native-reanimated';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { ThemeColors } from '../../types/navigation';
+import { Image } from 'expo-image';
 
 interface SpendiaryLogoProps {
-    colors: ThemeColors; // Para adaptar sombras al tema si es necesario
+    colors?: ThemeColors;
     size?: 'small' | 'medium' | 'large';
+    showIcon?: boolean;
 }
 
-// Paleta de gradiente: Un azul profundo a un turquesa moderno.
-    // Se ve excelente tanto en temas claros como oscuros.
-    const gradientColors = ['#FF712F', '#1A3799'] as const; 
-    // Opción alternativa más cálida: ['#FF712F', '#1A3799'] (Naranja a Rosa)
+// 🎨 Paleta Mejorada: Añadí un color intermedio (Violeta) para evitar 
+// que la mezcla entre Naranja y Azul se vea "sucia" o grisácea.
+const LOGO_GRADIENT = ['#FF712F', '#D946EF', '#4F46E5'] as const;
 
+// Componente para el Texto con Gradiente
 const GradientText = (props: any) => {
-        return (
-            <MaskedView maskElement={<Text {...props} />}>
-                <LinearGradient
-                    colors={gradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                >
-                    {/* El texto aquí es invisible pero define el tamaño del gradiente */}
-                    <Text {...props} style={[props.style, { opacity: 0 }]} />
-                </LinearGradient>
-            </MaskedView>
+    return (
+        <MaskedView maskElement={<Text {...props} />}>
+            <LinearGradient
+                colors={LOGO_GRADIENT}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill} // Asegura que cubra todo
+            />
+            {/* Texto invisible para mantener el layout */}
+            <Text {...props} style={[props.style, { opacity: 0 }]} />
+        </MaskedView>
+    );
+};
+
+// Componente del Icono Geométrico (Una tarjeta abstracta con chip)
+const LogoMark = ({ size }: { size: number }) => {
+    // Animación de "respiración" suave para el icono
+    const glowScale = useSharedValue(1);
+
+    useEffect(() => {
+        glowScale.value = withRepeat(
+            withSequence(
+                withTiming(1.1, { duration: 2000 }),
+                withTiming(1, { duration: 2000 })
+            ),
+            -1, // Infinito
+            true // Reverse
         );
-    };
+    }, []);
 
-export const SpendiaryLogo = ({ colors, size = 'medium' }: SpendiaryLogoProps) => {
-    const {theme} = useSettingsStore();
+    const animatedGlowStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: glowScale.value }],
+        opacity: 0.5,
+    }));
 
-    // Definimos tamaños dinámicos
-    const titleSize = {
-        small: 24,
-        medium: 32,
-        large: 42,
+    const iconSize = size * 1.2;
+
+    return (
+        <View style={{ width: iconSize, height: iconSize, marginRight: size * 0.3, justifyContent: 'center', alignItems: 'center' }}>
+            {/* Fondo Glow Animado */}
+            <Animated.View style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: '#D946EF', borderRadius: iconSize / 2 },
+                animatedGlowStyle
+            ]} />
+
+            {/* Forma de Tarjeta/Wallet */}
+            <LinearGradient
+                colors={LOGO_GRADIENT}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                    width: '80%',
+                    height: '60%',
+                    borderRadius: iconSize * 0.2,
+                    transform: [{ rotate: '-10deg' }],
+                    alignItems: 'flex-end',
+                    padding: iconSize * 0.1,
+                    justifyContent: 'flex-start',
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 4.65,
+                    elevation: 8,
+                }}
+            >
+                {/* Chip Simulado */}
+                <View style={{
+                    width: '30%',
+                    height: '40%',
+                    backgroundColor: 'rgba(255,255,255,0.3)',
+                    borderRadius: 4
+                }} />
+            </LinearGradient>
+        </View>
+    );
+};
+
+export const SpendiaryLogo = ({ size = 'medium', showIcon = true }: SpendiaryLogoProps) => {
+    const { theme } = useSettingsStore();
+    const isDark = theme === 'dark';
+
+    // Configuración de tamaños
+    const config = {
+        small: { fontSize: 24, iconSize: 24 },
+        medium: { fontSize: 32, iconSize: 40 },
+        large: { fontSize: 48, iconSize: 60 },
     }[size];
 
     return (
-        <Animated.View 
-            entering={FadeInDown.duration(700).springify()}
-            style={styles.container}
-        >
-            {/* Capa de Sombra Suave (Backend) */}
-            {/* Esto crea un "resplandor" sutil detrás del texto para darle profundidad 3D */}
-            <Text 
-                style={[
-                    styles.baseText, 
-                    styles.shadowLayer, 
-                    { 
-                        fontSize: titleSize,
-                        textShadowColor: theme === 'dark' ? 'rgba(27, 255, 255, 0.3)' : 'rgba(46, 49, 146, 0.25)',
-                    }
-                ]}
-            >
-                Spendiary
-            </Text>
+        <View style={styles.container}>
+            {/* 1. Capa de Luz Ambiental (Ambient Light) */}
+            {/* Crea una atmósfera detrás del logo en lugar de una sombra dura */}
+            <View style={{
+                position: 'absolute',
+                width: config.fontSize * 6,
+                height: config.fontSize * 2,
+                backgroundColor: isDark ? '#4F46E5' : '#FF712F',
+                opacity: isDark ? 0.15 : 0.08,
+                borderRadius: 100,
+                transform: [{ scaleY: 0.6 }],
+                zIndex: -1,
+                // Blur simulado (si expo-blur no es opción, usas opacidad baja)
+            }} />
 
-            {/* Capa Frontal con Gradiente */}
-            <View style={styles.foregroundLayer}>
-                <GradientText style={[styles.baseText, { fontSize: titleSize }]}>
-                    Spendiary
-                </GradientText>
+            <View style={styles.row}>
+                {/* 2. Icono con animación de entrada Pop-up */}
+                {showIcon && (
+                    <View style={[styles.iconCircle]}>
+                        <Image
+                            style={styles.image}
+                            source={require('../../../assets/splash-icon.png')}
+                            accessible={false}
+                        />
+                    </View>
+                )}
+
+                {/* 3. Texto con gradiente y tipografía */}
+                <Animated.View entering={FadeInDown.duration(700).delay(100).springify()}>
+                    <View style={{ position: 'relative' }}>
+                        {/* Sombra suave para legibilidad */}
+                        <Text style={[
+                            styles.textBase,
+                            { 
+                                fontSize: config.fontSize,
+                                position: 'absolute',
+                                color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                top: 2, left: 1
+                            }
+                        ]}>
+                            Spendiary
+                        </Text>
+
+                        {/* Texto Principal */}
+                        <GradientText style={[styles.textBase, { fontSize: config.fontSize }]}>
+                            Spendiary
+                        </GradientText>
+                    </View>
+                </Animated.View>
             </View>
-
-            {/* Elemento Gráfico Opcional (El punto de la 'i') */}
-            {/* Si quisieras personalizar el punto de la 'i' con otro color, se agregaría aquí */}
-            {/* <View style={[styles.accentDot, { left: titleSize * 4.6, top: titleSize * 0.25 }]} /> */}
-
-        </Animated.View>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        position: 'relative',
         alignItems: 'center',
         justifyContent: 'center',
-        // Un pequeño padding asegura que las sombras no se corten
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        paddingVertical: 15,
     },
-    baseText: {
-        letterSpacing: 0.5,
-        fontFamily: 'Tinos-Bold', 
-        includeFontPadding: false,
+    image: {
+        flex: 1,
+        borderRadius: 40,
+        width: 120,
+        height: 120,
+
+
+        // backgroundColor: '#0553', // Opcional
+    },
+    iconCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8, // Espacio entre icono y texto
+    },
+    textBase: {
+        fontFamily: 'Tinos-Bold',
+        letterSpacing: -0.5, // Las fuentes Serif modernas se ven mejor un poco más juntas (tracking negativo)
         textAlign: 'center',
     },
-    shadowLayer: {
-        position: 'absolute',
-        color: 'transparent', // El texto en sí es transparente, solo queremos la sombra
-        zIndex: 0,
-        textShadowOffset: { width: 0, height: 4 },
-        textShadowRadius: 12,
-    },
-    foregroundLayer: {
-        zIndex: 1,
-         // En Android, el MaskedView necesita un fondo transparente explícito a veces
-        backgroundColor: 'transparent',
-    },
-    // Estilo para el punto de acento opcional
-    accentDot: {
-        position: 'absolute',
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#FFD700', // Oro/Amarillo para acento
-        zIndex: 2,
-        shadowColor: "#FFD700",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 6,
-    }
 });

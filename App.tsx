@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, StatusBar, View } from 'react-native';
+import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -12,7 +12,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-// --- Imports Locales (Ajusta las rutas según tu proyecto) ---
 import './src/i18n';
 import { TransactionsScreen } from './src/screens/transactions/TransactionsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
@@ -23,11 +22,9 @@ import { useAuthStore } from './src/stores/authStore';
 import { useSettingsStore } from './src/stores/settingsStore';
 import { lightTheme, darkTheme } from './src/theme/colors';
 
-// Polyfill para Buffer en React Native
 import { Buffer } from 'buffer';
 global.Buffer = global.Buffer || Buffer;
 
-// Importamos nuestros tipos y componentes tipados
 import {
   RootStackParamList,
   AppStackParamList,
@@ -41,16 +38,10 @@ import { useTranslation } from 'react-i18next';
 import { BudgetScreen } from './src/screens/budget/BudgetScreen';
 import { TabBarVisibilityProvider } from './src/context/TabBarVisibilityContext';
 
-
-
-// --- Creación de Navigators Tipados ---
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
-// ============================================
-// MAIN TAB NAVIGATOR
-// ============================================
 const MainTabs = () => {
   const { t } = useTranslation();
   const { theme } = useSettingsStore();
@@ -65,12 +56,10 @@ const MainTabs = () => {
     <Tab.Navigator
       tabBar={renderTabBar}
       screenOptions={{
-        // Aquí decimos: "Usa mi header custom"
         header: ({ options, route }) => {
-          // Lógica para decidir qué mostrar según la pantalla
-          const isHome = route.name === 'Transactions'; // O 'Home' si tienes una dashboard
+
+          const isHome = route.name === 'Transactions'; 
           if (route.name === "Settings" || route.name === "Budget") {
-            // En Settings no mostramos header
             return (
               <ModernHeader
                 title={options.title}
@@ -81,9 +70,7 @@ const MainTabs = () => {
             />
           );
           }
-
-        },
-        tabBarStyle: { /* ... tu estilo transparente ... */ },
+        }
       }}
     >
       <Tab.Screen
@@ -122,15 +109,12 @@ const MainTabs = () => {
   );
 };
 
-// ============================================
-// APP STACK
-// ============================================
 const AppStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false, // Ocultamos header del stack porque las Tabs tienen el suyo
-        presentation: 'card', // 'modal' si prefieres animaciones verticales
+        headerShown: false,
+        presentation: 'card',
       }}
     >
       <Stack.Screen
@@ -138,14 +122,10 @@ const AppStack = () => {
         component={MainTabs}
       />
 
-      {/* Aquí podrías agregar pantallas secundarias que tapen la tab bar */}
     </Stack.Navigator>
   );
 };
 
-// ============================================
-// ROOT NAVIGATOR
-// ============================================
 const RootNavigator = () => {
   const isSetupComplete = useAuthStore(state => state.isSetupComplete);
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
@@ -162,10 +142,12 @@ const RootNavigator = () => {
   }, []);
 
   if (!isReady) {
-    return <View style={styles.loadingContainer} />;
+    return <View style={{
+      flex: 1,
+      backgroundColor: '#1e293b'
+    }} />;
   }
 
-  // Lógica: Solo mostramos bloqueo si el setup está listo, el PIN está habilitado y no está autenticado
   const showLockScreen = isSetupComplete && !isAuthenticated && (isPinEnabled || isBiometricEnabled);
 
   return (
@@ -181,16 +163,11 @@ const RootNavigator = () => {
   );
 };
 
-// ============================================
-// MAIN APP COMPONENT
-// ============================================
-// Evita que la pantalla de carga se oculte automáticamente
 SplashScreen.preventAutoHideAsync();
+
 const App = () => {
   const themeMode = useSettingsStore(state => state.theme);
   const [fontsLoaded, setFontsLoaded] = useState(false);
-
-
 
   useEffect(() => {
     async function loadFonts() {
@@ -250,12 +227,5 @@ const App = () => {
     </SafeAreaProvider>
   );
 };
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#1e293b', // Color de carga seguro
-  },
-});
 
 export default App;
