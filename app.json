@@ -27,7 +27,8 @@
       },
       "permissions": [
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "VIBRATE"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -37,12 +38,24 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.armandoaranopla.spendiary"
     },
-    "web": {
-      "favicon": "./assets/favicon.ico"
-    },
     "plugins": [
       "expo-localization",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "blockedPermissions": [
+              "android.permission.READ_EXTERNAL_STORAGE",
+              "android.permission.WRITE_EXTERNAL_STORAGE",
+              "android.permission.ACCESS_NETWORK_STATE",
+              "android.permission.WAKE_LOCK",
+              "android.permission.SYSTEM_ALERT_WINDOW",
+              "com.google.android.gms.permission.AD_ID"
+            ]
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

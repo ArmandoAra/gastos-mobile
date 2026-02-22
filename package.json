@@ -1,6 +1,6 @@
 {
   "name": "gastos-mobile",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -24,6 +24,7 @@
     "date-fns": "^4.1.0",
     "expo": "~54.0.31",
     "expo-blur": "^15.0.8",
+    "expo-build-properties": "~1.0.10",
     "expo-crypto": "~15.0.8",
     "expo-dev-client": "~6.0.20",
     "expo-document-picker": "~14.0.8",
