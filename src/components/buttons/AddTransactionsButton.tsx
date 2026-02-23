@@ -23,6 +23,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { darkTheme, lightTheme } from "../../theme/colors";
 import { useAddTransactions } from "../../hooks/useAddTransactions";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSettingsStore } from "../../stores/settingsStore";
+import { ThemeColors } from "../../types/navigation";
 
 interface InputOptionProps {
     title: string;
@@ -33,6 +35,8 @@ interface InputOptionProps {
 }
 const InputOption = React.memo<InputOptionProps>(
     ({ title, iconName, gradientColors, onPress, index }) => {
+        const theme = useSettingsStore((state) => state.theme);
+        const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
         return (
             <Animated.View
                 entering={FadeInDown.delay(index * 50)
@@ -48,11 +52,8 @@ const InputOption = React.memo<InputOptionProps>(
                     style={styles.touchableOption}
                 >
                     {/* Texto */}
-                    <View style={styles.textWrapper}>
-                        <Text style={styles.cardText}>{title}</Text>
-                    </View>
-
-                    {/* Icono */}
+                    <View style={[styles.textWrapper, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.cardText, { color: colors.text }]}>{title}</Text>
 
                     <LinearGradient
                         colors={gradientColors}
@@ -62,6 +63,10 @@ const InputOption = React.memo<InputOptionProps>(
                     >
                         <MaterialIcons name={iconName} size={20} color="#FFF" />
                     </LinearGradient>
+                    </View>
+
+                    {/* Icono */}
+
                 </TouchableOpacity>
             </Animated.View>
         );
@@ -167,142 +172,95 @@ const styles = StyleSheet.create({
         zIndex: 1000,
         ...Platform.select({ android: { elevation: 1 } }),
     },
-
     backdropPressable: {
         flex: 1,
-
         width: "100%",
-
         height: "100%",
     },
-
     optionsContainer: {
         position: "absolute",
-
         bottom: 210,
-
         right: 38,
-
         zIndex: 1300,
-
         alignItems: "flex-end",
     },
-
     optionsWrapper: {
         gap: 16,
-
         alignItems: "flex-end",
     },
-
     fabContainer: {
         position: "absolute",
-
         right: 24,
-
         zIndex: 1301,
     },
-
     fab: {
         width: FAB_SIZE,
-
         height: FAB_SIZE,
-
         borderRadius: FAB_SIZE / 2,
-
         justifyContent: "center",
-
         alignItems: "center",
-
         ...Platform.select({
             android: {
                 elevation: 6,
             },
-
             ios: {
                 shadowColor: "#000",
-
                 shadowOffset: { width: 0, height: 4 },
-
                 shadowOpacity: 0.3,
-
                 shadowRadius: 4.65,
             },
         }),
     },
-
     cardContainer: {
         flexDirection: "row",
-
         justifyContent: "flex-end",
-
         alignItems: "center",
     },
-
     touchableOption: {
         flexDirection: "row",
-
         alignItems: "center",
-
         justifyContent: "flex-end",
-
         gap: 12,
     },
 
     textWrapper: {
-        backgroundColor: "#FFF",
-
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
         paddingVertical: 6,
-
         paddingHorizontal: 12,
-
-        borderRadius: 8,
-
+        borderRadius: 25,
         ...Platform.select({
             android: {
                 elevation: 2,
             },
-
             ios: {
                 shadowColor: "#000",
-
                 shadowOpacity: 0.1,
-
                 shadowRadius: 2,
             },
         }),
     },
-
     cardText: {
         fontSize: 14,
-
         fontFamily: "FiraSans-Regular",
-
         color: "#333",
     },
 
     avatarNoShadow: {
         width: 44,
-
         height: 44,
-
         borderRadius: 22,
-
         justifyContent: "center",
-
         alignItems: "center",
-
         ...Platform.select({
             android: {
                 elevation: 4,
             },
-
             ios: {
                 shadowColor: "#000",
-
                 shadowOpacity: 0.2,
-
                 shadowRadius: 3,
-
                 shadowOffset: { width: 0, height: 2 },
             },
         }),

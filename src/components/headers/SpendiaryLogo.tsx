@@ -41,70 +41,7 @@ const GradientText = (props: any) => {
     );
 };
 
-// Componente del Icono Geométrico (Una tarjeta abstracta con chip)
-const LogoMark = ({ size }: { size: number }) => {
-    // Animación de "respiración" suave para el icono
-    const glowScale = useSharedValue(1);
-
-    useEffect(() => {
-        glowScale.value = withRepeat(
-            withSequence(
-                withTiming(1.1, { duration: 2000 }),
-                withTiming(1, { duration: 2000 })
-            ),
-            -1, // Infinito
-            true // Reverse
-        );
-    }, []);
-
-    const animatedGlowStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: glowScale.value }],
-        opacity: 0.5,
-    }));
-
-    const iconSize = size * 1.2;
-
-    return (
-        <View style={{ width: iconSize, height: iconSize, marginRight: size * 0.3, justifyContent: 'center', alignItems: 'center' }}>
-            {/* Fondo Glow Animado */}
-            <Animated.View style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: '#D946EF', borderRadius: iconSize / 2 },
-                animatedGlowStyle
-            ]} />
-
-            {/* Forma de Tarjeta/Wallet */}
-            <LinearGradient
-                colors={LOGO_GRADIENT}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                    width: '80%',
-                    height: '60%',
-                    borderRadius: iconSize * 0.2,
-                    transform: [{ rotate: '-10deg' }],
-                    alignItems: 'flex-end',
-                    padding: iconSize * 0.1,
-                    justifyContent: 'flex-start',
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 4.65,
-                    elevation: 8,
-                }}
-            >
-                {/* Chip Simulado */}
-                <View style={{
-                    width: '30%',
-                    height: '40%',
-                    backgroundColor: 'rgba(255,255,255,0.3)',
-                    borderRadius: 4
-                }} />
-            </LinearGradient>
-        </View>
-    );
-};
-
+// Usado en: SetupScreen.
 export const SpendiaryLogo = ({ size = 'medium', showIcon = true }: SpendiaryLogoProps) => {
     const { theme } = useSettingsStore();
     const isDark = theme === 'dark';
@@ -182,9 +119,6 @@ const styles = StyleSheet.create({
         borderRadius: 40,
         width: 120,
         height: 120,
-
-
-        // backgroundColor: '#0553', // Opcional
     },
     iconCircle: {
         width: 80,

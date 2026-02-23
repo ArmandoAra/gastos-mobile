@@ -1,7 +1,7 @@
 export const lightTheme = {
     primary: '#4FB7B3',
-    accent: '#03DAC6',
-    accentSecondary: '#a855f7',
+    accent: '#9CD5FF',
+    accentSecondary: '#9CD5FF',
     background: '#F1FADA90',
     surface: '#FFFFFF',
     surfaceSecondary: '#E8F9FF',
@@ -19,7 +19,7 @@ export const lightTheme = {
 export const darkTheme = {
     primary: '#123524',
     accent: '#1F7D53',
-    accentSecondary: '#a285f7',
+    accentSecondary: '#0E3E56',
     background: '#070F2B90',
     surface: '#2E2E2E',
     surfaceSecondary: '#070F2B',

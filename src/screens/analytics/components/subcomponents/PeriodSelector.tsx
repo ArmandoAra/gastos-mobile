@@ -39,7 +39,7 @@ export default function PeriodSelector({
     <View 
       style={[
         styles.container, 
-        { backgroundColor: colors.surface, borderColor: colors.border }
+        { backgroundColor: 'transparent', borderColor: colors.border }
       ]}
       accessibilityRole="radiogroup"
       // Importante: Agrupa la navegación para lectores de pantalla

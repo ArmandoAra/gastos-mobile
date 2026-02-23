@@ -5,20 +5,21 @@ import { format, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
 import { es, enUS, ptBR } from 'date-fns/locale';
 import ModernDateSelector from '../buttons/ModernDateSelector';
 import useDateStore from '../../stores/useDateStore';
-import { useSettingsStore } from '../../stores/settingsStore';
 import { ThemeColors } from '../../types/navigation';
-import { darkTheme, lightTheme } from '../../theme/colors';
 import { ViewMode, ViewPeriod } from '../../interfaces/date.interface';
 import { useTranslation } from 'react-i18next';
-import DataManagementSection from '../../screens/settings/components/DataManagementSection';
+import { LanguageCode } from '../../constants/languages';
+import { fontSizes } from '../../theme/global.styles';
 
 export interface InfoHeaderProps {
   viewMode: ViewMode | ViewPeriod;
+  colors: ThemeColors;
+  language: LanguageCode;
 }
 
-export default function InfoHeader({ viewMode }: InfoHeaderProps) {
-  const { theme, language } = useSettingsStore();
-  const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+// Utilizado en : TransactionsScreen, AnalyticsScreen
+export default function InfoHeader({ viewMode, colors, language }: InfoHeaderProps) {
+
   const { localSelectedDay, setLocalSelectedDay } = useDateStore();
   const { t } = useTranslation();
 
@@ -51,7 +52,7 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
     const today = new Date();
     // Clave de traducción basada en el modo
     if (viewMode === 'day' && isSameDay(localSelectedDay, today)) return 'header.today';
-    
+
     switch (viewMode) {
       case 'day': return 'header.dailyoverview';
       case 'month': return 'header.monthlyoverview';
@@ -63,17 +64,20 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
   const translatedSubtitle = t(subTitle);
 
   return (
-    <Animated.View 
-      entering={FadeInDown.duration(600).springify()} 
+    <Animated.View
+      entering={FadeInDown.duration(600).springify()}
       style={styles.container}
     >
       {/* Tarjeta de Fecha Principal */}
-      <View style={[styles.dateCard, { 
-        backgroundColor: colors.surface, 
-        shadowColor: colors.shadow,
-        borderColor: colors.border
-      }]}>
-        
+      <View style={[
+        styles.dateCard,
+        {
+          backgroundColor: colors.surface,
+          shadowColor: colors.shadow,
+          borderColor: colors.border
+        }
+      ]}>
+
         {/* Fondo decorativo ignorado por accesibilidad */}
         <View
           style={[styles.glowEffect, { backgroundColor: colors.accent }]}
@@ -96,7 +100,7 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
             </Text>
             <Text
               style={[styles.dateDisplay, { color: colors.text }]}
-              maxFontSizeMultiplier={1.3} // Limitamos ligeramente para no romper la tarjeta
+              maxFontSizeMultiplier={1.3} 
             >
               {viewMode === 'day' && isSameDay(localSelectedDay, new Date()) ? dateText.split(',').slice(1).join(',') : dateText}
               {/* {dateText} */}
@@ -104,7 +108,7 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
           </View>
 
           {/* Columna del Selector (Fija/Auto) */}
-                <ModernDateSelector
+          <ModernDateSelector
             selectedDate={localSelectedDay}
             onDateChange={(date) => {
               setLocalSelectedDay(date);
@@ -113,7 +117,7 @@ export default function InfoHeader({ viewMode }: InfoHeaderProps) {
               }
             }}
           />
-            </View>
+        </View>
       </View>
     </Animated.View>
   );
@@ -126,16 +130,11 @@ const styles = StyleSheet.create({
   },
   // Tarjeta
   dateCard: {
-    borderRadius: 20,
-    padding: 20, // Padding interno generoso
+    borderRadius: 30,
+    padding: 25, 
     borderWidth: 1,
     position: 'relative',
     overflow: 'hidden',
-    // Sombras
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
   },
   // Efecto visual
   glowEffect: {
@@ -145,7 +144,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    opacity: 0.15, // Opacidad reducida para no interferir con el texto
+    opacity: 0.15, 
     transform: [{ scale: 1.2 }],
   },
   // Layout interno
@@ -157,14 +156,12 @@ const styles = StyleSheet.create({
   },
   // Columna de texto
   textColumn: {
-    flex: 1, // CLAVE: Permite que el texto ocupe el espacio pero respete al botón
-    paddingRight: 8, // Espacio de seguridad contra el botón
+    flex: 1,
     justifyContent: 'center',
   },
 
-  // Textos
   overviewLabel: {
-    fontSize: 12,
+    fontSize: fontSizes.sm,
     textTransform: 'uppercase',
     fontFamily: 'FiraSans-Bold',
     letterSpacing: 1,
@@ -172,10 +169,10 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   dateDisplay: {
-    fontSize: 20, // Ligeramente más grande
+    fontSize: fontSizes.xl, 
     fontFamily: 'Tinos-Bold',
     textTransform: 'capitalize',
-    lineHeight: 26, // Altura de línea para cuando hace wrap
+    lineHeight: 20, 
     flexWrap: 'wrap',
   },
 });

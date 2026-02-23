@@ -22,6 +22,8 @@ import {
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useTabBarVisibility } from '../../context/TabBarVisibilityContext';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { globalStyles } from '../../theme/global.styles';
 
 
 interface CustomTabBarProps extends BottomTabBarProps {
@@ -60,6 +62,7 @@ const getIconComponent = (routeName: string, iconsOptions: string) => {
 };
 
 export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation, colors }) => {
+  const theme = useSettingsStore((state) => state.theme);
   const IconsOptions = useSettingsStore((state) => state.iconsOptions);
   const insets = useSafeAreaInsets();
 
@@ -78,17 +81,23 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
     <Animated.View
       style={[
         styles.tabBarContainer,
-        animatedTabBarStyle // <--- Aquí va el estilo de Reanimated
+        animatedTabBarStyle
       ]}>
+      <LinearGradient
+        // 1. Colores del gradiente (de arriba hacia abajo usando tu tema)
+        colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accentSecondary,]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
 
-      <View style={[
-        styles.tabBar,
-        {
-          backgroundColor: colors.surfaceSecondary,
-          height: insets.bottom + 60,
-          paddingBottom: insets.bottom - 6,
-        }
-      ]}>
+        // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+        style={[
+          styles.tabBar,
+          {
+            height: insets.bottom + 60,
+            paddingBottom: insets.bottom - 15,
+          }
+        ]}
+      >
         {state.routes.map((route, index) => {
           const routeName = route.name as keyof MainTabParamList;
           const { options } = descriptors[route.key];
@@ -170,7 +179,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
             </TouchableOpacity>
           );
         })}
-      </View>
+      </LinearGradient>
     </Animated.View>
   );
 };
@@ -188,7 +197,12 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    width: '95%',
     paddingHorizontal: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    elevation: 5,
+    borderWidth: 0.5,
   },
   tabItem: {
     justifyContent: 'center',

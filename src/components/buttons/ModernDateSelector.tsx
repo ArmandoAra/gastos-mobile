@@ -246,12 +246,12 @@ export default function ModernCalendarSelector({
               }}
               style={[
                 styles.footerButton,
-                { borderColor: colors.accent, backgroundColor: colors.surface }
+                { backgroundColor: colors.surfaceSecondary }
               ]}
               accessibilityRole="button"
               accessibilityLabel={t('calendar.go_to_today', 'Select Today')}
             >
-              <Text style={[styles.todayButtonText, { color: colors.accent }]}>
+              <Text style={[styles.todayButtonText, { color: colors.text }]}>
                 {t('header.today')}
               </Text>
             </TouchableOpacity>
@@ -374,8 +374,8 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 2,
+    borderRadius: 25,
+    borderWidth: 0.5,
     width: '100%',
   },
   todayButtonText: {

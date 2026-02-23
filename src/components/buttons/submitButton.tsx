@@ -103,11 +103,10 @@ export default function SubmitButton({
 const styles = StyleSheet.create({
     containerWrapper: {
         width: '100%',
-        // Importante: No ponemos height fija aquí
     },
     touchable: {
         width: '100%',
-        borderRadius: 12,
+        borderRadius: 18,
         // Sombra suave (Elevation para Android, Shadow para iOS)
         ...Platform.select({
             ios: {
@@ -130,14 +129,14 @@ const styles = StyleSheet.create({
     },
     gradient: {
         // Layout Flexible
-        minHeight: 48, // Altura mínima táctil (Standard de accesibilidad)
+        minHeight: 56, 
         paddingVertical: 12, // Permite que el botón crezca si la fuente es gigante
         paddingHorizontal: 24,
-        borderRadius: 12,
+        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
         // Borde sutil
-        borderWidth: 1,
+        borderWidth: 0.5,
         borderColor: 'rgba(255,255,255,0.1)',
     },
     text: {

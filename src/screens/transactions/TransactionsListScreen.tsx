@@ -12,9 +12,6 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import AddTransactionsButton from "../../components/buttons/AddTransactionsButton";
 import InfoPopUp from "../../components/messages/InfoPopUp";
 import { TransactionItemMobile } from "./components/TransactionItem";
-
-// Stores & Interfaces
-import { Transaction } from "../../interfaces/data.interface";
 import { formatCurrency } from "../../utils/helpers";
 import FilterFloatingButton from "./components/FilterFloatingButton";
 import { useSettingsStore } from "../../stores/settingsStore";
@@ -24,9 +21,12 @@ import { useTransactionsLogic } from "./hooks/useTransactionsLogic";
 import TransactionForm from '../../components/forms/TransactionForm';
 import { useScrollDirection } from "../../hooks/useScrollDirection";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTabBarVisibility } from "../../context/TabBarVisibilityContext";
 import { ListItem } from "../../interfaces/items.interface";
 import { AnimatedFlashList } from "../../components/animatedFlashList/AnimatedFlashList";
+import { globalStyles } from "../../theme/global.styles";
+import { darkTheme, lightTheme } from "../../theme/colors";
+import { ThemeColors } from "../../types/navigation";
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 
@@ -34,26 +34,28 @@ import { AnimatedFlashList } from "../../components/animatedFlashList/AnimatedFl
 export function TransactionsScreen() {
     const {
         viewMode,
-        setViewMode,
         filter,
-        setFilter,
         searchQuery,
-        setSearchQuery,
-        colors,
         t,
         listData,
         accountSelected,
-        setAccountSelected,
         allAccounts,
         stickyHeaderIndices,
-        handleDelete,
-        handleSave,
         isEditModalOpen,
         editingTransaction,
+        setViewMode,
+        setFilter,
+        setSearchQuery,
+        setAccountSelected,
+        handleDelete,
+        handleSave,
         handleOpenEdit,
         handleCloseEdit,
         getGroupTitle
     } = useTransactionsLogic();
+    const theme = useSettingsStore((state) => state.theme);
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+    const language = useSettingsStore((state) => state.language);
 
     const { isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
     const { onScroll } = useScrollDirection();
@@ -66,19 +68,19 @@ export function TransactionsScreen() {
 
             return (
                 <View
-                    style={[localStyles.dateHeader, { backgroundColor: colors.text }]}
+                    style={[styles.dateHeader, { backgroundColor: colors.text }]}
                     accessibilityRole="header"
                     accessibilityLabel={`${title}, total ${totalFormatted}`}
                 >
                     <Text
-                        style={[localStyles.dateHeaderText, { color: colors.surface }]}
+                        style={[styles.dateHeaderText, { color: colors.surface }]}
                         maxFontSizeMultiplier={1.5}
                     >
                         {title}
                     </Text>
                     <Text
                         style={[
-                            localStyles.dateHeaderTotal,
+                            styles.dateHeaderTotal,
                             { color: item.total < 0 ? colors.error : colors.success }
                         ]}
                         maxFontSizeMultiplier={1.5}
@@ -104,14 +106,29 @@ export function TransactionsScreen() {
     }, []);
 
     return (
-        <View style={[localStyles.container, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
+        <LinearGradient
+            // 1. Colores del gradiente (de arriba hacia abajo usando tu tema)
+            colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accent,]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+
+            // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+            style={[
+                globalStyles.screenContainer,
+                { paddingTop: insets.top }
+            ]}
+        >
             <InfoPopUp />
-            <InfoHeader viewMode={viewMode} />
+
+            <InfoHeader viewMode={viewMode} colors={colors} language={language} />
 
             {/* --- CONTROLES Y FILTROS --- */}
-            <View style={[localStyles.controlsContainer, { borderBottomColor: colors.border }]}>
+            <View style={[
+                styles.controlsContainer,
+                { borderBottomColor: colors.border }
+            ]}>
                 {/* Grupo Izquierdo */}
-                <View style={localStyles.filterGroup}>
+                <View style={styles.filterGroup}>
                     <FilterFloatingButton
                         viewMode={viewMode}
                         setViewMode={setViewMode}
@@ -122,21 +139,21 @@ export function TransactionsScreen() {
                         setAccountSelected={setAccountSelected}
                         allAccounts={allAccounts}
                     />
-                    <View style={localStyles.badgesContainer}>
-                        <Text style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}>
+                    <View style={styles.badgesContainer}>
+                        <Text style={[styles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}>
                             {t(`transactions.${viewMode}`)}
                         </Text>
-                        <Text style={[localStyles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}>
+                        <Text style={[styles.modeLabel, { backgroundColor: colors.text, color: colors.surface }]}>
                             {t(`transactions.${filter}Plural`)}
                         </Text>
                     </View>
                 </View>
 
                 {/* Grupo Derecho: Búsqueda */}
-                <View style={[localStyles.searchContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+                <View style={[styles.searchContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
                     <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} importantForAccessibility="no" />
                     <TextInput
-                        style={[localStyles.searchInput, { color: colors.text }]}
+                        style={[styles.searchInput, { color: colors.text }]}
                         placeholder={`${t('transactions.searchPlaceholder')} ${t(`transactions.${viewMode}`).toLowerCase()}`}
                         placeholderTextColor={colors.textSecondary}
                         value={searchQuery}
@@ -160,7 +177,7 @@ export function TransactionsScreen() {
             <View style={{ height: 1 }} />
 
             {/* --- LISTA --- */}
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingHorizontal: 4 }}>
                 <GestureHandlerRootView style={{ flex: 1 }}>
                     <AnimatedFlashList
                         data={listData}
@@ -171,12 +188,12 @@ export function TransactionsScreen() {
                         onScroll={onScroll}
                         scrollEventThrottle={16} // Importante para suavidad
                         stickyHeaderIndices={stickyHeaderIndices}
-                        contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 8 }}
+                        contentContainerStyle={{ paddingBottom: 160 }}
                         keyboardDismissMode="on-drag"
                         ListEmptyComponent={
-                            <View style={localStyles.emptyState} accessible={true}>
+                            <View style={styles.emptyState} accessible={true}>
                                 <MaterialIcons name="receipt-long" size={48} color={colors.textSecondary} importantForAccessibility="no" />
-                                <Text style={[localStyles.emptyText, { color: colors.textSecondary }]}>
+                                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                                     {`${t('transactions.notFound')} ${t(`transactions.${viewMode}`).toLowerCase()}.`}
                                 </Text>
                             </View>
@@ -201,22 +218,20 @@ export function TransactionsScreen() {
             />
 
             <AddTransactionsButton />
-        </View>
+        </LinearGradient>
     );
 }
 
-const localStyles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingHorizontal: 12,
-    },
+const styles = StyleSheet.create({
     controlsContainer: {
-        paddingVertical: 12,
+        borderBottomWidth: 1,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         justifyContent: 'space-between',
-        gap: 12,
+        gap: 8,
     },
     filterGroup: {
         flexDirection: 'row',
@@ -233,7 +248,7 @@ const localStyles = StyleSheet.create({
     modeLabel: {
         fontFamily: 'FiraSans-Bold',
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: 1,
         borderRadius: 14,
         textTransform: 'capitalize',
         fontSize: 11,
@@ -247,7 +262,7 @@ const localStyles = StyleSheet.create({
         minHeight: 44,
         paddingHorizontal: 12,
         borderRadius: 12,
-        borderWidth: 1,
+        borderWidth: 0.5,
     },
     searchInput: {
         flex: 1,
@@ -260,11 +275,11 @@ const localStyles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 2,
         paddingLeft: 20,
         paddingHorizontal: 12,
         marginBottom: 8,
-        marginTop: 0,
+        marginTop: 2,
         borderRadius: 8,
     },
     dateHeaderText: {

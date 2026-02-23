@@ -19,12 +19,16 @@ import { useScrollDirection } from '../../hooks/useScrollDirection';
 
 // 1. IMPORTANTE: Usamos Animated de Reanimated
 import Animated from 'react-native-reanimated';
+import { ThemeColors } from '../../types/navigation';
+import { globalStyles } from '../../theme/global.styles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { theme } = useSettingsStore();
-  const colors = theme === 'dark' ? darkTheme : lightTheme;
+  const theme = useSettingsStore((state) => state.theme);
+  const language = useSettingsStore((state) => state.language);
+  const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
 
   const [selectedPeriod, setSelectedPeriod] = useState<ViewPeriod>('month');
 
@@ -40,23 +44,29 @@ export default function AnalyticsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
-      <InfoHeader viewMode={selectedPeriod} />
+    <LinearGradient
+      // 1. Colores del gradiente (de arriba hacia abajo usando tu tema)
+      colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accent,]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
 
-      {/* 3. CAMBIO CLAVE: Usar Animated.ScrollView */}
+      // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+      style={[
+        globalStyles.screenContainer,
+        { paddingTop: insets.top }
+      ]}
+    >
+      <InfoHeader viewMode={selectedPeriod} colors={colors} language={language} />
+
       <Animated.ScrollView
         contentContainerStyle={styles.scrollContent}
 
         // Conectamos el handler
         onScroll={onScroll}
 
-        // IMPORTANTE: 16ms = 60fps. Sin esto, el evento se dispara lento en Android.
         scrollEventThrottle={16}
-
         showsVerticalScrollIndicator={false}
       >
-        { /* Period Selector */}
-
         {/* 1. Daily View */}
         <DailyExpenseViewMobile handlePeriodChange={handlePeriodChange} />
 
@@ -67,15 +77,11 @@ export default function AnalyticsScreen() {
         <View style={{ height: insets.bottom + 80 }} />
 
       </Animated.ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 12,
-  },
   // ... resto de tus estilos (se mantienen igual)
   periodSelectorWrapper: {
     paddingHorizontal: 12,

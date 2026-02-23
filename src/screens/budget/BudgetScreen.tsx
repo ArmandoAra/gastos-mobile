@@ -8,8 +8,6 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import Animated from 'react-native-reanimated'; // Importación correcta
-import { FlashList } from '@shopify/flash-list';
 
 // Componentes
 import { BudgetCard } from './components/BudgetCard';
@@ -18,21 +16,23 @@ import InfoPopUp from '../../components/messages/InfoPopUp';
 import TransactionForm from '../../components/forms/TransactionForm';
 
 // Hooks y Stores
-import { useTransactionsLogic } from '../transactions/hooks/useTransactionsLogic';
 import { ExpenseBudget } from '../../interfaces/data.interface';
 import useBudgetsStore from '../../stores/useBudgetStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { AnimatedBudgetFlashList } from '../../components/animatedFlashList/AnimatedFlashList';
+import { LinearGradient } from 'expo-linear-gradient';
+import { globalStyles } from '../../theme/global.styles';
+import { ThemeColors } from '../../types/navigation';
+import { darkTheme, lightTheme } from '../../theme/colors';
 
 export function BudgetScreen() {
-    const { colors } = useTransactionsLogic();
+    const theme = useSettingsStore((state) => state.theme);
+    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
+
     const { t } = useTranslation();
     const { isAddOptionsOpen, setIsAddOptionsOpen } = useSettingsStore();
 
-    // 2. CORRECCIÓN REACTIVIDAD: Traemos la DATA, no la función getter.
-    // Asumiendo que tu store tiene una propiedad 'budgets' o 'userBudgets'.
-    // Si tu store solo tiene getUserBudgets, debes cambiar el store o usar un selector que devuelva el array.
     const budgets = useBudgetsStore(state => state.budgets); 
 
     const [filter, setFilter] = useState<'all' | 'favorites'>('all');
@@ -61,12 +61,20 @@ export function BudgetScreen() {
     };
 
     return (
-        <View style={[styles.screenContainer, { backgroundColor: colors.surface }]}>
+        <LinearGradient
+            // 1. Colores del gradiente (de arriba hacia abajo usando tu tema)
+            colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accent,]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+
+            // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+            style={[
+                globalStyles.screenContainer,
+            ]}
+        >
             <InfoPopUp />
 
-            {/* --- ZONA SUPERIOR (FILTROS) --- */}
-            {/* 3. CORRECCIÓN LAYOUT: Quitamos 'absolute' y 'top: -50' para que se vea normal */}
-            <View style={[styles.headerContainer, { backgroundColor: colors.surface }]}>
+            <View style={[styles.headerContainer, { backgroundColor: 'transparent' }]}>
                 <View style={styles.filterContainer}>
                     <TouchableOpacity
                         onPress={() => setFilter('all')}
@@ -120,7 +128,7 @@ export function BudgetScreen() {
                     scrollEventThrottle={16}
 
                     contentContainerStyle={{
-                        paddingHorizontal: 10, // Un poco más de margen lateral
+                        paddingHorizontal: 4, // Un poco más de margen lateral
                         paddingTop: 10,
                         paddingBottom: Platform.OS === 'ios' ? 120 : 140
                     }}
@@ -174,22 +182,15 @@ export function BudgetScreen() {
             />
 
             <TransactionForm isOpen={isAddOptionsOpen} onClose={() => setIsAddOptionsOpen(false)} />
-        </View>
+        </LinearGradient>
     );
 }
 
 export const styles = StyleSheet.create({
-    screenContainer: {
-        flex: 1,
-        paddingHorizontal: 12,
-        // paddingTop eliminado aquí, manejado por safe area o header
-    },
-    // Cambiado de fixedHeader (absolute) a headerContainer (flex)
     headerContainer: {
         paddingVertical: 10,
         paddingHorizontal: 15,
-        zIndex: 10, // Para asegurar que esté por encima si hay sombras
-    // Si quieres que flote sobre el scroll pero con fondo, añade elevation/shadow
+        zIndex: 10, 
     },
     filterContainer: {
         flexDirection: 'row',

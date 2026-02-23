@@ -53,10 +53,8 @@ import CalculatorSheet from './Inputs/CalculatorSheet';
 import CategorySelectorPopover from './Inputs/CategorySelector';
 import InfoPopUp from '../messages/InfoPopUp';
 import { defaultCategories } from '../../constants/categories';
-import { CategoryLabel, CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/categories.interface';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/categories.interface';
 import useCategoriesStore from '../../stores/useCategoriesStore';
-import { de } from 'date-fns/locale';
 
 interface TransactionFormProps {
     isOpen: boolean;

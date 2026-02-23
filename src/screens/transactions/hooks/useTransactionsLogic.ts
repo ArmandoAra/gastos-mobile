@@ -9,8 +9,6 @@ import useDataStore from "../../../stores/useDataStore";
 import useDateStore from "../../../stores/useDateStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { Transaction, TransactionType } from "../../../interfaces/data.interface";
-import { darkTheme, lightTheme } from '../../../theme/colors';
-import { ThemeColors } from "../../../types/navigation";
 import { ViewPeriod } from "../../../interfaces/date.interface";
 
 type ViewMode = 'day' | 'month' | 'year';
@@ -20,20 +18,17 @@ export type ListItem =
     | { type: 'transaction'; data: Transaction };
 
 export const useTransactionsLogic = () => {
-    const { theme, language } = useSettingsStore();
-    const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
-    const { t } = useTranslation();
+    const language = useSettingsStore((state) => state.language);
+
     const { localSelectedDay } = useDateStore();
     const [selectedPeriod, setSelectedPeriod] = useState<ViewPeriod>('day');
+    const { t } = useTranslation();
 
-    // Estados Locales
     const [viewMode, setViewMode] = useState<ViewMode>('day');
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // --- NUEVO: Estado para filtro por cuenta ---
     const [accountSelected, setAccountSelected] = useState<string>('all');
-
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
@@ -219,7 +214,6 @@ export const useTransactionsLogic = () => {
         viewMode,
         filter,
         searchQuery,
-        colors,
         selectedPeriod,
         accountSelected,
         allAccounts,

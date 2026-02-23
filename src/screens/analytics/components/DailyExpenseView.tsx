@@ -90,9 +90,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
             <PeriodSelector
                 selectedPeriod={currentPeriod}
                 onPeriodChange={(period) => {
-                    // Este lo cambia
                     setCurrentPeriod(period);
-                    //Este envia el estado al padre
                     handlePeriodChange(period);
                 }}
                 colors={colors}

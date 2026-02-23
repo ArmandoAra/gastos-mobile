@@ -31,6 +31,8 @@ import { InputNameActive } from "../../../interfaces/settings.interface";
 import { formatCurrency } from "../../../utils/helpers";
 import CategorySelectorPopover from "../../../components/forms/Inputs/CategorySelector";
 import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
+import { LinearGradient } from 'expo-linear-gradient';
+import { globalStyles } from "../../../theme/global.styles";
 
 export const BudgetFormModal = ({
     visible,
@@ -45,6 +47,7 @@ export const BudgetFormModal = ({
     colors: ThemeColors;
 }) => {
     const insets = useSafeAreaInsets();
+    const theme = useSettingsStore((state) => state.theme);
     const { t } = useTranslation();
 
     const [menuVisible, setMenuVisible] = useState(false);
@@ -219,7 +222,18 @@ export const BudgetFormModal = ({
                 }}
             />}
 
-            <View style={[styles.container, { backgroundColor: colors.surfaceSecondary }]}>
+            {/* <View style={[styles.container, { backgroundColor: colors.surfaceSecondary }]}> */}
+            <LinearGradient
+                // 1. Colores del gradiente (de arriba hacia abajo usando tu tema)
+                colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accent,]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+
+                // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+                style={[
+                    globalStyles.screenContainer,
+                ]}
+            >
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={{ flex: 1 }}
@@ -373,7 +387,8 @@ export const BudgetFormModal = ({
 
                     </Animated.View>
                 </KeyboardAvoidingView>
-            </View>
+            </LinearGradient>
+            {/* </View> */}
         </Modal>
     );
 };

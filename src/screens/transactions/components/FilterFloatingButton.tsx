@@ -17,6 +17,7 @@ import { filterTransactionsTypes, filterViewModes } from '../constants/filters';
 import AccountSelector from '../../../components/forms/Inputs/AccoutSelector';
 import { Account } from '../../../interfaces/data.interface';
 import { useTransactionsLogic } from '../hooks/useTransactionsLogic';
+import { Button } from 'react-native-paper';
 
 interface FilterFloatingButtonProps {
     viewMode: ViewMode;
@@ -59,8 +60,7 @@ export default function FilterFloatingButton({
                 entering={FadeIn.delay(200)} 
                 style={styles.floatingContainer}
             >
-                <TouchableOpacity 
-                    activeOpacity={0.8}
+                <Button 
                     onPress={() => setIsOpen(true)}
                     style={[styles.fabButton, {
                         backgroundColor: isOpen ? colors.surface : colors.text,
@@ -69,7 +69,7 @@ export default function FilterFloatingButton({
                     }]}
                 >
                     <Ionicons name="filter" size={24} color={colors.accent} />
-                </TouchableOpacity>
+                </Button>
             </Animated.View>
 
             {/* --- MODAL DE FILTROS --- */}

@@ -12,6 +12,8 @@ export type themeOptions = 'light' | 'dark';
 export type iconsThemeOptions = 'material' | 'painted';
 
 export interface SettingsState {
+    darkColors: any;
+    lightColors: any;
     theme: themeOptions;
     iconsOptions: iconsThemeOptions;
     language: LanguageCode;

@@ -31,6 +31,7 @@ import LanguageSection from './components/LanguageSection';
 import SecuritySection from './components/SecuritySection';
 import InfoPopUp from '../../components/messages/InfoPopUp';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { globalStyles } from '../../theme/global.styles';
 
 export const SettingsScreen = () => {
     const { theme } = useSettingsStore();
@@ -38,10 +39,20 @@ export const SettingsScreen = () => {
 
 
     return (
-        <>
+        <LinearGradient
+            // 1. Colores del gradiente (de arriba hacia abajo usando tu tema)
+            colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+
+            // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+            style={[
+                globalStyles.screenContainer,
+            ]}
+        >
             <InfoPopUp />
         <ScrollView
-                style={[styles.container, { backgroundColor: theme === 'dark' ? colors.background : colors.background }]}
+                style={[styles.container, { backgroundColor: 'transparent' }]}
             showsVerticalScrollIndicator={false}
             >
                 <UserProfileSection colors={colors} />
@@ -59,6 +70,6 @@ export const SettingsScreen = () => {
                 <DangerZoneSection colors={colors} />
 
         </ScrollView>
-        </>
+        </LinearGradient>
     );
 };

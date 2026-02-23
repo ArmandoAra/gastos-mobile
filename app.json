@@ -46,12 +46,7 @@
         {
           "android": {
             "blockedPermissions": [
-              "android.permission.READ_EXTERNAL_STORAGE",
-              "android.permission.WRITE_EXTERNAL_STORAGE",
-              "android.permission.ACCESS_NETWORK_STATE",
-              "android.permission.WAKE_LOCK",
-              "android.permission.SYSTEM_ALERT_WINDOW",
-              "com.google.android.gms.permission.AD_ID"
+              "android.permission.ACCESS_NETWORK_STATE"
             ]
           }
         }

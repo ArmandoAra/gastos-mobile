@@ -37,6 +37,7 @@ export interface ThemeColors {
     border: string;
     error: string;
     accent: string;
+    accentSecondary: string;
     shadow: string;
     income: string;
     expense: string;
