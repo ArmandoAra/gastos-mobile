@@ -16,6 +16,7 @@ import './src/i18n';
 import { TransactionsScreen } from './src/screens/transactions/TransactionsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
 import { PinScreen } from './src/screens/auth/PinScreen';
+import CreditCircleScreen from './src/screens/cycle/CreditCircleScreen';
 import { SetupScreen } from './src/screens/auth/SetupScreen';
 
 import { useAuthStore } from './src/stores/authStore';
@@ -95,6 +96,14 @@ const MainTabs = () => {
         options={{
           title: t('navigation.budget'),
           headerTitle: t('navigation.budget')
+        }}
+      />
+      <Tab.Screen
+        name="CreditCircle"
+        component={CreditCircleScreen}
+        options={{
+          title: 'Mi Tarjeta (Ciclo)',
+          headerTitle: 'Mi Tarjeta (Ciclo)'
         }}
       />
       <Tab.Screen

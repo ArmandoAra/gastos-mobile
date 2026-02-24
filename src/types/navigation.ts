@@ -1,17 +1,17 @@
 // src/types/navigation.ts
 import { NavigatorScreenParams } from '@react-navigation/native';
+import CreditCycleScreen from '../screens/cycle/CreditCircleScreen';
 
 export type MainTabParamList = {
     Transactions: undefined;
     Analytics: undefined;
     Budget: undefined;
+    CreditCircle: undefined;
     Settings: undefined;
 };
 
 export type AppStackParamList = {
     MainTabs: NavigatorScreenParams<MainTabParamList>;
-    // Aquí irían modales globales, ej:
-    // AddTransactionModal: undefined;
 };
 
 export type AuthStackParamList = {
