@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -11,12 +11,9 @@ import {
   Platform,
 } from 'react-native';
 import { Text } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   FadeInDown,
-  FadeInUp,
-  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -28,8 +25,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { addDays, differenceInDays, format, subDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { addDays, differenceInDays, format, set, subDays } from 'date-fns';
+import { es, se } from 'date-fns/locale';
 import {
   useCycleStore,
   selectActiveCycle,
@@ -38,6 +35,7 @@ import {
   BucketType,
   Bucket,
 } from '../../stores/useCycleStore';
+import useDataStore from "../../stores/useDataStore"
 
 // ─── MOCK DATA ──────────────────────────────────────────────────────────────
 export const today = new Date();
@@ -126,14 +124,31 @@ import { useShallow } from 'zustand/react/shallow';
 import { HeroCard } from './components/HeroCard';
 import { LineChart } from 'react-native-gifted-charts';
 import { CategoryRow } from './components/CategoryRow';
-import { NudgeBanner } from './components/NudgetBanner';
 import { RolloverModal } from './components/RolloverModal';
 import { BucketCard } from './components/BucketCard';
 import { CycleHistoryRow } from './components/CircleHistory';
 import { AllocationModal } from './components/AllocationModal';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { t } from 'i18next';
+import { darkTheme, lightTheme } from "../../theme/colors";
+import { LinearGradient } from 'expo-linear-gradient';
+import { globalStyles } from '../../theme/global.styles';
+import { AccountModalSelector } from '../../components/forms/Inputs/AccountModalSelector';
 
 
 export default function CreditCycleScreen() {
+  const theme = useSettingsStore((s) => s.theme);
+  const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
+  const allAccounts = useDataStore((s) => s.allAccounts);
+  const selectedAccount = useDataStore((s) => s.selectedAccount);
+  const [isAccountSelectorOpen, setIsAccountSelectorOpen] = useState(false);  
+  const [accountSelected, setAccountSelected] = useState<string>(selectedAccount);
+
+  // Memoizar la cuenta seleccionada
+      const selectedAccountObj = useMemo(() => {
+          return allAccounts.find(acc => acc.id === accountSelected);
+      }, [accountSelected, allAccounts]);
+ 
     const [showRollover, setShowRollover] = useState(false);
   const scrollY = useSharedValue(0);
 
@@ -158,27 +173,52 @@ export default function CreditCycleScreen() {
 
   return (
     <View style={main.root}>
-      <LinearGradient colors={['#080812', '#0d0d1a']} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+                  colors={[colors.surfaceSecondary, theme === 'dark' ? colors.primary : colors.accent,]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+      
+                  // 2. Quitamos el backgroundColor sólido para que se vea el gradiente
+                  style={[
+                      globalStyles.screenContainer,
+                  ]}
+              >
+        <AccountModalSelector
+                isOpen={isAccountSelectorOpen} 
+                setIsOpen={setIsAccountSelectorOpen} 
+                accounts={allAccounts}
+                accountSelected={accountSelected}
+                setAccountSelected={setAccountSelected}
+                colors={colors}
+                label={t('navigation.accounts')}
+            />
 
-      <SafeAreaView style={{ flex: 1 }}>
            
-          <DemoSeedButton />
+      <SafeAreaView style={{ flex: 1 }}>
 
         {/* HEADER */}
          <Animated.View style={[screen.topBar, headerStyle]}>
-          <TouchableOpacity style={screen.iconBtn}>
-             <Ionicons name="menu" size={22} color="#fff" />
-           </TouchableOpacity>
-
            <View style={screen.titleBlock}>
-             <Text style={screen.topTitle}>Mi Tarjeta</Text>
-           <Text style={screen.topSub}>Ciclo activo · {daysElapsed} días</Text>
+             <Text style={[globalStyles.headerTitleBase, { color: colors.text }]}>{selectedAccountObj?.name}</Text>
+           <Text style={[
+            globalStyles.bodyTextBase,
+             { color: colors.textSecondary }
+             ]}>{t('cycle_screen.active_cycle')} {daysElapsed} {daysElapsed === 1 ? t('cycle_screen.days_singular') : t('cycle_screen.days')}
+             </Text>
            </View>
 
-           <TouchableOpacity style={screen.iconBtn}>
-            <Ionicons name="notifications-outline" size={22} color="#fff" />
-             <View style={screen.notifDot} />
+           <TouchableOpacity style={[
+            globalStyles.smallButton,
+             { 
+              backgroundColor: colors.text, 
+              position: 'absolute', right: 10,top: 10, 
+              }]} 
+              onPress={() => setIsAccountSelectorOpen((prev) => !prev)
+              }>
+             <Ionicons name="menu" size={24} color={colors.surface} />
            </TouchableOpacity>
+
+           
       </Animated.View>
 
       {/* CONTENT */}
@@ -188,9 +228,7 @@ export default function CreditCycleScreen() {
           contentContainerStyle={screen.scroll}
           showsVerticalScrollIndicator={false}
         >
-          {/* NUDGE */}
-          <NudgeBanner />
-
+          <DemoSeedButton />
           {/* HERO */}
           <Animated.View entering={FadeInDown.delay(150).springify()}>
             <HeroCard />
@@ -199,8 +237,8 @@ export default function CreditCycleScreen() {
           {/* CHART */}
           <Animated.View entering={FadeInDown.delay(250).springify()} style={screen.section}>
             <View style={screen.sectionHeader}>
-              <Text style={screen.sectionTitle}>Ritmo de gasto</Text>
-              <Text style={screen.sectionSub}>Real vs. Ideal</Text>
+              <Text style={screen.sectionTitle}>{t('cycle_screen.spending_rate')}</Text>
+              <Text style={screen.sectionSub}>{t('cycle_screen.real_vs_ideal')}</Text>
             </View>
 
             <View style={screen.chartWrap}>
@@ -356,7 +394,7 @@ export default function CreditCycleScreen() {
           <View style={{ height: 40 }} />
         </Animated.ScrollView>
         </SafeAreaView>
-      
+      </LinearGradient>
     </View>
   );
 }
@@ -372,12 +410,11 @@ const screen = StyleSheet.create({
     paddingBottom: 16,
     gap: 12,
   },
-  iconBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
   titleBlock: { flex: 1, alignItems: 'center' },
   topTitle: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: -0.3 },
   topSub: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 1 },
   notifDot: { position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: 99, backgroundColor: '#FC8181', borderWidth: 1.5, borderColor: '#0D0D1A' },
-  scroll: { paddingHorizontal: 16, gap: 16, paddingBottom: 40 },
+  scroll: {  gap: 16, paddingBottom: 40 },
   section: {
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 22,

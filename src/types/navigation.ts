@@ -1,6 +1,5 @@
 // src/types/navigation.ts
 import { NavigatorScreenParams } from '@react-navigation/native';
-import CreditCycleScreen from '../screens/cycle/CreditCircleScreen';
 
 export type MainTabParamList = {
     Transactions: undefined;

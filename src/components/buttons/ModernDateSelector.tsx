@@ -207,7 +207,6 @@ export default function ModernCalendarSelector({
                     key={day}
                     onPress={() => handleDaySelect(day)}
                     style={styles.dayCell}
-                    // Accesibilidad Clave
                     accessibilityRole="button"
                     accessibilityLabel={`${day}, ${months[language][viewDate.getMonth()]} ${viewDate.getFullYear()}`}
                     accessibilityState={{ selected: selected }}
@@ -215,13 +214,13 @@ export default function ModernCalendarSelector({
                   >
                                     <View style={[
                       styles.dayContent,
-                      selected && { backgroundColor: colors.text },
+                      selected && { backgroundColor: colors.accentSecondary },
                       today && !selected && { borderWidth: 2, borderColor: colors.accent }
                                     ]}>
                       <Text
                         style={[
                           styles.dayText,
-                          { color: selected ? colors.surface : colors.text },
+                          { color: selected ? colors.text : colors.textSecondary },
                           today && !selected && { color: colors.accent }
                         ]}
                         // CLAVE: Evita que el número se salga del círculo si el texto es gigante

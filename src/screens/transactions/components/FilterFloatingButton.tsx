@@ -16,8 +16,9 @@ import { ViewMode } from '../../../interfaces/date.interface';
 import { filterTransactionsTypes, filterViewModes } from '../constants/filters';
 import AccountSelector from '../../../components/forms/Inputs/AccoutSelector';
 import { Account } from '../../../interfaces/data.interface';
-import { useTransactionsLogic } from '../hooks/useTransactionsLogic';
 import { Button } from 'react-native-paper';
+import { CloseButton } from '../../../components/buttons/closeButton';
+import { fontSizes, globalStyles } from '../../../theme/global.styles';
 
 interface FilterFloatingButtonProps {
     viewMode: ViewMode;
@@ -55,11 +56,11 @@ export default function FilterFloatingButton({
 
     return (
         <>
-            {/* --- BOTÓN FLOTANTE (Abajo Izquierda) --- */}
             <Animated.View 
                 entering={FadeIn.delay(200)} 
                 style={styles.floatingContainer}
             >
+                {/* Boton de filtro */}
                 <Button 
                     onPress={() => setIsOpen(true)}
                     style={[styles.fabButton, {
@@ -100,13 +101,11 @@ export default function FilterFloatingButton({
                         style={[styles.modalContent, { borderColor: colors.border, backgroundColor: colors.surface }]}
                     >
                         <View style={styles.header}>
-                            <Text style={[styles.headerTitle, { color: colors.text }]}>{t('transactions.filtersAndView')}</Text>
-                            <TouchableOpacity onPress={() => setIsOpen(false)}>
-                                <Ionicons name="close-circle" size={32} color={colors.error} />
-                            </TouchableOpacity>
+                            <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>{t('transactions.filtersAndView')}</Text>
+                            {/* <CloseButton onPress={() => setIsOpen(false)} color={colors.error} /> */}
                         </View>
 
-                        {/* SECCIÓN 1: VIEW MODE */}
+                        {/* SECCIÓN 1: VIEW MODE PERIOD */}
                         <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('transactions.period')}</Text>
                         <View style={styles.selectorContainer}>
                             {filterViewModes.map((mode) => {
@@ -114,17 +113,20 @@ export default function FilterFloatingButton({
                                 return (
                                     <TouchableOpacity
                                         key={mode}
-                                        onPress={() => {setViewMode(mode); setIsOpen(false);}}
-                                        style={styles.optionWrapper}
+                                        onPress={() => {
+                                            setViewMode(mode);
+                                            setIsOpen(false);
+                                        }}
+                                        style={globalStyles.mediumButton}
                                     >
                                         {isActive ? (
                                             <View
-                                                style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.text }]}
+                                                style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.accentSecondary }]}
                                             >
-                                                <Text style={[styles.textActive, { color: colors.surface, fontSize: 8, position: 'relative', bottom: 3 }]}>
+                                                <Text style={[styles.textActive, { color: colors.textSecondary, fontSize: 8, position: 'relative', bottom: 3 }]}>
                                                     {t('transactions.by')}&nbsp;
                                                 </Text>
-                                                <Text style={[styles.textActive, { color: colors.surface }]}>
+                                                <Text style={[styles.textActive, { color: colors.text }]}>
                                                     {t(`transactions.${mode}`)}
                                                 </Text>
                                             </View>
@@ -155,13 +157,13 @@ export default function FilterFloatingButton({
                                             setFilter(f);
                                             setIsOpen(false);
                                         }}
-                                        style={styles.optionWrapper}
+                                        style={globalStyles.mediumButton}
                                     >
                                         {isActive ? (
                                             <View
-                                                style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.text }]}
+                                                style={[styles.optionActive, { borderColor: colors.border, backgroundColor: colors.accentSecondary }]}
                                             >
-                                                <Text style={[styles.textActive, { color: colors.surface }]}>
+                                                <Text style={[styles.textActive, { color: colors.text }]}>
                                                     {f === 'all' ? t('transactions.all') : t(`transactions.${f}Plural`)}
                                                 </Text>
                                             </View>
@@ -228,7 +230,7 @@ const styles = StyleSheet.create({
         width: '100%',
         maxWidth: 360,
         borderRadius: 24,
-        padding: 24,
+        paddingHorizontal: 20,
         borderWidth: 0.4,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 10 },
@@ -238,17 +240,12 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontFamily: 'Tinos-Bold',
-        color: 'white',
+        marginVertical: 16,
     },
     sectionLabel: {
-        fontSize: 12,
+        fontSize: fontSizes.sm,
         fontFamily: 'FiraSans-Bold',
         color: '#94a3b8',
         textTransform: 'uppercase',
@@ -258,11 +255,6 @@ const styles = StyleSheet.create({
     selectorContainer: {
         flexDirection: 'row',
         gap: 8,
-    },
-    optionWrapper: {
-        flex: 1,
-        height: 40,
-        borderRadius: 12,
     },
     optionActive: {
         flexDirection: 'row',

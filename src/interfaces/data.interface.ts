@@ -6,32 +6,18 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    createdAt: Date; // Timestamp de creación
-    updatedAt: Date; // Timestamp de última actualización
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Account {
     id: string;
     name: string;
-    type: string; // Ej: "savings", "checking"
+    type: string; 
     balance: number;
-    createdAt: Date; // Timestamp de creación
-    updatedAt: Date; // Timestamp de última actualización
-    userId: string; // Foreign key
-}
-
-export interface MonthFinance {
-    id: string; // Cambiado a string para usar UUIDs
-    year: number; // Año del mes financiero
-    month: number; // Mes (1-12)
-    date: Date; // ISO string del primer día del mes (ej: "2024-01-01")
-    createdAt: Date; // Timestamp de creación
-    updatedAt: Date; // Timestamp de última actualización
-}
-
-export interface YearResume extends MonthFinance {
-    totalExpenses: number;
-    totalIncomes: number;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
 }
 
 export enum TransactionType {
@@ -71,12 +57,10 @@ export interface Item {
     name: string;
     price: number;
     quantity: number;
-    done: boolean; // Nuevo campo para marcar si el item ya fue comprado
-    expenseBudgetId: string; // Foreign key
+    done: boolean;
+    expenseBudgetId: string;
 }
 
-// Pagina de presupuesto de gastos, cada presupuesto tiene varios items, y se le puede asignar una categoria
-// Debe poder convertirse en Transaction solo si el usuario lo desea
 export interface ExpenseBudget {
     id: string;
     account_id: string;
@@ -89,12 +73,9 @@ export interface ExpenseBudget {
     spentAmount: number; //Es la suma de los items
     budgetedAmount: number; //Es el monto total del presupuesto
     favorite: boolean;
-    period?: 'weekly' | 'monthly' | 'yearly' | 'one-time'; // La fecha  endDate debe ser obligatoriamente para periodos recurrentes
+    period?: 'weekly' | 'monthly' | 'yearly' | 'one-time'; 
     date: string;
     endDate?: string;
     created_at: string;
     updated_at: string;
 }
-
-// Requiere en los inputs de:
-// nombre, categoria, budgetedAmount, period (opcional), endDate (opcional), items (opcional)

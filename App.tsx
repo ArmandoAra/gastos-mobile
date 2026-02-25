@@ -16,7 +16,7 @@ import './src/i18n';
 import { TransactionsScreen } from './src/screens/transactions/TransactionsListScreen';
 import { SettingsScreen } from './src/screens/settings/SettingsScreen';
 import { PinScreen } from './src/screens/auth/PinScreen';
-import CreditCircleScreen from './src/screens/cycle/CreditCircleScreen';
+import CreditCircleScreen from './src/screens/cycle/CreditCycleScreen';
 import { SetupScreen } from './src/screens/auth/SetupScreen';
 
 import { useAuthStore } from './src/stores/authStore';
@@ -66,7 +66,7 @@ const MainTabs = () => {
                 title={options.title}
               showAvatar={isHome}
               showNotification={isHome}
-              showBack={false} // En tabs no suele haber back
+                showBack={false}
               colors={currentColors}
             />
           );
@@ -182,7 +182,6 @@ const App = () => {
     async function loadFonts() {
       try {
         await Font.loadAsync({
-          // El nombre de la izquierda es como la llamarás en tu CSS
           'Tinos-Bold': require('./src/theme/fonts/Tinos-Bold.ttf'),
           'Tinos-Regular': require('./src/theme/fonts/Tinos-Regular.ttf'),
           'Tinos-Italic': require('./src/theme/fonts/Tinos-Italic.ttf'),
@@ -194,7 +193,7 @@ const App = () => {
         console.warn(e);
       } finally {
         setFontsLoaded(true);
-        await SplashScreen.hideAsync(); // Oculta la pantalla de carga
+        await SplashScreen.hideAsync();
       }
     }
 
@@ -219,7 +218,7 @@ const App = () => {
     };
   }, [themeMode]);
 
-  if (!fontsLoaded) return null; // O un componente de carga
+  if (!fontsLoaded) return null;
 
   return (
     <SafeAreaProvider>

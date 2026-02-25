@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   ScrollView,
@@ -27,7 +27,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
-import { spendProgress, timeProgress } from '../CreditCircleScreen';
+import { spendProgress, timeProgress } from '../CreditCycleScreen';
+import { globalStyles } from '../../../theme/global.styles';
+import { t } from 'i18next';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { darkTheme, lightTheme } from '../../../theme/colors';
 
 
 
@@ -36,49 +40,50 @@ import { spendProgress, timeProgress } from '../CreditCircleScreen';
 
 /** Dual progress bar: tiempo vs gasto */
 export function PacingBar() {
-  const theme = useTheme();
+  const theme = useSettingsStore((s) => s.theme);
+  const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const overSpend = spendProgress > timeProgress;
 
   return (
     <View style={pacing.wrapper}>
       {/* Tiempo transcurrido */}
       <View style={pacing.row}>
-        <Text style={pacing.label}>Tiempo</Text>
-        <View style={pacing.track}>
+        <Text style={[globalStyles.bodyTextSm, { color: colors.text, width: 52 }]}>{t('cycle_screen.time')}</Text>
+        <View style={[pacing.track, { backgroundColor: colors.surfaceSecondary }]}>
           <Animated.View
             entering={FadeInDown.delay(200)}
-            style={[pacing.fill, { width: `${timeProgress * 100}%`, backgroundColor: '#A0AEC0' }]}
+            style={[pacing.fill, { width: `${timeProgress * 100}%`, backgroundColor: colors.text }]}
           />
           <View style={[pacing.marker, { left: `${timeProgress * 100}%` }]}>
-            <Text style={pacing.markerText}>{Math.round(timeProgress * 100)}%</Text>
+            <Text style={globalStyles.bodyTextSm}>{Math.round(timeProgress * 100)}%</Text>
           </View>
         </View>
       </View>
 
       {/* Gasto */}
       <View style={pacing.row}>
-        <Text style={pacing.label}>Gasto</Text>
-        <View style={pacing.track}>
+        <Text style={[globalStyles.bodyTextSm, { color: colors.text, width: 52 }]}>{t('cycle_screen.spend')}</Text>
+        <View style={[pacing.track, { backgroundColor: colors.surfaceSecondary }]}>
           <Animated.View
             entering={FadeInDown.delay(350)}
             style={[
               pacing.fill,
               {
                 width: `${spendProgress * 100}%`,
-                backgroundColor: overSpend ? '#FC8181' : '#68D391',
+                backgroundColor: overSpend ? colors.error : colors.success,
               },
             ]}
           />
           <View style={[pacing.marker, { left: `${spendProgress * 100}%` }]}>
-            <Text style={pacing.markerText}>{Math.round(spendProgress * 100)}%</Text>
+            <Text style={globalStyles.bodyTextSm}>{Math.round(spendProgress * 100)}%</Text>
           </View>
         </View>
       </View>
 
-      <Text style={[pacing.hint, { color: overSpend ? '#FC8181' : '#68D391' }]}>
+      <Text style={[pacing.hint, { color: overSpend ? colors.error : colors.success }]}>
         {overSpend
-          ? '⚠️ Tu gasto supera el tiempo transcurrido'
-          : '✅ Vas a buen ritmo este ciclo'}
+          ? t('cycle_screen.overpacing')
+          : t('cycle_screen.onTrack')}
       </Text>
     </View>
   );
@@ -86,8 +91,7 @@ export function PacingBar() {
 
 const pacing = StyleSheet.create({
   wrapper: { gap: 10, paddingVertical: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  label: { color: 'rgba(255,255,255,0.6)', fontSize: 11, width: 46, letterSpacing: 0.5 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   track: {
     flex: 1,
     height: 10,

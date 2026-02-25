@@ -4,7 +4,6 @@ import { createMMKV } from 'react-native-mmkv' // 1. Importar MMKV
 import { Account, Category, Transaction, TransactionType } from '../interfaces/data.interface'
 import * as uuid from 'uuid';
 import { useAuthStore } from './authStore';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { migrateTransactions } from '../migrations/migrateTransactions';
 
 // ============================================
@@ -30,10 +29,6 @@ const zustandStorage: StateStorage = {
         return storage.remove(name)
     },
 }
-
-// ============================================
-// TIPOS (Sin cambios)
-// ============================================
 
 export type PersistedState = {
     balance: number | undefined

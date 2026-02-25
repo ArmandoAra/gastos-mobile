@@ -1,37 +1,18 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
-  Platform,
 } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
-import { format, addDays, subDays, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { Text } from 'react-native-paper';
+
 import Animated, {
   FadeInDown,
-  FadeInUp,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  interpolate,
-  Extrapolation,
-  useAnimatedScrollHandler,
 } from 'react-native-reanimated';
-import { LineChart } from 'react-native-gifted-charts';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
-
-
-
+import { Ionicons } from '@expo/vector-icons';
 
 /** Nudge inteligente */
+// Aun no utilizado, pero la idea es mostrar un banner de advertencia cuando el usuario se acerca a su límite semanal en una categoría. El banner se puede descartar y no volverá a aparecer durante ese ciclo.
 export function NudgeBanner() {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;

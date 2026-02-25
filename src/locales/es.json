@@ -474,5 +474,31 @@
         "warnings": {
             "delete_confirmation": "¿Estás seguro de que deseas eliminar este presupuesto? Esta acción no se puede deshacer."
         }
-}
+},
+"cycle_screen": {
+    "active_cycle": "Ciclo activo",
+    "select_account": "Seleccionar cuenta",
+    "days": "días",
+    "days_singular": "día",
+    "no_selected_account": "Ninguna cuenta seleccionada",
+    "today_available": "Disponible para gastar hoy",
+    "time": "Tiempo",
+    "spend": "Gasto",
+    "accelerated": "Acelerado",
+    "optimum": "Óptimo",
+    "overpacing": "Sobrepasando el ritmo",
+    "onTrack": "En ritmo",
+    "spent": "Gastado",
+    "fixed_upcoming": "Fijos futuros",
+    "budget": "Presupuesto",
+    "spending_rate": "Ritmo de gasto",
+    "real_vs_ideal": "Real vs. Ideal",
+    "total_saved": "TOTAL GUARDADO",
+    "rollover": "Rollover",
+    "rollover_sub": "El dinero que no gastes hoy se sumará a tu presupuesto de mañana.",
+    "buffer": "Buffer",
+    "buffer_sub": "Un pequeño colchón para días con gastos inesperados.",
+    "avg_per_cycle": "Prom./ciclo",
+    "avg_per_day_sub": "Gasto promedio por día basado en tu ciclo actual."
+    }
 }

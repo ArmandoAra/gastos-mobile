@@ -17,13 +17,14 @@ import {
   SettingsIconPainted,
   AnalyticsIconPainted,
   SummarizeIconPainted,
-  BudgetIconPainted
+  BudgetIconPainted,
+  CreditCircleIconPainted,
+  CreditCircleIcon
 } from '../../constants/icons';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useTabBarVisibility } from '../../context/TabBarVisibilityContext';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { globalStyles } from '../../theme/global.styles';
 
 
 interface CustomTabBarProps extends BottomTabBarProps {
@@ -40,6 +41,8 @@ const getIconComponent = (routeName: string, iconsOptions: string) => {
         return AnalyticsIconPainted;
       case 'Budget':
         return BudgetIconPainted;
+      case 'CreditCircle':
+        return CreditCircleIconPainted; 
       case 'Settings':
         return SettingsIconPainted;
       default:
@@ -53,6 +56,8 @@ const getIconComponent = (routeName: string, iconsOptions: string) => {
       return AnalyticsIcon;
     case 'Budget':
       return BudgetIcon;
+      case 'CreditCircle':
+        return CreditCircleIcon;
     case 'Settings':
       return SettingsIcon;
     default:
@@ -116,14 +121,6 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
             }
           };
 
-          const onLongPress = () => {
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
-          };
-
-          // 6. Usamos RNAnimated (la nativa renombrada) para la lógica interna de los iconos
           const scaleValue = useRef(new RNAnimated.Value(1)).current;
           
           useEffect(() => {
@@ -141,7 +138,6 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, 
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
               onPress={onPress}
-              onLongPress={onLongPress}
               style={styles.tabItem}
               activeOpacity={0.7}
             >

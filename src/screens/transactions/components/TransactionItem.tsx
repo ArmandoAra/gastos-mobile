@@ -14,6 +14,7 @@ import { ThemeColors } from '../../../types/navigation';
 import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { defaultCategoryNames } from '../../../constants/categories';
+import { globalStyles } from '../../../theme/global.styles';
 // IMPORT ELIMINADO: TransactionForm ya no se usa aquí
 
 interface TransactionItemProps {
@@ -154,7 +155,7 @@ export const TransactionItemMobile = React.memo(({
                             </View>
                             <Text
                                 style={[
-                                    styles.amountText,
+                                    globalStyles.amountSm,
                                     { color: isExpense ? colors.expense : colors.income }
                                 ]}
                                 numberOfLines={2}
@@ -276,10 +277,5 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontFamily: 'FiraSans-Regular',
         lineHeight: 14,
-    },
-    amountText: {
-        fontSize: 16,
-        fontFamily: 'FiraSans-Bold',
-        lineHeight: 20,
     },
 });

@@ -2,9 +2,9 @@ import React from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLOR_PICKER_PALETTE } from './categories';
 import { Image } from 'expo-image';
-import { List } from 'react-native-paper';
-import { useSettingsStore } from '../stores/settingsStore';
 import { CategoryLabel } from '../interfaces/categories.interface';
+import { Star } from 'lucide-react';
+import { create } from 'zustand';
 
 
 // =====================================================================
@@ -21,8 +21,15 @@ type IconProps = {
 const createIcon = (name: keyof typeof MaterialIcons.glyphMap) => (props: IconProps) => (
     <MaterialIcons name={name} size={props.size || 24} color={props.color || '#FFF'} style={props.style} />
 );
+
 const createIconPainted = (source: string) => (props: IconProps) => (
-    <Image source={source} style={[{ width: props.size || 44, height: props.size || 44 }, props.style]} />
+    <Image
+        source={source}
+        style={[{ width: props.size || 44, height: props.size || 44 }, props.style]}
+        contentFit="contain"
+        cachePolicy="memory-disk"
+        transition={200}
+    />
 );
 
 // Iconos para la barra inferior (usando emojis en App.tsx)
@@ -35,6 +42,10 @@ export const AnalyticsIconPainted = createIconPainted(require('../../assets/icon
 export const SettingsIcon = createIcon('settings');
 export const SettingsIconPainted = createIconPainted(require('../../assets/icons/custom/configuracion.webp'));
 
+// Icons de ciclo de crédito (usados en CreditCycleScreen)
+export const CreditCircleIcon = createIcon('credit-score');
+export const CreditCircleIconPainted = createIconPainted(require('../../assets/icons/cycle/cycle.webp'));
+
 export const BudgetIcon = createIcon('account-balance-wallet');
 export const BudgetIconPainted = createIconPainted(require('../../assets/icons/custom/cartera.webp'));
 
@@ -42,8 +53,8 @@ export const BudgetIconPainted = createIconPainted(require('../../assets/icons/c
 // 2. DEFINICIÓN DE TODOS LOS COMPONENTES DE ICONOS
 // =====================================================================
 // --- Income ---
-const WorkIcon = createIcon('work');
-const WorkIconPainted = createIconPainted(require('../../assets/icons/custom/salario.webp'));
+export const WorkIcon = createIcon('work');
+export const WorkIconPainted = createIconPainted(require('../../assets/icons/custom/salario.webp'));
 
 const AttachMoneyIcon = createIcon('attach-money');
 const AttachMoneyIconPainted = createIconPainted(require('../../assets/icons/custom/moneda.webp'));
@@ -75,8 +86,8 @@ const SchoolIconPainted = createIconPainted(require('../../assets/icons/custom/e
 const ScholarshipIcon = createIcon('school');
 const ScholarshipIconPainted = createIconPainted(require('../../assets/icons/custom/becas.webp'));
 
-const SavingsIcon = createIcon('savings');
-const SavingsIconPainted = createIconPainted(require('../../assets/icons/custom/metas.webp'));
+export const SavingsIcon = createIcon('savings');
+export const SavingsIconPainted = createIconPainted(require('../../assets/icons/custom/metas.webp'));
 
 // const AddCircleIcon = createIcon('add-circle');
 
@@ -236,6 +247,13 @@ const LostIconPainted = createIconPainted(require('../../assets/icons/custom/per
 const OtherIncomesIcon = createIcon('more-horiz');
 const OtherIncomesIconPainted = createIconPainted(require('../../assets/icons/custom/OtherIncomes.webp'));
 
+// Others
+export const TriStarsIcon = createIconPainted(require('../../assets/icons/cycle/1.webp'));
+export const RedStar = createIconPainted(require('../../assets/icons/cycle/red_star.webp'));
+export const BlueStar = createIconPainted(require('../../assets/icons/cycle/blue_star.webp'));
+export const YellowStar = createIconPainted(require('../../assets/icons/cycle/yellow_star.webp'));
+
+export const StarIcon = createIcon('star');
 
 
 // =====================================================================
