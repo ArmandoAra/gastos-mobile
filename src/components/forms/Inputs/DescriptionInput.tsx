@@ -4,12 +4,11 @@ import {
     Text, 
     TextInput, 
     StyleSheet,
-    Platform
 } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
-import { is } from 'date-fns/locale';
+import { globalStyles } from '../../../theme/global.styles';
 
 interface DescriptionInputProps {
     isReady?: boolean;
@@ -34,7 +33,7 @@ export default function DescriptionInput({
         >
             {/* Label Superior */}
             <Text
-                style={[styles.label, { color: colors.textSecondary }]}
+                style={[globalStyles.bodyTextSm, { color: colors.textSecondary, fontWeight: 'bold', marginBottom: 8, marginLeft: 4 }]}
                 maxFontSizeMultiplier={1.5} // Evita que la etiqueta se vuelva gigante y rompa el ritmo
                 numberOfLines={1}
             >
@@ -54,7 +53,7 @@ export default function DescriptionInput({
                     multiline={true}
                     numberOfLines={3}
                     maxLength={MAX_LENGTH}
-                    style={[styles.input, { color: colors.text }]}
+                            style={[globalStyles.inputLg, { color: colors.text }]}
                     textAlignVertical="top"
                     // Permitir scroll si el texto es muy grande para la caja
                     scrollEnabled={true}
@@ -63,8 +62,7 @@ export default function DescriptionInput({
                     accessibilityLabel={t('transactions.description', 'Description')}
                     accessibilityHint={t('accessibility.description_hint', `Max ${MAX_LENGTH} characters`)}
                     // Importante para formularios en iOS
-                    returnKeyType="default"
-                    blurOnSubmit={true} 
+                            returnKeyType="default"
                 />
                 
                 {/* Contador de caracteres */}
@@ -74,8 +72,8 @@ export default function DescriptionInput({
                     importantForAccessibility="no-hide-descendants"
                 >
                     <Text
-                        style={[styles.counter, { color: colors.textSecondary }]}
-                        maxFontSizeMultiplier={1.2}
+                                style={[globalStyles.amountXs, { color: colors.textSecondary }]}
+                                maxFontSizeMultiplier={1.2}
                     >
                         {description.length}/{MAX_LENGTH}
                             </Text>
@@ -95,30 +93,13 @@ const styles = StyleSheet.create({
         width: '100%',
         marginTop: 0, // Separación del input anterior
     },
-    label: {
-        fontSize: 11, // Aumentado de 8px a 11px para legibilidad mínima
-        fontFamily: 'FiraSans-Bold',
-        marginBottom: 6,
-        marginLeft: 4,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
     inputWrapper: {
         minHeight: 120,
         width: '100%',
         borderRadius: 18,
         padding: 16,
-        borderWidth: 1.5,
-        // Eliminamos shadow para consistencia con el diseño plano
+        borderWidth: 0.5,
         position: 'relative',
-    },
-    input: {
-        fontSize: 16,
-        fontFamily: 'FiraSans-Regular',
-        minHeight: 80, // Altura base
-        // CLAVE: Padding bottom extra para que el texto nunca escriba ENCIMA del contador
-        paddingBottom: 20,
-        paddingTop: 0,
     },
     counterContainer: {
         position: 'absolute',

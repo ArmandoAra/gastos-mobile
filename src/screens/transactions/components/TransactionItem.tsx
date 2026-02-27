@@ -5,7 +5,7 @@ import {
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
-import Animated, { withDecay } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import WarningMessage from './WarningMessage';
@@ -15,7 +15,6 @@ import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { defaultCategoryNames } from '../../../constants/categories';
 import { globalStyles } from '../../../theme/global.styles';
-// IMPORT ELIMINADO: TransactionForm ya no se usa aquí
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -27,7 +26,7 @@ interface TransactionItemProps {
 export const TransactionItemMobile = React.memo(({
     transaction,
     onDelete,
-    onEditPress, // Recibimos la función del padre
+    onEditPress,
     colors,
 }: TransactionItemProps) => {
 
@@ -42,7 +41,7 @@ export const TransactionItemMobile = React.memo(({
         t,
         isWarningOpen,
         handleLayout,
-        prepareForEdit, 
+        prepareForEdit,
         performDelete,
         handleCancelDelete,
         handleAccessibilityAction,
@@ -55,10 +54,9 @@ export const TransactionItemMobile = React.memo(({
 
     const { IconComponent, color, displayName } = categoryIconData;
 
-    // Handler intermedio para coordinar la lógica
     const handlePress = () => {
-        prepareForEdit(); // 1. Hook: Configura store global (InputNameActive)
-        onEditPress(transaction); // 2. Prop: Avisa al padre para abrir el modal
+        prepareForEdit();
+        onEditPress(transaction);
     };
 
     return (
@@ -72,10 +70,14 @@ export const TransactionItemMobile = React.memo(({
                 importantForAccessibility="no"
             >
                 <View style={[styles.deleteIconContainer, { left: 20 }]}>
-                    <MaterialIcons name="delete" size={24} color={colors.text} />
+                    <View style={styles.deleteIconCircle}>
+                        <MaterialIcons name="delete" size={20} color="#fff" />
+                    </View>
                 </View>
                 <View style={[styles.deleteIconContainer, { right: 20 }]}>
-                    <MaterialIcons name="delete" size={24} color={colors.text} />
+                    <View style={styles.deleteIconCircle}>
+                        <MaterialIcons name="delete" size={20} color="#fff" />
+                    </View>
                 </View>
             </Animated.View>
 
@@ -85,91 +87,91 @@ export const TransactionItemMobile = React.memo(({
                     style={[
                         styles.itemContainer,
                         rStyle,
-                        { borderColor: colors.border, backgroundColor: colors.surface }
+                        { backgroundColor: colors.surface }
                     ]}
                 >
                     <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={handlePress} // Usamos nuestro handler intermedio
-                        style={[styles.touchableContent, { backgroundColor: color + '10' }]}
+                        activeOpacity={0.88}
+                        onPress={handlePress}
+                        style={styles.touchableContent}
                         accessibilityRole="button"
                         accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
                         accessibilityHint={t('accessibility.swipe_hint', 'Tap to edit, use actions to delete')}
                         accessibilityActions={accessibilityActions}
                         onAccessibilityAction={handleAccessibilityAction}
                     >
-                        {/* 1. Avatar */}
-                        <View style={[styles.avatar, { backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface }]}>
+                        {/* 1. Avatar — mismo estilo que iconBox de CategoryRow */}
+                        <View style={[styles.avatar, { backgroundColor: color + '22' }]}>
                             {IconComponent ? (
                                 <IconComponent
-                                    color={colors.text}
+                                    color={color}
                                     style={{
-                                    width: iconsOptions === 'painted' ? 60 : 32,
-                                    height: iconsOptions === 'painted' ? 60 : 32,
-                                    backgroundColor: iconsOptions === 'painted' ? 'transparent' : colors.surface,
-                                    borderRadius: 50,
-                                    padding: 4,
-                                }} />
+                                        width: iconsOptions === 'painted' ? 52 : 26,
+                                        height: iconsOptions === 'painted' ? 52 : 26,
+                                        backgroundColor: 'transparent',
+                                        borderRadius: 50,
+                                    }}
+                                />
                             ) : (
-                                    <MaterialIcons name="shopping-bag" size={22} color={colors.text} />
+                                    <MaterialIcons name="shopping-bag" size={20} color={color} />
                             )}
                         </View>
 
-                        {/* 2. Textos */}
+                        {/* 2. Textos — columna central */}
                         <View style={styles.textContainer}>
-                            <View style={styles.titleRow}>
-                                <Text
-                                    style={[styles.description, { color: colors.text }]}
-                                    numberOfLines={2}
-                                    ellipsizeMode="tail"
-                                >
-                                    {transaction.description || t('common.noDescription')}
+                            <Text
+                                style={[styles.description, { color: colors.text }]}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                            >
+                                {transaction.description || t('common.noDescription')}
+                            </Text>
+
+                            {/* Fila inferior: fecha + chip de categoría */}
+                            <View style={styles.metaRow}>
+                                <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+                                    {formattedDate}
                                 </Text>
-                                <View style={[styles.chip, { backgroundColor: color + '33' }]}>
+                                <View style={[styles.chip, { backgroundColor: color + '22' }]}>
                                     <Text
-                                        style={[styles.chipText, { color: colors.textSecondary }]}
+                                        style={[styles.chipText, { color: color }]}
                                         numberOfLines={1}
                                     >
-                                        {defaultCategoryNames.some(name => name === displayName) ? t(`icons.${displayName}`) : displayName}
+                                        {defaultCategoryNames.some(n => n === displayName)
+                                            ? t(`icons.${displayName}`)
+                                            : displayName}
                                     </Text>
                                 </View>
                             </View>
-                            <Text
-                                style={[styles.dateText, { color: colors.text }]}
-                                numberOfLines={2}
-                            >
-                                {formattedDate}
-                            </Text>
                         </View>
 
-                        {/* 3. Monto y Cuenta */}
+                        {/* 3. Monto + cuenta — columna derecha */}
                         <View style={styles.amountContainer}>
-                            <View style={[styles.accountBadgeContainer, { backgroundColor: colors.primary + '22' }]}>
-                                <Text
-                                    numberOfLines={2}
-                                    ellipsizeMode="tail"
-                                    style={[styles.accountBadgeText, { color: colors.text }]}
-                                >
-                                    {accountName}
-                                </Text>
-                            </View>
                             <Text
                                 style={[
                                     globalStyles.amountSm,
                                     { color: isExpense ? colors.expense : colors.income }
                                 ]}
-                                numberOfLines={2}
+                                numberOfLines={1}
                                 adjustsFontSizeToFit
                                 minimumFontScale={0.8}
                             >
                                 {formattedAmount}
                             </Text>
+                            <View style={[styles.accountBadge, { backgroundColor: colors.primary + '18' }]}>
+                                <Text
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                    style={[styles.accountText, { color: colors.textSecondary }]}
+                                >
+                                    {accountName}
+                                </Text>
+                            </View>
                         </View>
                     </TouchableOpacity>
                 </Animated.View>
             </GestureDetector>
 
-            {/* MODALES */}
             {isWarningOpen && (
                 <WarningMessage
                     message={t('transactions.deleteConfirm')}
@@ -177,21 +179,21 @@ export const TransactionItemMobile = React.memo(({
                     onSubmit={performDelete}
                 />
             )}
-
         </Animated.View>
     );
 });
 
 const styles = StyleSheet.create({
     containerWrapper: {
-        borderRadius: 12,
-        minHeight: 80,
+        borderRadius: 14,
+        minHeight: 72,
     },
     backgroundContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 12,
-        paddingHorizontal: 10,
+        borderRadius: 14,
+        paddingHorizontal: 16,
+        backgroundColor: '#FC8181',
     },
     deleteIconContainer: {
         position: 'absolute',
@@ -199,82 +201,89 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: 'center',
     },
+    deleteIconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     itemContainer: {
-        borderRadius: 12,
-        borderWidth: 0.5,
+        borderRadius: 14,
         height: '100%',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+        // Sin border — el color de fondo ya delimita la tarjeta
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+        elevation: 2,
     },
     touchableContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
         gap: 12,
         flex: 1,
-        minHeight: 80,
+        minHeight: 72,
     },
+    // Avatar — alineado con iconBox de CategoryRow
     avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 50,
+        width: 44,
+        height: 44,
+        borderRadius: 50,           // mismo borderRadius que iconBox (10-12)
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        elevation: 5,
     },
+    // Textos
     textContainer: {
         flex: 1,
-        gap: 6,
+        gap: 5,
         justifyContent: 'center',
     },
-    titleRow: {
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: 4,
-        flexWrap: 'wrap', 
-    },
     description: {
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'FiraSans-Regular',
-        flexShrink: 1,
-        lineHeight: 22,
+        lineHeight: 20,
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    dateText: {
+        fontSize: 11,
+        fontFamily: 'FiraSans-Regular',
+        lineHeight: 14,
     },
     chip: {
-        paddingHorizontal: 10,
-        paddingVertical: 1,
-        borderRadius: 12,
-        maxWidth: 120,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 99, 
     },
     chipText: {
-        fontSize: 11,
+        fontSize: 10,
         fontFamily: 'FiraSans-Bold',
         lineHeight: 14,
     },
-    dateText: {
-        fontSize: 12,
-        lineHeight: 16,
-        fontFamily: 'FiraSans-Regular',
-    },
+    // Columna derecha
     amountContainer: {
         alignItems: 'flex-end',
         justifyContent: 'center',
+        gap: 5,
         flexShrink: 0,
-        gap: 6,
-        minWidth: 90,
+        minWidth: 80,
     },
-    accountBadgeContainer: {
-        paddingHorizontal: 10,
-        paddingVertical: 1,
+    accountBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
         borderRadius: 6,
-        maxWidth: 100,
-        minHeight: 22,
+        maxWidth: 96,
     },
-    accountBadgeText: {
-        fontSize: 11,
+    accountText: {
+        fontSize: 10,
         fontFamily: 'FiraSans-Regular',
         lineHeight: 14,
     },

@@ -73,14 +73,14 @@ export function TransactionsScreen() {
                     accessibilityLabel={`${title}, total ${totalFormatted}`}
                 >
                     <Text
-                        style={[styles.dateHeaderText, { color: colors.surface }]}
+                        style={[globalStyles.headerTitleSm, { color: colors.surface }]}
                         maxFontSizeMultiplier={1.5}
                     >
-                        {title}
+                        {title.toLocaleUpperCase()}
                     </Text>
                     <Text
                         style={[
-                            styles.dateHeaderTotal,
+                            globalStyles.amountSm,
                             { color: item.total < 0 ? colors.error : colors.success }
                         ]}
                         maxFontSizeMultiplier={1.5}
@@ -280,16 +280,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         marginBottom: 8,
         marginTop: 2,
-        borderRadius: 8,
-    },
-    dateHeaderText: {
-        fontSize: 14,
-        fontFamily: 'Tinos-Bold',
-        textTransform: 'capitalize',
-    },
-    dateHeaderTotal: {
-        fontSize: 14,
-        fontFamily: 'FiraSans-Bold',
+        borderRadius: 25,
     },
     emptyState: {
         alignItems: 'center',

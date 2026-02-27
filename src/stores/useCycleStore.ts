@@ -102,6 +102,9 @@ export interface CycleStoreActions {
   // Cofres
   withdrawFromBucket: (bucketId: BucketType, amount: number, note?: string) => boolean;
   resetBucket: (bucketId: BucketType) => void;
+
+  // Debug / Admin
+  clearAllCycleData: () => void;
 }
 
 // ─── DEFAULTS ────────────────────────────────────────────────────────────────
@@ -301,6 +304,17 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           state.buckets[bucketId].deposits = [];
         });
       },
+
+      clearAllCycleData: () => {
+        set(() => ({
+          cycles: [],
+          activeCycleId: null,
+          buckets: DEFAULT_BUCKETS,
+          bufferBalance: 0
+        }));
+        cycleStorage.clearAll(); // Limpia también el almacenamiento persistente
+      },
+
     })),
     {
       name: 'cycle-store-v1',

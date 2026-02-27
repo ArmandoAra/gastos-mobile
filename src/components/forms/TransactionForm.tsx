@@ -407,7 +407,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                                     <SubmitButton
                                         handleSave={handleFinalSave}
                                         selectedCategory={selectedCategory}
-                                        option={isExpense ? addOption.Spend : addOption.Income}
+                                            // option={isExpense ? addOption.Spend : addOption.Income}
                                         loading={isSubmitting || isLoadingEdit}
                                         disabled={!amount || parseFloat(amount) === 0 || !selectedAccount}
                                         colors={colors}

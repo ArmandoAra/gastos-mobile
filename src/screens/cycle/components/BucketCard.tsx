@@ -1,12 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
-import {  View ,Text, StyleSheet, TouchableOpacity} from "react-native";
+import { useMemo, useState } from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Bucket, BucketType } from "../../../stores/useCycleStore";
 import * as Haptics from "expo-haptics";
+import { useSettingsStore } from "../../../stores/settingsStore";
+import { darkTheme, lightTheme } from "../../../theme/colors";
+import { t } from "i18next";
+import { useAuthStore } from "../../../stores/authStore";
+import { globalStyles } from "../../../theme/global.styles";
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const BUCKET_META: Record<BucketType, { gradient: [string, string]; glow: string }> = {
@@ -18,48 +22,45 @@ const BUCKET_META: Record<BucketType, { gradient: [string, string]; glow: string
 };
 
 export function BucketCard({ bucket, index }: { bucket: Bucket; index: number }) {
+  const currencySymbol = useAuthStore((s) => s.currencySymbol);
+
+  const theme = useSettingsStore((s) => s.theme);
+  const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const [expanded, setExpanded] = useState(false);
-  const meta = BUCKET_META[bucket.id];
   const lastDeposit = bucket.deposits[bucket.deposits.length - 1];
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
-      <TouchableOpacity
-        activeOpacity={0.88}
+    <Animated.View entering={FadeInDown.delay(index * 80).springify()} >
+      <Pressable
         onPress={() => {
           Haptics.selectionAsync();
           setExpanded((v) => !v);
         }}
-        style={{ marginBottom: 12 }}
+        style={[bucket_s.card, { marginBottom: 12, backgroundColor: bucket.color + "30" }]}
       >
-        <LinearGradient
-          colors={meta.gradient}
-          style={[bucket_s.card, { shadowColor: meta.glow }]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
           {/* Orb decorativo */}
           <View style={[bucket_s.orb, { backgroundColor: bucket.color + '18' }]} />
 
           <View style={bucket_s.topRow}>
             <View style={[bucket_s.emojiBox, { backgroundColor: bucket.color + '25' }]}>
               <Text style={bucket_s.emoji}>{bucket.emoji}</Text>
+
             </View>
+          <Text style={[globalStyles.bodyTextXl, { color: colors.text, fontWeight: 'bold' }]}>{bucket.label}</Text>
             <View style={bucket_s.badge}>
-              <Text style={[bucket_s.badgeText, { color: bucket.color }]}>
-                {bucket.deposits.length} dep.
+            <Text style={[globalStyles.amountXs, { color: colors.text }]}>
+              {bucket.deposits.length} {t("cycle_screen.deposit_short")}.
               </Text>
             </View>
           </View>
 
-          <Text style={bucket_s.amount}>
-            ${bucket.totalAccumulated.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
-          </Text>
-          <Text style={bucket_s.label}>{bucket.label}</Text>
+        <Text style={[globalStyles.amountLg, { color: colors.text }]}>
+          {currencySymbol}{bucket.totalAccumulated.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
+        </Text>
 
           {lastDeposit && (
-            <Text style={bucket_s.lastDeposit}>
-              Último: +${lastDeposit.amount} ·{' '}
+          <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>
+            {t("cycle_screen.last")}: +{currencySymbol}{lastDeposit.amount} ·{' '}
               {format(new Date(lastDeposit.date), 'dd MMM', { locale: es })}
             </Text>
           )}
@@ -68,17 +69,17 @@ export function BucketCard({ bucket, index }: { bucket: Bucket; index: number })
           {expanded && (
             <Animated.View entering={FadeInDown.springify()} style={bucket_s.historyBlock}>
               <View style={bucket_s.divider} />
-              <Text style={bucket_s.historyTitle}>Historial de depósitos</Text>
+            <Text style={[globalStyles.headerTitleSm, { color: colors.text }]}>{t("cycle_screen.deposit_history")}</Text>
               {bucket.deposits.length === 0 ? (
-                <Text style={bucket_s.emptyHistory}>Sin depósitos aún</Text>
+              <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>{t("cycle_screen.no_deposits_yet")}</Text>
               ) : (
                 [...bucket.deposits].reverse().slice(0, 5).map((d) => (
                   <View key={d.id} style={bucket_s.depositRow}>
-                    <Text style={bucket_s.depositDate}>
+                    <Text style={[globalStyles.amountSm, { color: colors.text }]}>
                       {format(new Date(d.date), 'dd MMM yyyy', { locale: es })}
                     </Text>
-                    <Text style={[bucket_s.depositAmount, { color: bucket.color }]}>
-                      +${d.amount.toLocaleString()}
+                    <Text style={[globalStyles.amountXs, { color: colors.text, fontWeight: '700' }]}>
+                      +{currencySymbol}{d.amount.toLocaleString()}
                     </Text>
                   </View>
                 ))
@@ -90,27 +91,21 @@ export function BucketCard({ bucket, index }: { bucket: Bucket; index: number })
             <Ionicons
               name={expanded ? 'chevron-up' : 'chevron-down'}
               size={14}
-              color="rgba(255,255,255,0.3)"
+            color={colors.textSecondary}
             />
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
+        </View>
+      </Pressable>
     </Animated.View>
   );
 }
 
 const bucket_s = StyleSheet.create({
   card: {
+    flex: 1,
     borderRadius: 22,
     padding: 20,
     overflow: 'hidden',
     position: 'relative',
-    elevation: 8,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   orb: {
     position: 'absolute',
@@ -127,18 +122,10 @@ const bucket_s = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 99,
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  amount: { color: '#fff', fontSize: 32, fontWeight: '800', letterSpacing: -1 },
-  label: { color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: 0.5, marginTop: 2 },
-  lastDeposit: { color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 8 },
   chevronRow: { alignItems: 'center', marginTop: 12 },
   divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 12 },
   historyBlock: { marginTop: 4 },
-  historyTitle: { color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: 1, marginBottom: 8, fontWeight: '700' },
   emptyHistory: { color: 'rgba(255,255,255,0.25)', fontSize: 12 },
   depositRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-  depositDate: { color: 'rgba(255,255,255,0.4)', fontSize: 12 },
-  depositAmount: { fontWeight: '700', fontSize: 13 },
 });

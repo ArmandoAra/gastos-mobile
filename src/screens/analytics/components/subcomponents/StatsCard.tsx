@@ -35,7 +35,7 @@ export const StatCard = ({ data }: StatCardProps) => (
     ]}>
         <View style={styles.statHeader}>
             <Ionicons name={data.icon} size={isSmallScreen ? 12 : 14} color={data.colorBgAndHeader} style={{ marginRight: 4 }} />
-            <Text style={[styles.statLabel, { color: data.colorBgAndHeader + 'dd' }, isSmallScreen && styles.statLabelSmall]}>
+            <Text style={[styles.statLabel, { color: data.colorBgAndHeader }, isSmallScreen && styles.statLabelSmall]}>
                 {data.label}
             </Text>
         </View>

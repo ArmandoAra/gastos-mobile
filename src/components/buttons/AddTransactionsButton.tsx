@@ -65,8 +65,6 @@ const InputOption = React.memo<InputOptionProps>(
                     </LinearGradient>
                     </View>
 
-                    {/* Icono */}
-
                 </TouchableOpacity>
             </Animated.View>
         );
@@ -227,9 +225,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 25,
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 50,
         ...Platform.select({
             android: {
                 elevation: 2,
@@ -253,16 +251,5 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         justifyContent: "center",
         alignItems: "center",
-        ...Platform.select({
-            android: {
-                elevation: 4,
-            },
-            ios: {
-                shadowColor: "#000",
-                shadowOpacity: 0.2,
-                shadowRadius: 3,
-                shadowOffset: { width: 0, height: 2 },
-            },
-        }),
     },
 });

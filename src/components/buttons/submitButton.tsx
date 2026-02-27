@@ -5,7 +5,8 @@ import {
     StyleSheet, 
     ActivityIndicator,
     View,
-    Platform
+    Platform,
+    Pressable
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
@@ -16,6 +17,8 @@ import Animated, {
 import { useTranslation } from 'react-i18next';
 import { Category } from '../../interfaces/data.interface';
 import { ThemeColors } from '../../types/navigation';
+import { globalStyles } from '../../theme/global.styles';
+import { Button } from 'react-native-paper';
 
 // Definición de Enum y Props
 export enum addOption {
@@ -26,7 +29,6 @@ export enum addOption {
 interface SubmitButtonProps {
     handleSave: () => void;
     selectedCategory: Category;
-    option?: addOption;
     loading?: boolean;
     disabled?: boolean;
     colors: ThemeColors;
@@ -36,7 +38,6 @@ export default function SubmitButton({
     handleSave,
     selectedCategory,
     disabled = false,
-    option,
     loading = false,
     colors,
 }: SubmitButtonProps) {
@@ -44,12 +45,6 @@ export default function SubmitButton({
 
     // 1. Animación de Escala (Press Effect)
     const scale = useSharedValue(1);
-
-    const animatedStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ scale: scale.value }],
-        };
-    });
 
     const handlePressIn = () => {
         if (!disabled && !loading) {
@@ -63,62 +58,41 @@ export default function SubmitButton({
         }
     };
 
-    const textColor = disabled ? '#888888' : '#FFFFFF';
 
     return (
-        <Animated.View style={[styles.containerWrapper, animatedStyle]}>
-            <TouchableOpacity
+        <Pressable
                 onPress={handleSave}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 disabled={disabled || loading}
-                activeOpacity={0.9}
-                style={[styles.touchable, disabled && styles.disabledShadow]}
+            style={[globalStyles.btnPrimary, { backgroundColor: disabled ? colors.textSecondary : selectedCategory?.color || colors.income, elevation: disabled ? 0 : 4 }]}
                 // Accesibilidad
                 accessibilityRole="button"
                 accessibilityLabel={loading ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
                 accessibilityState={{ disabled: disabled, busy: loading }}
                 accessibilityHint={disabled ? t('accessibility.fill_required', 'Complete all fields to save') : undefined}
             >
-                <View
-                    style={[styles.gradient, { backgroundColor: selectedCategory?.color || '#4CAF50' }]}
+            <View
                 >
                     {loading ? (
-                        <ActivityIndicator size="small" color={textColor} />
+                    <ActivityIndicator size="small" color={disabled ? colors.textSecondary : colors.text} />
                     ) : (
                             <Text
-                                style={[styles.text, { color: colors.text, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, textShadowColor: 'rgba(0, 0, 0, 0.3)' }]}
-                                maxFontSizeMultiplier={1.5} // Evita que el texto crezca excesivamente rompiendo todo
+                            style={[globalStyles.bodyTextXl, { fontSize: 16, color: colors.text, fontWeight: 'bold' }]}
+                            maxFontSizeMultiplier={1.5} 
                                 numberOfLines={1}
                             >
-                                {t('common.save', 'Save')}
+                            {t('common.save', 'Save')}
                         </Text>
                     )}
                 </View>
-            </TouchableOpacity>
-        </Animated.View>
+        </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
     containerWrapper: {
         width: '100%',
-    },
-    touchable: {
-        width: '100%',
-        borderRadius: 18,
-        // Sombra suave (Elevation para Android, Shadow para iOS)
-        ...Platform.select({
-            ios: {
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-            },
-            android: {
-                elevation: 5,
-            },
-        }),
     },
     disabledShadow: {
         // Quitamos la sombra si está deshabilitado para que parezca "plano"
@@ -127,18 +101,7 @@ const styles = StyleSheet.create({
             android: { elevation: 0 },
         }),
     },
-    gradient: {
-        // Layout Flexible
-        minHeight: 56, 
-        paddingVertical: 12, // Permite que el botón crezca si la fuente es gigante
-        paddingHorizontal: 24,
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center',
-        // Borde sutil
-        borderWidth: 0.5,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
+
     text: {
         fontFamily: 'FiraSans-Bold',
         fontSize: 16,

@@ -27,30 +27,44 @@ export const globalStyles = StyleSheet.create({
     paddingHorizontal: 12,
   },
 
-
-
   // Buttons
   smallButton: {
     width: 40, height: 40, borderRadius: 25, alignItems: 'center', justifyContent: 'center'
   },
-  mediumButton: {
+  mediumButton: { 
     flex: 1,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 12
   },
   largeButton: {},
+  btnPrimary: {
+    flex: 1,
+    width: '100%',
+    padding: 16,
+    borderRadius: 50,
+    alignItems: 'center',
+  },
+  btnSecondary: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 50,
+    alignItems: 'center',
+    elevation: 2,
+  },
 
   // Text
   headerTitleSm: { fontSize: fontSizes.lg, fontFamily: 'Tinos-Bold' },
   headerTitleBase: { fontSize: fontSizes.xl, fontFamily: 'Tinos-Bold' },
   headerTitleXL: { fontSize: fontSizes.xxl, fontFamily: 'Tinos-Bold' },
 
+  bodyTextXs: { fontSize: fontSizes.xs, fontFamily: 'FiraSans-Regular' },
   bodyTextSm: { fontSize: fontSizes.sm, fontFamily: 'FiraSans-Regular' },
   bodyTextBase: { fontSize: fontSizes.base, fontFamily: 'FiraSans-Regular' },
   bodyTextLg: { fontSize: fontSizes.lg, fontFamily: 'FiraSans-Regular' },
   bodyTextXl: { fontSize: fontSizes.xl, fontFamily: 'FiraSans-Regular' },
 
   // AmountsText
+  amountXs: { fontSize: fontSizes.sm, fontFamily: 'FiraSans-Bold' },
   amountSm: { fontSize: fontSizes.lg, fontFamily: 'FiraSans-Bold' },
   amountBase: { fontSize: fontSizes.xxl, fontFamily: 'FiraSans-Bold' },
   amountLg: { fontSize: 36, fontFamily: 'FiraSans-Bold' },
@@ -64,5 +78,21 @@ export const globalStyles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   }, 
+
+  inputLg: {
+    fontSize: fontSizes.lg,
+    fontFamily: 'FiraSans-Regular',
+    minHeight: 80, // Altura base
+    paddingBottom: 20,
+    paddingTop: 0,
+  },
+
+  amountInput: {
+    fontSize: fontSizes.xxl,
+    fontFamily: 'FiraSans-Bold',
+    textAlign: 'center',
+    padding: 0,
+    margin: 0,
+  },
 
 });

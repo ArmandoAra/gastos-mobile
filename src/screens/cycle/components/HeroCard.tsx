@@ -31,7 +31,9 @@ import { globalStyles } from '../../../theme/global.styles';
 import { useAuthStore } from '../../../stores/authStore';
 import { InfoModalTotal } from './InfoModalTotal';
 import { ThemeColors } from '../../../types/navigation';
-import { BlueStar, RedStar, SavingsIcon, StarIcon, TriStarsIcon, WorkIcon, WorkIconPainted, YellowStar } from '../../../constants/icons';
+import { BlueStar, RedStar, SavingsIcon, StarIcon, TriStarsIcon, WorkIconPainted, YellowStar } from '../../../constants/icons';
+import { DatePickerModal } from 'react-native-paper-dates';
+import { CycleDatePicker } from './CycleDatePicker';
 
 export function HeroCard() {
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
@@ -51,6 +53,18 @@ export function HeroCard() {
     history.length > 0
       ? history.reduce((a, c) => a + (c.surplusAmount ?? 0), 0) / history.length
       : 0;
+
+  // Dentro de tu componente:
+  const [range, setRange] = React.useState({ startDate: cycleStart, endDate: cycleEnd });
+  const [open, setOpen] = React.useState(false);
+
+  const onConfirm = React.useCallback(({ startDate, endDate }: { startDate: Date | undefined; endDate: Date | undefined }) => {
+    console.log({ startDate, endDate });
+    setOpen(false);
+    if (startDate && endDate) {
+      setRange({ startDate, endDate });
+    }
+  }, []);
 
   return (
     <>
@@ -72,6 +86,8 @@ export function HeroCard() {
                 {format(cycleStart, 'dd MMM', { locale: es })} →{' '}
                 {format(cycleEnd, 'dd MMM', { locale: es })}
               </Text>
+              <CycleDatePicker />
+
             </View>
             <View style={hero.badgeWrapper}>
               <View style={[hero.badge, { backgroundColor: isOverpacing ? colors.expense : colors.income }]}>

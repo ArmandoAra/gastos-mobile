@@ -31,6 +31,7 @@ import useCategoriesStore from '../../../stores/useCategoriesStore';
 import { defaultCategories } from '../../../constants/categories';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { formatCurrency } from '../../../utils/helpers';
+import { globalStyles } from '../../../theme/global.styles';
 
 interface CategoryAndAmountInputProps {
     isReady?: boolean;
@@ -86,7 +87,7 @@ export default function CategoryAndAmountInput({
             <View style={styles.categoryColumn}>
                 {isReady && <Animated.View entering={FadeIn.delay(200)}>
                     <Text
-                        style={[styles.label, { color: colors.textSecondary }]}
+                        style={[globalStyles.bodyTextSm, { color: colors.textSecondary, fontWeight: 'bold', marginBottom: 8, marginLeft: 4 }]}
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={1}
                     >
@@ -136,7 +137,7 @@ export default function CategoryAndAmountInput({
             <View style={styles.amountColumn}>
                 {isReady && <Animated.View entering={FadeIn.delay(300)}>
                     <Text
-                        style={[styles.label, { color: colors.textSecondary }]}
+                        style={[globalStyles.bodyTextSm, { color: colors.textSecondary, fontWeight: 'bold', marginBottom: 8, marginLeft: 4 }]}
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={1}
                     >
@@ -161,14 +162,13 @@ export default function CategoryAndAmountInput({
                     >
                         <Text
                             style={[
-                                styles.textDisplay,
+                                globalStyles.amountBase,
                                 {
                                     color: hasAmount ? colors.text : colors.textSecondary,
-                                    // Si quieres simular un cursor parpadeando, podrías agregar una View extra aquí
                                 }
                             ]}
                             numberOfLines={1}
-                            adjustsFontSizeToFit={true} // Útil si el número es muy largo
+                            adjustsFontSizeToFit={true} 
                             minimumFontScale={0.5}
                         >
                             {hasAmount ? amount : "0,00"}
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {
         minHeight: 58,
-        borderRadius: 18,
-        borderWidth: 1.5,
+        borderRadius: 50,
+        borderWidth: 0.5,
         paddingLeft: 16,
         paddingRight: 6,
         overflow: 'hidden',

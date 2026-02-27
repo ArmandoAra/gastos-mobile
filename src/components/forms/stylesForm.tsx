@@ -51,7 +51,6 @@ export const styles = StyleSheet.create({
     footer: {
         width: '100%',
         display: 'flex',
-        marginTop: 10,
         alignItems: 'center',
     },
     actionButtons: {

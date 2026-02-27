@@ -2,11 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {  View ,Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, Platform} from "react-native";
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 import { Bucket, BucketType, useCycleStore } from "../../../stores/useCycleStore";
 import * as Haptics from "expo-haptics";
+import { t } from "i18next";
+import { useAuthStore } from "../../../stores/authStore";
+import { useSettingsStore } from "../../../stores/settingsStore";
+import { darkTheme, lightTheme } from "../../../theme/colors";
+import { globalStyles } from "../../../theme/global.styles";
 
 interface AllocationModalProps {
   cycleId: string;
@@ -15,6 +20,9 @@ interface AllocationModalProps {
 }
 
 export function AllocationModal({ cycleId, available, onDone }: AllocationModalProps) {
+  const currencySymbol = useAuthStore((s) => s.currencySymbol);
+  const theme = useSettingsStore((s) => s.theme);
+  const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const [selected, setSelected] = useState<BucketType | null>(null);
   const [customAmount, setCustomAmount] = useState(String(available));
   const [step, setStep] = useState<'pick' | 'confirm' | 'done'>('pick');
@@ -68,24 +76,24 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
   const renderDone = () => (
     <Animated.View entering={ZoomIn.springify()} style={alloc.doneCard}>
       <Text style={alloc.doneEmoji}>✅</Text>
-      <Text style={alloc.doneTitle}>¡Guardado!</Text>
+      <Text style={alloc.doneTitle}>{t("cycle_screen.saved")}</Text>
       <Text style={alloc.doneSub}>
-        ${customAmount} asignados a {buckets[selected!]?.emoji} {buckets[selected!]?.label}
+        {currencySymbol}{customAmount} {t("cycle_screen.allocated_to")} {buckets[selected!]?.emoji} {buckets[selected!]?.label}
       </Text>
     </Animated.View>
   );
 
   const renderConfirm = () => (
-    <Animated.View entering={FadeInUp.springify()} style={alloc.card}>
-      <Text style={alloc.header}>Confirmar asignación</Text>
-      <Text style={alloc.bucketName}>
+    <Animated.View entering={FadeInUp.springify()} style={[alloc.card, { borderColor: buckets[selected!].color, backgroundColor: colors.surface }]}>
+      <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>{t("cycle_screen.confirm_allocation")}</Text>
+      <Text style={[globalStyles.bodyTextLg, { color: colors.text }]}>
         {buckets[selected!]?.emoji} {buckets[selected!]?.label}
       </Text>
 
       <View style={alloc.inputRow}>
-        <Text style={alloc.currency}>$</Text>
+        <Text style={[globalStyles.bodyTextLg, { color: colors.text }]}>{currencySymbol} </Text>
         <TextInput
-          style={alloc.input}
+          style={[globalStyles.amountInput, { color: colors.text, backgroundColor: colors.surfaceSecondary }]}
           value={customAmount}
           onChangeText={setCustomAmount}
           keyboardType="numeric"
@@ -95,26 +103,27 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
           autoFocus // Abre el teclado automáticamente
         />
       </View>
-      <Text style={alloc.maxHint}>Máx. disponible: ${available}</Text>
+      <Text style={alloc.maxHint}>{t("cycle_screen.max_available")}: {currencySymbol}{available}</Text>
 
       <View style={alloc.btnRow}>
-        <TouchableOpacity style={alloc.btnSecondary} onPress={() => setStep('pick')}>
-          <Text style={alloc.btnSecondaryText}>← Volver</Text>
+        <TouchableOpacity style={[globalStyles.btnSecondary, { backgroundColor: colors.expense }]} onPress={() => setStep('pick')}>
+          <Text style={[globalStyles.bodyTextLg, { color: colors.text, fontWeight: 'bold' }]}>{t("common.back")}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={alloc.btnPrimary} onPress={handleConfirm}>
-          <Text style={alloc.btnPrimaryText}>Confirmar</Text>
+        <TouchableOpacity style={[globalStyles.btnSecondary, { backgroundColor: colors.income }]} onPress={handleConfirm}>
+          <Text style={[globalStyles.bodyTextLg, { color: colors.text, fontWeight: 'bold' }]}>{t("common.confirm")}</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
   );
 
   const renderPick = () => (
-    <Animated.View entering={FadeInUp.springify()} style={alloc.card}>
-      <TouchableOpacity style={alloc.closeBtn} onPress={onDone}>
-        <Ionicons name="close" size={20} color="rgba(255,255,255,0.5)" />
+    <Animated.View entering={FadeInUp.springify()} style={[alloc.card, { backgroundColor: colors.surfaceSecondary }]}>
+      <TouchableOpacity style={[alloc.closeBtn, { backgroundColor: colors.text, }]} onPress={onDone}>
+        <Ionicons name="close" size={20} color={colors.surfaceSecondary} />
       </TouchableOpacity>
-      <Text style={alloc.header}>🎉 ¡Sobraron ${available}!</Text>
-      <Text style={alloc.subheader}>¿Dónde guardamos este dinero?</Text>
+      {/* TODO: Poner un icono de fiesta */}
+      <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>🎉 ¡{t("cycle_screen.surplus")}: {currencySymbol}{available}!</Text>
+      <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>{t("cycle_screen.where_to_store")}</Text>
       
       {bucketOrder.map((id, i) => {
         const b = buckets[id];
@@ -123,7 +132,7 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
         return (
           <Animated.View key={id} entering={FadeInDown.delay(i * 60).springify()}>
             <TouchableOpacity
-              style={[alloc.option, { borderColor: b.color + '44' }]}
+              style={[alloc.option, { borderColor: b.color, backgroundColor: b.color + '22' }]}
               onPress={() => handleSelect(id)}
               activeOpacity={0.8}
             >
@@ -131,16 +140,16 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
                 <Text style={{ fontSize: 22 }}>{b.emoji}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={alloc.optionLabel}>{b.label}</Text>
-                <Text style={[alloc.optionSub, { color: b.color + 'bb' }]}>
+                <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>{b.label}</Text>
+                <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>
                   {id === 'rollover'
-                    ? 'Suma al presupuesto del próximo ciclo'
+                    ? t("cycle_screen.rollover_description")
                     : id === 'buffer'
-                    ? 'Cubre déficits futuros automáticamente'
-                    : `Acumulado: $${b.totalAccumulated.toLocaleString()}`}
+                      ? t("cycle_screen.buffer_description")
+                      : `${t("cycle_screen.accumulated")}: ${currencySymbol}${b.totalAccumulated.toLocaleString()}`}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.3)" />
+              <Ionicons name="chevron-forward" size={18} color={colors.text} />
             </TouchableOpacity>
           </Animated.View>
         );
@@ -149,10 +158,10 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
   );
 
   return (
-    <Modal transparent animationType="fade">
+    <Modal animationType="fade" statusBarTranslucent>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={alloc.overlay}>
           {step === 'done' && renderDone()}
@@ -169,23 +178,19 @@ const alloc = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'flex-end',
     padding: 16,
-    paddingBottom: 32,
   },
   card: {
-    backgroundColor: '#131320',
     borderRadius: 28,
     padding: 24,
     gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 0.5,
   },
   closeBtn: {
+    borderRadius: 50,
     alignSelf: 'flex-end',
     padding: 4,
     marginBottom: 4,
   },
-  header: { color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
-  subheader: { color: 'rgba(255,255,255,0.45)', fontSize: 14, marginBottom: 8 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -202,47 +207,19 @@ const alloc = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionLabel: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  optionSub: { fontSize: 11, marginTop: 2 },
   // Confirm step
   bucketName: { color: '#fff', fontSize: 28, fontWeight: '800', textAlign: 'center', marginTop: 8 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
+    borderRadius: 25,
     paddingHorizontal: 20,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  currency: { color: '#fff', fontSize: 28, fontWeight: '700', marginRight: 4 },
-  input: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '800',
-    paddingVertical: 16,
-    letterSpacing: -1,
   },
   maxHint: { color: 'rgba(255,255,255,0.35)', fontSize: 12, textAlign: 'center' },
   btnRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
-  btnSecondary: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center',
-  },
-  btnSecondaryText: { color: 'rgba(255,255,255,0.6)', fontWeight: '600' },
-  btnPrimary: {
-    flex: 2,
-    padding: 16,
-    borderRadius: 14,
-    backgroundColor: '#68D391',
-    alignItems: 'center',
-  },
-  btnPrimaryText: { color: '#0d2a1a', fontWeight: '800', fontSize: 15 },
+
   // Done step
   doneCard: {
     alignSelf: 'center',
@@ -255,6 +232,4 @@ const alloc = StyleSheet.create({
     gap: 8,
   },
   doneEmoji: { fontSize: 56 },
-  doneTitle: { color: '#fff', fontSize: 24, fontWeight: '800' },
-  doneSub: { color: 'rgba(255,255,255,0.55)', fontSize: 14, textAlign: 'center' },
 });

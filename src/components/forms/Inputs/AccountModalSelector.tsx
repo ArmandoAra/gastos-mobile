@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.6)', 
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        paddingHorizontal: 20
     },
     modalContent: {
         width: '100%',
@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.3,
         overflow: 'hidden',
         paddingHorizontal: 10,
+        paddingVertical: 8,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,

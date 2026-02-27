@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     container: {
         width: '100%',
         marginBottom: 16,
+        paddingVertical: 4
     },
     label: {
         // Aumentado de 8 a 12 para legibilidad mínima

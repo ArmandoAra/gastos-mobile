@@ -17,7 +17,6 @@ import { filterTransactionsTypes, filterViewModes } from '../constants/filters';
 import AccountSelector from '../../../components/forms/Inputs/AccoutSelector';
 import { Account } from '../../../interfaces/data.interface';
 import { Button } from 'react-native-paper';
-import { CloseButton } from '../../../components/buttons/closeButton';
 import { fontSizes, globalStyles } from '../../../theme/global.styles';
 
 interface FilterFloatingButtonProps {
