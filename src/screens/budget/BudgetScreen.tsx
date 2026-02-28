@@ -133,8 +133,8 @@ export function BudgetScreen() {
                         paddingBottom: Platform.OS === 'ios' ? 120 : 140
                     }}
 
-                    ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-
+                    ItemSeparatorComponent={() =>
+                        <View style={{ height: 12 }} />}
                     renderItem={({ item }) => (
                         <BudgetCard
                             item={item}

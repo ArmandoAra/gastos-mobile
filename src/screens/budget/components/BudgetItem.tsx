@@ -1,10 +1,12 @@
+
 import React, { memo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { MaterialIcons } from "@expo/vector-icons";
-import { ThemeColors } from '../../../types/navigation'; // Ajusta tus rutas de importación
-import { Item } from '../../../interfaces/data.interface'; // Ajusta tus rutas
+import { ThemeColors } from '../../../types/navigation';
+import { Item } from '../../../interfaces/data.interface';
 import { formatCurrency } from '../../../utils/helpers';
+import * as Haptics from 'expo-haptics';
 
 interface BudgetItemProps {
     item: Item;
@@ -30,6 +32,14 @@ const BudgetItemComponent = ({
     onSetRef
 }: BudgetItemProps) => {
 
+    const isDone = item.done;
+    const lineColor = isDone ? colors.income : colors.expense;
+
+    const handleRemove = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        onRemove(item.id);
+    }
+
     return (
         <Animated.View
             entering={FadeIn}
@@ -37,100 +47,161 @@ const BudgetItemComponent = ({
             style={[
                 styles.itemRow,
                 {
-                    backgroundColor: item.done ? colors.surface : colors.surface,
-                    borderColor: item.done ? colors.accent : colors.border,
+                    backgroundColor: colors.surface,
+                    borderLeftColor: isDone ? colors.income : colors.expense,
+                    borderTopColor: colors.border,
+                    borderRightColor: colors.border,
+                    borderBottomColor: colors.border,
+                    opacity: isDone ? 0.72 : 1,
                 }
             ]}
             accessible={true}
             accessibilityLabel={`${item.name || 'Item sin nombre'}, ${item.quantity} por ${item.price}, total ${(item.price * item.quantity).toFixed(2)}`}
         >
-            {/* Fila superior: Nombre y acciones */}
+            {/* ── FILA SUPERIOR: nombre + acciones ── */}
             <View style={styles.itemRowHeader}>
+
+                {/* Avatar de estado — mismo patrón que catDotBox */}
+                <View style={[
+                    styles.statusBox,
+
+                    { backgroundColor: lineColor + '20', borderRadius: 99 }
+                ]}>
+                    <MaterialIcons
+                        name={isDone ? "check" : "edit"}
+                        size={16}
+                        color={lineColor}
+                    />
+                </View>
+
                 <TextInput
                     ref={onSetRef}
-                    style={[styles.itemNameInput, { color: colors.text, minHeight: 40 * fontScale }]}
+                    style={[
+                        styles.itemNameInput,
+                        {
+                            color: colors.text,
+                            minHeight: 40 * fontScale,
+                        }
+                    ]}
                     value={item.name}
-                    onChangeText={(t) => onUpdate(item.id, 'name', t)}
+                    onChangeText={(v) => onUpdate(item.id, 'name', v)}
                     placeholder={t('budget_form.items.item_name_placeholder')}
                     placeholderTextColor={colors.textSecondary}
                     multiline
                     accessibilityLabel={t('budget_form.items.item_name_placeholder')}
                 />
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                {/* Acciones */}
+                <View style={styles.actions}>
                     <TouchableOpacity
                         onPress={() => onToggle(item.id)}
-                        style={styles.touchableAction}
+                        style={[styles.actionBtn, { backgroundColor: lineColor + '18' }]}
                         accessibilityRole="button"
                         accessibilityLabel={t('budget_form.items.toggle_done_action')}
-                        accessibilityState={{ checked: item.done }}
+                        accessibilityState={{ checked: isDone }}
                     >
                         <MaterialIcons
-                            name={item.done ? "check-circle" : "radio-button-unchecked"}
-                            size={28 * fontScale}
-                            color={item.done ? colors.success || '#34C759' : colors.accent + 'CC'}
+                            name={isDone ? "check-circle" : "radio-button-unchecked"}
+                            size={22 * fontScale}
+                            color={lineColor}
                         />
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        onPress={() => onRemove(item.id)}
-                        style={styles.touchableAction}
+                        onPressIn={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+                        onLongPress={handleRemove}
+                        style={[styles.actionBtn, { backgroundColor: colors.error + '18' }]}
                         accessibilityRole="button"
                         accessibilityLabel={t('budget_form.items.delete_action')}
                     >
-                        <MaterialIcons name="delete-outline" size={28 * fontScale} color={colors.error} />
+                        <MaterialIcons
+                            name="delete-outline"
+                            size={22 * fontScale}
+                            color={colors.error}
+                        />
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Fila inferior: Cálculos (Flexible wrap) */}
+            {/* ── DIVISOR ── */}
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {/* ── FILA INFERIOR: cantidad × precio = total ── */}
             <View style={styles.itemRowInputs}>
+
+                {/* Cantidad */}
                 <View style={styles.inputGroup}>
-                    <Text style={[styles.miniLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.5}>
+                    <Text
+                        style={[styles.miniLabel, { color: colors.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                    >
                         {t('budget_form.items.quantity_label')}
                     </Text>
                     <TextInput
-                        style={[styles.inputSmall, { color: colors.text, borderColor: colors.border, minHeight: 44 }]}
+                        style={[
+                            styles.inputSmall,
+                            { color: colors.text, backgroundColor: colors.surfaceSecondary, borderColor: colors.border }
+                        ]}
                         keyboardType="numeric"
                         maxLength={5}
                         value={item.quantity.toString()}
-                        onChangeText={(t) => onUpdate(item.id, 'quantity', Math.abs(parseInt(t)) || 0)}
+                        onChangeText={(v) => {
+                            const formattedValue = v.replace(/,/g, '.'); // Reemplaza comas por puntos
+                            onUpdate(item.id, 'quantity', formattedValue);
+                        }}
                         accessibilityLabel={t('budget_form.items.quantity_label')}
                     />
                 </View>
 
-                <Text style={[styles.operatorText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.5}>x</Text>
+                {/* Operador × */}
+                <View style={[styles.operatorChip, { backgroundColor: colors.surfaceSecondary }]}>
+                    <Text style={[styles.operatorText, { color: colors.textSecondary }]}>X</Text>
+                </View>
 
+                {/* Precio */}
                 <View style={styles.inputGroup}>
-                    <Text style={[styles.miniLabel, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.5}>
+                    <Text
+                        style={[styles.miniLabel, { color: colors.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                    >
                         {t('budget_form.items.price_label')}
                     </Text>
                     <TextInput
-                        style={[styles.inputSmall, { color: colors.text, borderColor: colors.border, minHeight: 44 }]}
+                        style={[
+                            styles.inputSmall,
+                            { color: colors.text, backgroundColor: colors.surfaceSecondary, borderColor: colors.border }
+                        ]}
                         keyboardType="numeric"
                         maxLength={8}
                         value={item.price === 0 ? '' : item.price.toString()}
-                        onChangeText={(t) => onUpdate(item.id, 'price', Math.abs(parseFloat(t)) || 0)}
+                        onChangeText={(v) => {
+                            const formattedValue = v.replace(/,/g, '.'); // Reemplaza comas por puntos
+                            onUpdate(item.id, 'price', formattedValue);
+                        }}
                         placeholder="0.00"
                         placeholderTextColor={colors.textSecondary}
                         accessibilityLabel={t('budget_form.items.price_label')}
                     />
                 </View>
 
-                <Text style={[styles.operatorText, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.5}>=</Text>
-
-                <Text
-                    style={[styles.itemTotal, { color: colors.text }]}
-                    maxFontSizeMultiplier={2}
-                >
-                    {currencySymbol}{formatCurrency(item.price * item.quantity)}
-                </Text>
+                {/* Total — chip de resultado, igual que percentChip de DailyExpenseView */}
+                <View style={[styles.totalChip, { backgroundColor: lineColor + '18', borderColor: lineColor + '35' }]}>
+                    <Text
+                        style={[styles.itemTotal, { color: lineColor }]}
+                        maxFontSizeMultiplier={2}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                    >
+                        {currencySymbol}{formatCurrency(item.price * item.quantity)}
+                    </Text>
+                </View>
             </View>
+
         </Animated.View>
     );
 };
 
-// Optimizamos con React.memo para evitar re-renders innecesarios en listas largas
 export const BudgetItem = memo(BudgetItemComponent, (prevProps, nextProps) => {
     return (
         prevProps.item === nextProps.item &&
@@ -141,40 +212,118 @@ export const BudgetItem = memo(BudgetItemComponent, (prevProps, nextProps) => {
 });
 
 const styles = StyleSheet.create({
-    itemRow: { padding: 12, borderRadius: 12, marginBottom: 12, borderWidth: 1 },
-    itemRowHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12, gap: 10 },
+    itemRow: {
+        borderRadius: 14,
+        marginBottom: 10,
+        // Bordes independientes para la barra lateral de acento
+        borderLeftWidth: 4,
+        borderTopWidth: 1,
+        borderRightWidth: 1,
+        borderBottomWidth: 1,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
+    },
+    itemRowHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 2,
+        paddingHorizontal: 12,
+        gap: 10,
+    },
+    // Avatar de estado — mismo patrón que catDotBox / iconBox
+    statusBox: {
+        width: 32,
+        height: 32,
+        borderRadius: 9,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+    },
     itemNameInput: {
         flex: 1,
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'FiraSans-Regular',
         textAlignVertical: 'center',
-        paddingVertical: 5
+        paddingVertical: 2,
     },
-    touchableAction: { padding: 8, minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
+    actions: {
+        flexDirection: 'row',
+        gap: 6,
+        alignItems: 'center',
+    },
+    // Botones de acción con fondo tintado — mismo patrón que actionBtn de otros componentes
+    actionBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    divider: {
+        height: 1,
+        marginHorizontal: 12,
+    },
     itemRowInputs: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        padding: 12,
+        gap: 8,
         flexWrap: 'wrap',
-        gap: 8
     },
     inputGroup: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-        minWidth: 100
+        minWidth: 90,
+        gap: 6,
     },
-    miniLabel: { fontSize: 12, marginRight: 8, fontFamily: 'FiraSans-Regular' },
+    miniLabel: {
+        fontSize: 11,
+        fontFamily: 'FiraSans-Bold',
+        letterSpacing: 0.3,
+    },
     inputSmall: {
         borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 8,
+        borderRadius: 30,
+        paddingHorizontal: 10,
+        paddingVertical: 2,
         flex: 1,
-        minWidth: 60,
+        minWidth: 56,
         textAlign: 'center',
-        paddingVertical: 8,
         fontFamily: 'FiraSans-Regular',
+        fontSize: 13,
+        minHeight: 30,
     },
-    operatorText: { marginHorizontal: 2, fontSize: 14 },
-    itemTotal: { fontFamily: 'FiraSans-Bold', fontSize: 16, minWidth: 70, textAlign: 'right', paddingVertical: 5 }
+    // Chip del operador ×
+    operatorChip: {
+        width: 26,
+        height: 26,
+        borderRadius: 99,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+    },
+    operatorText: {
+        fontSize: 13,
+        fontFamily: 'FiraSans-Bold',
+    },
+    // Chip de total — mismo pill que percentChip / categoryChip
+    totalChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 99,
+        borderWidth: 1,
+        flexShrink: 0,
+        minWidth: 72,
+        alignItems: 'center',
+    },
+    itemTotal: {
+        fontFamily: 'FiraSans-Bold',
+        fontSize: 13,
+        textAlign: 'center',
+    },
 });

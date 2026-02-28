@@ -15,6 +15,7 @@ import { useTransactionItemLogic } from '../hooks/useTransactionItemLogic';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { defaultCategoryNames } from '../../../constants/categories';
 import { globalStyles } from '../../../theme/global.styles';
+import { SwipeDelete } from '../../../components/buttons/SwipeDelete';
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -65,21 +66,8 @@ export const TransactionItemMobile = React.memo(({
             onLayout={handleLayout}
         >
             {/* FONDO (Swipe Actions) */}
-            <Animated.View
-                style={[StyleSheet.absoluteFill, styles.backgroundContainer, rBackgroundStyle]}
-                importantForAccessibility="no"
-            >
-                <View style={[styles.deleteIconContainer, { left: 20 }]}>
-                    <View style={styles.deleteIconCircle}>
-                        <MaterialIcons name="delete" size={20} color="#fff" />
-                    </View>
-                </View>
-                <View style={[styles.deleteIconContainer, { right: 20 }]}>
-                    <View style={styles.deleteIconCircle}>
-                        <MaterialIcons name="delete" size={20} color="#fff" />
-                    </View>
-                </View>
-            </Animated.View>
+            {/* Swipe Delete  */}
+            <SwipeDelete rBackgroundStyle={rBackgroundStyle} colors={colors} />
 
             {/* CONTENIDO PRINCIPAL */}
             <GestureDetector gesture={panGesture}>
@@ -188,27 +176,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         minHeight: 72,
     },
-    backgroundContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 14,
-        paddingHorizontal: 16,
-        backgroundColor: '#FC8181',
-    },
-    deleteIconContainer: {
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        justifyContent: 'center',
-    },
-    deleteIconCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+
     itemContainer: {
         borderRadius: 14,
         height: '100%',

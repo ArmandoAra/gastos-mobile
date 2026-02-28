@@ -80,7 +80,7 @@ const datePickerTheme = useMemo(() => ({
         borderRadius: 25, 
         paddingHorizontal: 12,
         paddingVertical: 6,
-        color: isDark ? colors.surface : '#ffffff', 
+        color: colors.text, 
       },
       bodySmall: {
         ...paperTheme.fonts.bodySmall,

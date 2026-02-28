@@ -452,11 +452,11 @@
             "close": "Cerrar selector"
         },
         "fields": {
-            "name_label": "NOMBRE PRESUPUESTO",
+            "name_label": "Nombre del presupuesto",
             "name_placeholder": "Ej. Compras Supermercado",
-            "target_amount_label": "MONTO OBJETIVO",
+            "target_amount_label": "Monto objetivo",
             "target_placeholder": "0.00",
-            "current_total_label": "TOTAL ACTUAL"
+            "current_total_label": "Total actual"
         },
         "items": {
             "section_title": "Items",

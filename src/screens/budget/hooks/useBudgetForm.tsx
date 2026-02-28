@@ -104,7 +104,7 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
             price: 0,
             quantity: 1,
             expenseBudgetId: initialData?.id || 'temp',
-            done: false, // Inicializamos en false
+            done: false, 
         };
 
         setItems(prev => {
@@ -140,8 +140,6 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
         setItems(prev => prev.filter(item => item.id !== id));
     };
 
-
-
     // Guardado
     const handleSaveForm = () => {
         if (!name.trim()) {
@@ -175,8 +173,6 @@ export const useBudgetForm = ({ visible, onClose, initialData}: UseBudgetFormPro
             replaceBudget(updatedBudget);
 
         } else {
-            // Caso B: CREAR NUEVO (Usamos addBudget)
-            // El store generará el ID y las fechas
             addBudget({
                 account_id: allAccounts[0]?.id || 'default-account',
                 date: new Date().toISOString(),
