@@ -18,10 +18,17 @@ import { SettingsScreen } from './src/screens/settings/SettingsScreen';
 import { PinScreen } from './src/screens/auth/PinScreen';
 import CreditCircleScreen from './src/screens/cycle/CreditCycleScreen';
 import { SetupScreen } from './src/screens/auth/SetupScreen';
+import { en, es, pt, registerTranslation } from 'react-native-paper-dates';
 
 import { useAuthStore } from './src/stores/authStore';
 import { useSettingsStore } from './src/stores/settingsStore';
 import { lightTheme, darkTheme } from './src/theme/colors';
+
+// Registra los idiomas que vayas a usar
+registerTranslation('en', en);
+registerTranslation('es', es);
+registerTranslation('pt', pt);
+
 
 import { Buffer } from 'buffer';
 global.Buffer = global.Buffer || Buffer;

@@ -12,29 +12,28 @@ import { rollover_s, SAFE_TO_SPEND } from "../CreditCycleScreen";
 import Animated from "react-native-reanimated";
 import * as Haptics from 'expo-haptics';
 
-
-
 export function CloseCycleCard() {
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const startCycle = useCycleStore((s) => s.startNewCycle);
   const addExpense = useCycleStore((s) => s.addExpense);
   const closeCycle = useCycleStore((s) => s.closeCycle);
-  const activeCycleId = useCycleStore((s) => s.activeCycleId);
+  const activeCycleId = useCycleStore((s) => s.activeCycles);
+  const clearAllCycleData = useCycleStore((s) => s.clearAllCycleData);
 
   function closeCycleHandler() {
 
-    // clearAllCycleData();
-    if (activeCycleId) return;
-    const cycle = startCycle({
-      baseBudget: 1000,
-      startDate: new Date(Date.now() - 30 * 86400000),
-      endDate: new Date(Date.now() - 1 * 86400000),
-      fixedExpenses: 120,
-    });
-    addExpense(cycle.id, 650);
-    closeCycle(cycle.id);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    clearAllCycleData();
+    // if (activeCycleId) return;
+    // const cycle = startCycle({
+    //   baseBudget: 1000,
+    //   startDate: new Date(Date.now() - 30 * 86400000),
+    //   endDate: new Date(Date.now() - 1 * 86400000),
+    //   fixedExpenses: 120,
+    // });
+    // addExpense(cycle.id, 650);
+    // closeCycle(cycle.id);
+    // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }
 
   return (

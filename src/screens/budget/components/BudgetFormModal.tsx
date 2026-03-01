@@ -63,7 +63,8 @@ export const BudgetFormModal = ({
 
     const {
         name, setName,
-        budgetedAmount, setBudgetedAmount,
+        budgetedAmount,
+        setBudgetedAmount,
         items,
         totalSpent,
         categorySelectorOpen,
@@ -120,7 +121,7 @@ export const BudgetFormModal = ({
     const stableOnAddItem = useCallback(() => handleAddItemRef.current(), []);
 
     // ── LIST HEADER (Formulario + Cabecera Original) ──
-    const ListHeader = useCallback(() => (
+    const listHeaderElement = useMemo(() => (
         <>
             <BudgetFormSection
                 colors={colors}
@@ -146,7 +147,6 @@ export const BudgetFormModal = ({
             />
         </>
     ), [colors, name, budgetedAmount, totalSpent, selectedCategory, currencySymbol, t, setName, setBudgetedAmount, categorySelectorOpen, setCategorySelectorOpen, isOverBudget, items.length, fontScale, stableOnAddItem]);
-
     if (!visible) return null;
 
     return (
@@ -248,7 +248,7 @@ export const BudgetFormModal = ({
                             <FlatList<Item>
                                 data={items}
                                 keyExtractor={(item) => item.id}
-                                ListHeaderComponent={<ListHeader />}
+                                ListHeaderComponent={listHeaderElement}
                                 renderItem={({ item }) => (
                                     <BudgetItem
                                         item={item}

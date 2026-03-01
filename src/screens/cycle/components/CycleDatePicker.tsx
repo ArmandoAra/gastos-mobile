@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Text, ThemeProvider, useTheme } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -6,6 +6,7 @@ import { DatePickerModal } from 'react-native-paper-dates';
 // Importa tus colores y store
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { selectActiveCycle, useCycleStore } from '../../../stores/useCycleStore';
 
 export function CycleDatePicker() {
   // 1. Obtenemos el tema global de Paper (fuentes, animaciones, etc.)
@@ -13,6 +14,7 @@ export function CycleDatePicker() {
   
   // 2. Obtenemos la preferencia del usuario desde tu store
   const themeMode = useSettingsStore((s) => s.theme);
+  const language = useSettingsStore((s) => s.language);
   const isDark = themeMode === 'dark';
   const colors = useMemo(() => isDark ? darkTheme : lightTheme, [isDark]);
 
@@ -23,33 +25,50 @@ export function CycleDatePicker() {
     endDate: undefined,
   });
 
+  // 3. Acción para iniciar un nuevo ciclo (si es necesario)
+  const selectedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
+  const cycles = useCycleStore((s) => s.cycles);
+  const startNewCycle = useCycleStore((s) => s.startNewCycle);
+
+  useEffect(() => {
+    console.log('Ciclo activo:', selectedCycleAccount);
+    console.log('Ciclos actuales:', cycles);
+  }, [cycles, selectedCycleAccount]);
+
   // 4. Callback cuando el usuario confirma las fechas
   const onConfirmRange = useCallback(
     ({ startDate, endDate }: { startDate: Date | undefined; endDate: Date | undefined }) => {
       setOpen(false);
       if (startDate && endDate) {
         setRange({ startDate, endDate });
-        // Aquí puedes despachar la acción a tu store para filtrar los datos globales
-        // ej: useCycleStore.getState().setCustomRange(startDate, endDate);
+
+        const startCycleData = {
+          startDate,
+          endDate,
+          cutoffDate: endDate,
+          baseBudget: 0, // Puedes ajustar esto según tu lógica
+          accountId: selectedCycleAccount, // Asegúrate de pasar el accountId correcto
+        };
+
+        startNewCycle(startCycleData);
       }
     },
-    []
+    [selectedCycleAccount, startNewCycle]
   );
 
-  // 5. Tema inyectado exclusivamente para el calendario
 const datePickerTheme = useMemo(() => ({
     ...paperTheme, 
     roundness: 12, 
     colors: {
       ...paperTheme.colors,
       primary: colors.accent, 
-      surface: isDark ? colors.surfaceSecondary : '#ffffff', 
+      surface: colors.surface, 
       onSurface: colors.text, 
-      primaryContainer: isDark ? colors.surface : '#E0E7FF', 
+      primaryContainer: colors.accent, 
       onPrimaryContainer: colors.text, 
 
       // ─── AQUI ESTÁ EL COLOR DE "Desde" y "Hasta" ───
-      onSurfaceVariant: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', 
+      onSurfaceVariant: colors.text, 
     },
     fonts: {
       ...paperTheme.fonts,
@@ -80,12 +99,12 @@ const datePickerTheme = useMemo(() => ({
         borderRadius: 25, 
         paddingHorizontal: 12,
         paddingVertical: 6,
-        color: colors.text, 
+        color: colors.surface, 
       },
       bodySmall: {
         ...paperTheme.fonts.bodySmall,
         fontFamily: 'FiraSans-Bold',
-        fontSize: 12, 
+        fontSize: 16, 
       },
       titleLarge: {
         ...paperTheme.fonts.titleLarge,
@@ -112,7 +131,7 @@ const datePickerTheme = useMemo(() => ({
 
         {/* Modal de React Native Paper Dates */}
         <DatePickerModal
-          locale="es"
+          locale={language}
           mode="range"
           visible={open}
           onDismiss={() => setOpen(false)}

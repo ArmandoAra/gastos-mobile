@@ -3,7 +3,6 @@ import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback } f
 import { Text } from 'react-native-paper'; // Quitamos Tooltip
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
@@ -11,8 +10,6 @@ import { useShallow } from 'zustand/react/shallow';
 // Asegúrate de importar esto correctamente desde tus archivos
 import { PacingBar } from './PacingBar';
 import { 
-  cycleStart, 
-  cycleEnd, 
   isOverpacing, 
   SAFE_TO_SPEND, 
   SPENT, 
@@ -22,7 +19,8 @@ import {
 import { 
   useCycleStore, 
   selectTotalSaved, 
-  selectCycleHistory 
+  selectCycleHistory,
+  selectActiveCycle
 } from '../../../stores/useCycleStore'; 
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useSettingsStore } from '../../../stores/settingsStore';
@@ -32,27 +30,40 @@ import { useAuthStore } from '../../../stores/authStore';
 import { InfoModalTotal } from './InfoModalTotal';
 import { ThemeColors } from '../../../types/navigation';
 import { BlueStar, RedStar, SavingsIcon, StarIcon, TriStarsIcon, WorkIconPainted, YellowStar } from '../../../constants/icons';
-import { DatePickerModal } from 'react-native-paper-dates';
 import { CycleDatePicker } from './CycleDatePicker';
+import { es, pt, enUS } from 'date-fns/locale';
 
 export function HeroCard() {
+  const selectedAccount = useCycleStore((s) => s.selectedCycleAccount);
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
   const theme = useSettingsStore((s) => s.theme);
+  const language = useSettingsStore((s) => s.language);
   const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const iconsOptions = useSettingsStore((state) => state.iconsOptions);
 
   // ESTADO PARA EL MODAL DE AYUDA
   const [isHelpVisible, setIsHelpVisible] = useState(false);
 
-  const totalSaved = useCycleStore(selectTotalSaved);
-  const bufferBalance = useCycleStore((s) => s.bufferBalance);
-  const rollover = useCycleStore((s) => s.buckets.rollover.totalAccumulated);
-  const history = useCycleStore(useShallow(selectCycleHistory));
+  const history = useCycleStore(useShallow((state) => selectCycleHistory(selectedAccount)(state)));
+  const avgSurplus = history.length > 0
+    ? history.reduce((a, c) => a + (c.surplusAmount ?? 0), 0) / history.length
+    : 0;
 
-  const avgSurplus =
-    history.length > 0
-      ? history.reduce((a, c) => a + (c.surplusAmount ?? 0), 0) / history.length
-      : 0;
+  // 2. Extraer datos multi-cuenta con protección contra undefined
+  const totalSaved = useCycleStore((state) => selectTotalSaved(selectedAccount)(state));
+  const bufferBalance = useCycleStore((state) => state.bufferByAccount[selectedAccount] || 0);
+
+  // Extraemos específicamente el totalAccumulated del rollover
+  const rollover = useCycleStore((state) =>
+    state.bucketsByAccount[selectedAccount]?.rollover?.totalAccumulated || 0
+  );
+
+  // 3. Ciclo Activo
+  const activeCycle = useCycleStore((state) => selectActiveCycle(selectedAccount)(state));
+
+  // Buscar las fechas del ciclo activo o usar valores por defecto
+  const cycleStart = useMemo(() => activeCycle ? new Date(activeCycle.startDate) : new Date(), [activeCycle]);
+  const cycleEnd = useMemo(() => activeCycle ? new Date(activeCycle.endDate) : new Date(Date.now() + 30 * 86400000), [activeCycle]);
 
   // Dentro de tu componente:
   const [range, setRange] = React.useState({ startDate: cycleStart, endDate: cycleEnd });
@@ -65,6 +76,15 @@ export function HeroCard() {
       setRange({ startDate, endDate });
     }
   }, []);
+
+  const lang = useMemo(() => {
+    switch (language) {
+      case 'en': return enUS;
+      case 'es': return es;
+      case 'pt': return pt;
+      default: return enUS;
+    }
+  }, [language]);
 
   return (
     <>
@@ -82,11 +102,19 @@ export function HeroCard() {
           <View style={hero.header}>
             <View>
               <Text style={[globalStyles.headerTitleSm, { color: colors.text }]}>{t('cycle_screen.active_cycle')}</Text>
-              <Text style={[globalStyles.bodyTextBase, { color: colors.text }]}>
-                {format(cycleStart, 'dd MMM', { locale: es })} →{' '}
-                {format(cycleEnd, 'dd MMM', { locale: es })}
-              </Text>
-              <CycleDatePicker />
+              {
+                activeCycle ? (
+                  <Text style={[globalStyles.bodyTextBase, { color: colors.text }]}>
+                    {format(cycleStart, 'dd MMM', { locale: lang })} →{' '}
+                    {format(cycleEnd, 'dd MMM', { locale: lang })}
+                  </Text>
+                ) : (
+                  // Si no hay ciclo activo, mostramos el selector de fechas para iniciar uno nuevo
+                    <CycleDatePicker />
+                  // O Redefinir el ciclo actual siempre que no haya uno activo y a partir de la fecha que cerro el ultimo ciclo
+                )
+              }
+
 
             </View>
             <View style={hero.badgeWrapper}>

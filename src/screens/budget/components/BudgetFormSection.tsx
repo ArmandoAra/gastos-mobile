@@ -29,12 +29,11 @@ export const BudgetFormSection = ({
     currencySymbol,
     t
 }: BudgetFormSectionProps) => (
-    
             <View style={formStyles.rowWrap}>
                 <View style={[formStyles.totalBlock, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
                     <View style={formStyles.inputHeader}>
                         <Text style={[formStyles.label, { color: colors.textSecondary }]}>
-                            {t('budget_form.fields.target_amount_label')}
+                    {t('budget_form.fields.target_amount_label')}
                         </Text>
                         <MaterialIcons name="edit" size={14} color={colors.textSecondary} />
                     </View>

@@ -1,14 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,42 +10,56 @@ import Animated, {
   FadeInDown,
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-  runOnJS,
   useAnimatedScrollHandler,
-  Extrapolation,
+
 } from 'react-native-reanimated';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { addDays, differenceInDays, format, set, subDays } from 'date-fns';
-import { es, se } from 'date-fns/locale';
+
 import {
   useCycleStore,
-  selectActiveCycle,
   selectTotalSaved,
   selectCycleHistory,
   BucketType,
-  Bucket,
+  selectBuckets,
 } from '../../stores/useCycleStore';
 import useDataStore from "../../stores/useDataStore"
+
+import { CategoryRow } from './components/CategoryRow';
+import { RolloverModal } from './components/RolloverModal';
+import { AllocationModal } from './components/AllocationModal';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { t } from 'i18next';
+import { darkTheme, lightTheme } from "../../theme/colors";
+import { LinearGradient } from 'expo-linear-gradient';
+import { globalStyles } from '../../theme/global.styles';
+import { AccountModalSelector } from '../../components/forms/Inputs/AccountModalSelector';
+import { CycleLineChart } from './components/CycleLineChart';
+import { FixedExpenseRow } from './components/SpendingFixRow';
+
+import { CloseCycleCard } from './components/CloseCycleCard';
+import { HeroCard } from './components/HeroCard';
+import { useShallow } from 'zustand/react/shallow';
+import { subDays, addDays, differenceInDays } from 'date-fns';
+import { BucketCard } from './components/BucketCard';
+import { CollapsibleSection } from './components/CollapsibleSecction';
+import { CycleHistoryRow } from './components/CircleHistory';
+
 
 // ─── MOCK DATA ──────────────────────────────────────────────────────────────
 export const today = new Date();
 export const cycleStart = subDays(today, 10);
 export const cycleEnd = addDays(today, 20);
 export const cycleDays = differenceInDays(cycleEnd, cycleStart);
-export const daysElapsed = differenceInDays(today, cycleStart);
+// export const daysElapsed = differenceInDays(today, cycleStart);
 
 export const BUDGET = 1000;
 export const SPENT = 400;
 export const FIXED_UPCOMING = 120; // gastos fijos futuros
 export const SAFE_TO_SPEND = BUDGET - SPENT - FIXED_UPCOMING;
 
-export const timeProgress = daysElapsed / cycleDays; // 0–1
+// export const timeProgress = daysElapsed / cycleDays; // 0–1
 export const spendProgress = SPENT / BUDGET; // 0–1
-export const isOverpacing = spendProgress > timeProgress;
+export const isOverpacing = spendProgress > 100;
 
 export const realSpendingData = [
   { value: 0, label: 'D1' },
@@ -79,37 +87,19 @@ export const gastosFijos = [
 ];
 
 
-
-
-import { useShallow } from 'zustand/react/shallow';
-import { HeroCard } from './components/HeroCard';
-import { CategoryRow } from './components/CategoryRow';
-import { RolloverModal } from './components/RolloverModal';
-import { BucketCard } from './components/BucketCard';
-import { CycleHistoryRow } from './components/CircleHistory';
-import { AllocationModal } from './components/AllocationModal';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { t } from 'i18next';
-import { darkTheme, lightTheme } from "../../theme/colors";
-import { LinearGradient } from 'expo-linear-gradient';
-import { globalStyles } from '../../theme/global.styles';
-import { AccountModalSelector } from '../../components/forms/Inputs/AccountModalSelector';
-import { CycleLineChart } from './components/CycleLineChart';
-import { FixedExpenseRow } from './components/SpendingFixRow';
-import { CollapsibleSection } from './components/CollapsibleSecction';
-import { CloseCycleCard } from './components/CloseCycleCard';
-
-
 export default function CreditCycleScreen() {
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
+  const [daysElapsed, setDaysElapsed] = useState(0);
   const allAccounts = useDataStore((s) => s.allAccounts);
   const selectedAccount = useDataStore((s) => s.selectedAccount);
   const [isAccountSelectorOpen, setIsAccountSelectorOpen] = useState(false);  
   const [accountSelected, setAccountSelected] = useState<string>(selectedAccount);
+  const setSelectedCycleAccount = useCycleStore((s) => s.setSelectedCycleAccount);
 
   // Memoizar la cuenta seleccionada
       const selectedAccountObj = useMemo(() => {
+        setSelectedCycleAccount(accountSelected); // Actualiza el ciclo seleccionado en el store cada vez que cambia la cuenta
           return allAccounts.find(acc => acc.id === accountSelected);
       }, [accountSelected, allAccounts]);
  
@@ -118,9 +108,35 @@ export default function CreditCycleScreen() {
 
   const scrollHandler = useAnimatedScrollHandler({ onScroll: (e) => { scrollY.value = e.contentOffset.y; } });
 
-  const buckets = useCycleStore((s) => s.buckets);
+  const selectedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
+
   const cycles = useCycleStore((s) => s.cycles);
-  const history = useCycleStore(useShallow(selectCycleHistory));
+
+  const buckets = useCycleStore((state) => selectBuckets(selectedCycleAccount || '')(state));
+  const history = useCycleStore(
+    useShallow((state) => selectCycleHistory(selectedCycleAccount || '')(state))
+  );
+  const saved = useCycleStore((state) => selectTotalSaved(selectedCycleAccount || '')(state));
+
+  useEffect(() => {
+    console.log("ciclos en store:", cycles);
+    if (cycles.length > 0 && selectedCycleAccount) {
+      // 
+      console.log("Buscando último ciclo activo para la cuenta:", selectedCycleAccount);
+      const lastActiveCycle = [...cycles].reverse().find(c => c.status === 'active' && c.accountId === selectedCycleAccount);
+      if (!lastActiveCycle) {
+        console.log("No se encontró un ciclo activo para la cuenta:", selectedCycleAccount);
+        setShowRollover(true);
+      } else {
+        console.log("Último ciclo activo encontrado:", lastActiveCycle);
+        setShowRollover(false);
+        const daysElapsed = differenceInDays(new Date(lastActiveCycle.endDate), new Date(lastActiveCycle.startDate));
+        setDaysElapsed(daysElapsed);
+      }
+    }
+  }, [cycles, selectedCycleAccount]);
+
+
 
   // Busca el último ciclo cerrado sin destino asignado (pendiente de allocate)
   const pendingSurplusCycle = cycles.find(
@@ -162,12 +178,12 @@ export default function CreditCycleScreen() {
           <Animated.View style={[screen.topBar, { backgroundColor: colors.surfaceSecondary + '80' }]}>
            <View style={screen.titleBlock}>
              <Text style={[globalStyles.headerTitleBase, { color: colors.text }]}>{selectedAccountObj?.name}</Text>
-           <Text style={[
+              <Text style={[
             globalStyles.bodyTextBase,
              { color: colors.textSecondary }
              ]}>{t('cycle_screen.active_cycle')} {daysElapsed} {daysElapsed === 1 ? t('cycle_screen.days_singular') : t('cycle_screen.days')}
              </Text>
-           </View>
+            </View> 
 
            <TouchableOpacity style={[
             globalStyles.smallButton,
@@ -213,8 +229,8 @@ export default function CreditCycleScreen() {
 
 
           {/* HERO */}
-          <Animated.View entering={FadeInDown.delay(150).springify()}>
-            <HeroCard />
+            <Animated.View entering={FadeInDown.delay(150).springify()}>
+              <HeroCard />
           </Animated.View>
 
           {/* CHART */}
@@ -263,7 +279,7 @@ export default function CreditCycleScreen() {
                     <Text style={[globalStyles.bodyTextXs, { color: colors.primary, backgroundColor: colors.textSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 25 }]}>{t('cycle_screen.view_all')}</Text>
               </TouchableOpacity>
             </View>
-            {categories.map((c, i) => (
+                {categories.map((c, i) => (
               <CategoryRow key={c.label} item={c} delay={400 + i * 60} />
             ))}
               </LinearGradient>
@@ -280,7 +296,7 @@ export default function CreditCycleScreen() {
 
           {/* SPECIAL BUCKETS */}
             <CollapsibleSection title="Flujo especial" initialExpanded={true} customStyles={{ borderColor: colors.warning, backgroundColor: colors.surfaceSecondary }}>
-          {(['rollover', 'buffer'] as BucketType[]).map((id, i) => (
+              {(['rollover', 'buffer'] as BucketType[]).map((id, i) => (
             <BucketCard key={id} bucket={buckets[id]} index={i + 3} />
           ))}
             </CollapsibleSection>

@@ -10,7 +10,6 @@ import {
 import { Text, useTheme } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, addDays, subDays, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
 import Animated, {
   FadeInDown,
   FadeInUp,
