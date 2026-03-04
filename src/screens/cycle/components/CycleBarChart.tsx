@@ -132,7 +132,7 @@ export function CycleBarChart() {
               {t('cycle_screen.spending_rate')}
             </Text>
             <Text style={[globalStyles.bodyTextLg, { color: colors.textSecondary }]}>
-              {t('cycle_screen.real_vs_ideal')}
+              {t('cycle_screen.ideal_vs_exceeded', 'Recomendado vs Excedido')}
             </Text>
           </View>
           {/* Media de gasto diario */}
@@ -219,8 +219,8 @@ export function CycleBarChart() {
                   color: selectedData.isOverAcc ? colors.expense : colors.income,
                 }]}>
                   {selectedData.isOverAcc
-                    ? `+${currencySymbol}${formatCurrency(selectedData.realAcc - selectedData.idealAcc)} ${t('cycle_screen.over_budget', 'sobre presupuesto')}`
-                    : `-${currencySymbol}${formatCurrency(selectedData.idealAcc - selectedData.realAcc)} ${t('cycle_screen.under_budget', 'bajo presupuesto')}`
+                    ? `-${currencySymbol}${formatCurrency(selectedData.realAcc - selectedData.idealAcc)} ${t('cycle_screen.over_budget', 'sobre presupuesto')}`
+                    : `+${currencySymbol}${formatCurrency(selectedData.idealAcc - selectedData.realAcc)} ${t('cycle_screen.under_budget', 'bajo presupuesto')}`
                   }
                 </Text>
               </View>
@@ -240,7 +240,7 @@ export function CycleBarChart() {
         <View style={styles.metaRow}>
           {[
             { c: colors.income,  l: 'ideal_spending' },
-            { c: colors.expense, l: 'your_spending'  },
+            { c: colors.expense, l: 'exceeded_spending' },
           ].map((item) => (
             <View key={item.l} style={[styles.pill, { backgroundColor: colors.surfaceSecondary + '60' }]}>
               <View style={[styles.pillDot, { backgroundColor: item.c }]} />

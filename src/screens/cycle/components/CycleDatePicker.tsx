@@ -2,138 +2,185 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Text, ThemeProvider, useTheme } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
+import { startOfDay, differenceInDays, eachDayOfInterval } from 'date-fns';
 
-// Importa tus colores y store
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useCycleStore } from '../../../stores/useCycleStore';
 import { selectActiveCycle } from '../selectors/cycleSelectors';
+import { t } from 'i18next';
+
+const MIN_CYCLE_DAYS = 7;
 
 export function CycleDatePicker() {
   const paperTheme = useTheme();
-
   const themeMode = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const isDark = themeMode === 'dark';
   const colors = useMemo(() => isDark ? darkTheme : lightTheme, [isDark]);
 
-  // SOLO necesitamos estado local para abrir/cerrar el modal
   const [open, setOpen] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  // 1. Obtenemos la cuenta seleccionada y las acciones
   const selectedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
   const startNewCycle = useCycleStore((s) => s.startNewCycle);
+  const allCycles = useCycleStore((s) => s.cycles);
 
-  //  Obtenemos el ciclo activo directamente del store
   const activeCycle = useCycleStore((state) => selectActiveCycle(selectedCycleAccount)(state));
 
-  // 3. Derivamos las fechas para pasarlas al modal y mostrarlas en la UI
   const currentStartDate = activeCycle?.startDate ? new Date(activeCycle.startDate) : undefined;
   const currentEndDate = activeCycle?.endDate ? new Date(activeCycle.endDate) : undefined;
 
-  // 4. Callback: Al confirmar, creamos el ciclo en el store.
-  // Al hacer esto, "activeCycle" cambiará automáticamente y la UI se actualizará sin useEffects.
+  const today = startOfDay(new Date());
+
+  // ── FECHAS BLOQUEADAS ────────────────────────────────────────────────────
+  // disabledDates forma parte de validRange en react-native-paper-dates.
+  // Los días de ciclos cerrados se pasan como disabledDates dentro de validRange
+  // y el calendario los pinta automáticamente como no seleccionables.
+  const disabledDates = useMemo(() => {
+    const closedCycles = allCycles.filter(
+      (c) => c.accountId === selectedCycleAccount && c.status === 'closed'
+    );
+    const dates: Date[] = [];
+    for (const cycle of closedCycles) {
+      const start = startOfDay(new Date(cycle.startDate));
+      const end = startOfDay(new Date(cycle.endDate));
+      try {
+        eachDayOfInterval({ start, end }).forEach((d) => dates.push(d));
+      } catch {
+        // eachDayOfInterval lanza si start > end — ignoramos ciclos corruptos
+      }
+    }
+    return dates;
+  }, [allCycles, selectedCycleAccount]);
+
+  // ── RANGO VÁLIDO PARA EL PICKER ──────────────────────────────────────────
+  // startDate = hoy → bloquea fechas pasadas.
+  // disabledDates → días de ciclos cerrados, pintados en gris en el calendario.
+  const validRange = useMemo(() => ({
+    startDate: today,
+    disabledDates,
+  }), [today.toDateString(), disabledDates]);
+
+  // ── CONFIRMACIÓN ─────────────────────────────────────────────────────────
   const onConfirmRange = useCallback(
     ({ startDate, endDate }: { startDate: Date | undefined; endDate: Date | undefined }) => {
-      setOpen(false);
+      setValidationError(null);
 
-      if (startDate && endDate && selectedCycleAccount) {
-        const startCycleData = {
-          startDate,
-          endDate,
-          cutoffDate: endDate, // O lógica ajustada (ej. subDays(endDate, 5))
-          baseBudget: 0,
-          accountId: selectedCycleAccount, 
-        };
-
-        startNewCycle(startCycleData);
+      if (!startDate || !endDate || !selectedCycleAccount) {
+        setOpen(false);
+        return;
       }
+
+      const days = differenceInDays(endDate, startDate) + 1;
+
+      // Validar mínimo de días (sin máximo)
+      if (days < MIN_CYCLE_DAYS) {
+        setValidationError(
+          t('cycle_screen.min_cycle_error', `El ciclo debe tener al menos ${MIN_CYCLE_DAYS} días`)
+        );
+        // Dejamos el modal abierto para que el usuario corrija
+        return;
+      }
+
+      // Validar que ningún día del rango seleccionado coincida con un ciclo cerrado
+      const selectedDays = eachDayOfInterval({ start: startOfDay(startDate), end: startOfDay(endDate) });
+      const overlaps = selectedDays.some((sd) =>
+        disabledDates.some((dd) => dd.getTime() === sd.getTime())
+      );
+      if (overlaps) {
+        setValidationError(
+          t('cycle_screen.overlap_error', 'El rango seleccionado incluye días de un ciclo anterior')
+        );
+        return;
+      }
+
+      setOpen(false);
+      startNewCycle({
+        startDate,
+        endDate,
+        cutoffDate: endDate,
+        baseBudget: 0,
+        accountId: selectedCycleAccount,
+      });
     },
-    [selectedCycleAccount, startNewCycle]
+    [selectedCycleAccount, startNewCycle, disabledDates]
   );
 
+  const onDismiss = useCallback(() => {
+    setOpen(false);
+    setValidationError(null);
+  }, []);
+
+  // ── TEMA DEL PICKER ──────────────────────────────────────────────────────
   const datePickerTheme = useMemo(() => ({
-    ...paperTheme, 
-    roundness: 12, 
+    ...paperTheme,
+    roundness: 12,
     colors: {
       ...paperTheme.colors,
-      primary: colors.accent, 
-      surface: colors.surface, 
-      onSurface: colors.text, 
-      primaryContainer: colors.accent, 
-      onPrimaryContainer: colors.text, 
-      onSurfaceVariant: colors.text, 
+      primary: colors.accent,
+      surface: colors.surface,
+      onSurface: colors.text,
+      primaryContainer: colors.accent,
+      onPrimaryContainer: colors.text,
+      onSurfaceVariant: colors.text,
     },
     fonts: {
       ...paperTheme.fonts,
-      labelSmall: {
-        ...paperTheme.fonts.labelSmall,
-        fontFamily: 'Tinos-Regular',
-        fontSize: 14, 
-        letterSpacing: 0.5,
-      },
-      titleSmall: {
-        ...paperTheme.fonts.titleSmall,
-        fontFamily: 'FiraSans-Regular',
-        fontSize: 16, 
-      },
-      labelMedium: {
-        ...paperTheme.fonts.labelMedium,
-        fontFamily: 'Tinos-Regular',
-        fontSize: 18, 
-      },
+      labelSmall: { ...paperTheme.fonts.labelSmall, fontFamily: 'Tinos-Regular', fontSize: 14, letterSpacing: 0.5 },
+      titleSmall: { ...paperTheme.fonts.titleSmall, fontFamily: 'FiraSans-Regular', fontSize: 16 },
+      labelMedium: { ...paperTheme.fonts.labelMedium, fontFamily: 'Tinos-Regular', fontSize: 18 },
       labelLarge: {
         ...paperTheme.fonts.labelLarge,
         fontFamily: 'FiraSans-Regular',
-        fontSize: 14, 
-        backgroundColor: colors.text, 
-        borderRadius: 25, 
+        fontSize: 14,
+        backgroundColor: colors.text,
+        borderRadius: 25,
         paddingHorizontal: 12,
         paddingVertical: 6,
-        color: colors.surface, 
+        color: colors.surface,
       },
-      bodySmall: {
-        ...paperTheme.fonts.bodySmall,
-        fontFamily: 'FiraSans-Bold',
-        fontSize: 16, 
-      },
-      titleLarge: {
-        ...paperTheme.fonts.titleLarge,
-        fontFamily: 'FiraSans-Regular',
-        fontSize: 24, 
-      },
-    }
-  }), [paperTheme, colors, isDark]);
+      bodySmall: { ...paperTheme.fonts.bodySmall, fontFamily: 'FiraSans-Bold', fontSize: 16 },
+      titleLarge: { ...paperTheme.fonts.titleLarge, fontFamily: 'FiraSans-Regular', fontSize: 24 },
+    },
+  }), [paperTheme, colors]);
 
   return (
     <ThemeProvider theme={datePickerTheme}>
       <View style={styles.container}>
-        {/* Botón para abrir el selector */}
-        <TouchableOpacity 
-          style={[styles.button, { backgroundColor: colors.surfaceSecondary }]} 
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.surfaceSecondary }]}
           onPress={() => setOpen(true)}
         >
           <Text style={{ color: colors.text, fontWeight: 'bold' }}>
             {currentStartDate && currentEndDate
-              ? `${currentStartDate.toLocaleDateString()} - ${currentEndDate.toLocaleDateString()}` 
-              : 'Seleccionar ciclo'}
+              ? `${currentStartDate.toLocaleDateString()} - ${currentEndDate.toLocaleDateString()}`
+              : t('cycle_screen.select_cycle', 'Seleccionar ciclo')
+            }
           </Text>
         </TouchableOpacity>
 
-        {/* Modal de React Native Paper Dates */}
+        {/* Error de validación inline */}
+        {validationError && (
+          <Text style={[styles.errorText, { color: colors.expense }]}>
+            {validationError}
+          </Text>
+        )}
+
         <DatePickerModal
           locale={language}
           mode="range"
           visible={open}
-          onDismiss={() => setOpen(false)}
-          startDate={currentStartDate} // Pasamos la fecha derivada del store
-          endDate={currentEndDate}     // Pasamos la fecha derivada del store
+          onDismiss={onDismiss}
+          startDate={currentStartDate}
+          endDate={currentEndDate}
           onConfirm={onConfirmRange}
-
-          saveLabel="Confirmar"
-          label="Seleccionar Periodo"
-          startLabel="Desde"
-          endLabel="Hasta"
+          // Rango válido: hoy → hoy + 31 días (bloquea pasado y > 31 días)
+          validRange={validRange}
+          saveLabel={t('common.confirm', 'Confirmar')}
+          label={t('cycle_screen.select_period', 'Seleccionar Periodo')}
+          startLabel={t('common.from', 'Desde')}
+          endLabel={t('common.to', 'Hasta')}
           animationType="fade"
           uppercase={false}
         />
@@ -145,7 +192,7 @@ export function CycleDatePicker() {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
-    alignItems: 'flex-start', // Opcional, ajústalo según el diseño original
+    alignItems: 'flex-start',
   },
   button: {
     paddingHorizontal: 16,
@@ -153,5 +200,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(150,150,150,0.2)',
-  }
+  },
+  errorText: {
+    fontSize: 11,
+    fontFamily: 'FiraSans-Regular',
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
 });

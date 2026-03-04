@@ -493,7 +493,7 @@
     "fixed_upcoming": "Fijos futuros",
     "budget": "Presupuesto",
     "spending_rate": "Ritmo de gasto",
-    "real_vs_ideal": "Real vs. Ideal",
+    "ideal_vs_exceeded": "Ideal vs Excedido",
     "saved": "¡Guardado!",
     "total_saved": "TOTAL GUARDADO",
     "rollover": "Rollover",
@@ -504,6 +504,7 @@
     "avg_per_day_sub": "Gasto promedio por día basado en tu ciclo actual.",
     "ideal_spending": "Gasto ideal",
     "your_spending": "Tu gasto",
+    "exceeded_spending": "Gasto excedido",
     "by_category": "Por categoría",
     "no_transactions": "No hay transacciones en este ciclo",
     "fixed_expenses": "Gastos fijos",
@@ -531,6 +532,7 @@
     "touch_to_allocate": "Toca para distribuir tu sobrante",
     "unallocated_surplus": "Tienes ${pendingSurplusCycle.surplusAmount} sin asignar",
     "under_budget": "¡Estás por debajo del presupuesto!",
-    "over_budget": "¡Estás por encima del presupuesto!"
+    "over_budget": "¡Estás por encima del presupuesto!",
+    "days_left": "días restantes"
     }
 }

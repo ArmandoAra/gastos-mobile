@@ -82,7 +82,7 @@ export interface CycleStoreActions {
 
   addExpense: (cycleId: string, amount: number) => void;
 
-  closeCycle: (cycleId: string) => {
+  closeCycle: (cycleId: string, finalTotalSpent?: number) => {
     surplus: number;
     deficit: number;
     status: 'surplus' | 'deficit' | 'exact';
@@ -181,18 +181,21 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         });
       },
 
-      closeCycle: (cycleId) => {
+      closeCycle: (cycleId, finalTotalSpent?: number) => { // <-- Añade este parámetro opcional
         const cycle = get().cycles.find((c) => c.id === cycleId);
         if (!cycle) return { surplus: 0, deficit: 0, status: 'exact' };
 
-        const surplus = computeSurplus(cycle);
+        // Si mandan el gasto final, lo usamos para el cálculo
+        const finalSpent = finalTotalSpent !== undefined ? finalTotalSpent : cycle.totalSpent;
+        const surplus = cycle.effectiveBudget - finalSpent; 
 
         set((state) => {
           const c = state.cycles.find((c) => c.id === cycleId);
           if (c) {
             c.status = 'closed';
+            c.totalSpent = finalSpent; // Sincronizamos el gasto real final
             c.surplusAmount = surplus > 0 ? surplus : 0;
-            state.activeCycles[c.accountId] = null; // Limpiar el activo de SU cuenta
+            state.activeCycles[c.accountId] = null; 
           }
         });
 

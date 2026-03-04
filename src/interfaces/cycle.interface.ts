@@ -23,11 +23,19 @@ export interface Cycle {
   // Cierre de ciclo
   status: CycleStatus;
   surplus_amount?: number;        // Cuánto sobró al cerrar
-  surplus_destination?: string;   // A qué cofre se fue (ej. 'savings', 'rollover')
   
   // Auditoría
   created_at: string; 
   updated_at: string; 
+}
+
+export interface SurplusDestination {
+  id: string;
+  cycleId: string;
+  bucketId: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type BucketType = 'rollover' | 'savings' | 'emergency' | 'investment' | 'buffer';

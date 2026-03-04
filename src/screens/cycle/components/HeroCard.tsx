@@ -56,6 +56,7 @@ export function HeroCard() {
     spendProgress,
     safeToSpendToday,
     totalSpentInCycle,
+    remainingDays,
     rollover,
     totalSaved,
     bufferBalance,
@@ -111,7 +112,11 @@ export function HeroCard() {
                 style={[globalStyles.headerTitleSm, { color: colors.text }]}
                 accessibilityRole="header"
               >
-                {t('cycle_screen.active_cycle')}
+                {t('cycle_screen.active_cycle')} 
+              </Text>
+              <Text style={[globalStyles.bodyTextSm, { color: colors.textSecondary }]} accessibilityLabel={activeCycle ? `${remainingDays} ${t('cycle_screen.days_left')}` : t('cycle_screen.no_active_cycle')}
+              >
+                {activeCycle ? `(${remainingDays} ${t('cycle_screen.days_left')})` : ''}
               </Text>
               {activeCycle ? (
                 <Text
@@ -170,6 +175,7 @@ export function HeroCard() {
 
           {/* ─── 3. MÉTRICAS DEL CICLO ─── */}
           <View style={[hero.cycleStats, { backgroundColor: colors.accent + '40' }]}>
+
             <View
               style={hero.stat}
               accessible={true}
@@ -208,7 +214,7 @@ export function HeroCard() {
               <View
                 style={[
                   hero.budgetInputContainer,
-                  { backgroundColor: colors.surfaceSecondary + '40' },
+                  { backgroundColor: colors.text, elevation: 5 },
                 ]}
               >
                 <Text style={[globalStyles.bodyTextBase, { color: colors.income }]}>
@@ -416,7 +422,8 @@ const hero = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderRadius: 25,
-    padding: isSmallScreen ? 10 : 14,
+    padding: isSmallScreen ? 2 : 4,
+    paddingVertical: isSmallScreen ? 8 : 12,
     marginTop: 4,
   },
   divider: {
@@ -433,7 +440,7 @@ const hero = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
-    paddingHorizontal: 6,
+    paddingHorizontal: 2,
     paddingVertical: Platform.OS === 'ios' ? 4 : 0, // Ajuste sutil por plataforma
     minWidth: isSmallScreen ? 60 : 70,
     maxWidth: '100%',
