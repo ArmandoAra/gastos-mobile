@@ -10,7 +10,6 @@ import {
   selectTotalSaved,
 } from '../selectors/cycleSelectors';
 import useDataStore from '../../../stores/useDataStore';
-import { calculateDailyExpensesAcc } from '../../../utils/helpers';
 
 export const useCreditCycleScreen = () => {
   const [todayString, setTodayString] = useState(new Date().toDateString());
@@ -19,7 +18,7 @@ export const useCreditCycleScreen = () => {
   const transactions = useDataStore((s) => s.transactions);
   const allAccounts = useDataStore((s) => s.allAccounts);
   const selectedAccountGlobal = useDataStore((s) => s.selectedAccount);
-  
+
   // ── FUENTE DE VERDAD ÚNICA PARA LA CUENTA ──
   // Leemos y escribimos DIRECTAMENTE en Zustand. Cero estados locales duplicados.
   const storedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
@@ -32,10 +31,9 @@ export const useCreditCycleScreen = () => {
   // Garantizamos que el store se inicialice con la cuenta actual sin causar loops
   useEffect(() => {
     if (!storedCycleAccount && selectedAccountGlobal) {
-       setAccountSelected(selectedAccountGlobal);
+      setAccountSelected(selectedAccountGlobal);
     }
   }, [storedCycleAccount, selectedAccountGlobal, setAccountSelected]);
-
 
   // ── DATOS DEL STORE ──
   const activeCycle = useCycleStore((state) => selectActiveCycle(accountSelected)(state));
@@ -59,6 +57,13 @@ export const useCreditCycleScreen = () => {
     return differenceInDays(new Date(activeCycle.endDate), new Date(activeCycle.startDate));
   }, [activeCycle?.startDate, activeCycle?.endDate]);
 
+  const remainingDays = useMemo(() => {
+    if (!activeCycle) return 0;
+    const today = new Date();
+    const end = new Date(activeCycle.endDate);
+    return differenceInDays(end, today);
+  }, [activeCycle?.endDate, todayString]);
+
   const timeProgress = useMemo(() => {
     if (!activeCycle) return 0;
     const total = new Date(activeCycle.endDate).getTime() - new Date(activeCycle.startDate).getTime();
@@ -73,7 +78,7 @@ export const useCreditCycleScreen = () => {
       new Date(activeCycle.startDate),
       new Date(activeCycle.endDate)
     );
-    return cycleTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    return cycleTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
   }, [activeCycle, accountSelected, transactions, getAccoutTransactionsByCycle]);
 
   const spendProgress = useMemo(() => {
@@ -85,82 +90,79 @@ export const useCreditCycleScreen = () => {
     if (!activeCycle) return 0;
     const elapsedDays = differenceInDays(new Date(), new Date(activeCycle.startDate)) + 1;
     const totalDays = differenceInDays(new Date(activeCycle.endDate), new Date(activeCycle.startDate)) + 1;
-    
-    // Asumiendo que fixedExpenses es un number en tu interfaz de Cycle
     const variableBudget = activeCycle.baseBudget - (activeCycle.fixedExpenses || 0);
     const expectedSpendByToday = (variableBudget / totalDays) * elapsedDays;
-    
     return parseFloat((expectedSpendByToday - totalSpentInCycle).toFixed(2));
   }, [activeCycle, totalSpentInCycle]);
 
- const idealSpendingData = useMemo(() => {
-    if (!activeCycle) return [];
+  // ── DATOS PARA LA GRÁFICA ──────────────────────────────────────────────────
+  // REGLA CRÍTICA gifted-charts: data y data2 DEBEN tener exactamente la
+  // misma longitud o data2 simplemente no se renderiza sin error visible.
+  //
+  // FIX: generamos AMBOS arrays en el MISMO loop — longitud idéntica garantizada.
+  // Antes eran dos useMemo independientes que podían divergir (calculateDailyExpensesAcc
+  // omite días sin transacciones, idealSpendingData incluye todos los días → lengths distintos).
+  //
+  // También normalizamos a valores positivos: gifted-charts no puede
+  // mezclar eje negativo (real) con positivo (ideal) en el mismo chart.
+  const { idealSpendingData, realSpendingData } = useMemo(() => {
+    if (!activeCycle) return { idealSpendingData: [], realSpendingData: [] };
 
     const start = new Date(activeCycle.startDate);
     const end = new Date(activeCycle.endDate);
     const today = new Date();
+    const lastDate = today < end ? today : end;
 
-    // Limitamos el ciclo hasta hoy (o hasta el endDate si el ciclo ya terminó)
-    const lastDate = today > end ? end : today;
+    // Días a mostrar: desde el inicio hasta hoy (o fin de ciclo si ya terminó)
+    const daysToShow = Math.max(differenceInDays(lastDate, start) + 1, 1);
+    const totalDays = Math.max(differenceInDays(end, start) + 1, 1);
 
-    const totalDays = differenceInDays(end, start) + 1;
-    const elapsedDays = differenceInDays(lastDate, start) + 1;
-
-    // Presupuesto destinado solo a gastos variables
     const variableBudget = activeCycle.baseBudget - (activeCycle.fixedExpenses || 0);
     const idealDailyRate = variableBudget / totalDays;
 
-    const idealData = [];
-
-    for (let i = 0; i < elapsedDays; i++) {
-      const currentDate = addDays(start, i);
-      const dayLabel = `D${currentDate.getDate()}`; 
-      const accumulatedIdeal = idealDailyRate * (i + 1);
-
-      idealData.push({
-        label: dayLabel,
-        value: parseFloat(accumulatedIdeal.toFixed(2)),
-      });
+    // Pre-agrupar transacciones por fecha local → O(n) en vez de O(n²)
+    const cycleTransactions = getAccoutTransactionsByCycle(accountSelected, start, end);
+    const spendByDay: Record<string, number> = {};
+    for (const tx of cycleTransactions) {
+      const d = new Date(tx.date);
+      // Fecha LOCAL para evitar desfases por zona horaria UTC (toISOString da UTC)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      spendByDay[key] = (spendByDay[key] || 0) + Math.abs(tx.amount);
     }
 
-    return idealData;
-  }, [activeCycle]);
+    const ideal: { value: number; label: string }[] = [];
+    const real: { value: number; label: string }[] = [];
+    let cumulativeReal = 0;
 
-  // ─── 2. GRÁFICO: GASTO REAL ACUMULADO ───
-  const realSpendingData = useMemo(() => {
-    if (!activeCycle) return [];
+    for (let i = 0; i < daysToShow; i++) {
+      const day = addDays(start, i);
+      const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+      const label = `D${day.getDate()}`;
 
-    const start = new Date(activeCycle.startDate);
-    const end = new Date(activeCycle.endDate);
-    const today = new Date();
-    const lastDate = today > end ? end : today;
+      // Mismo índice, mismo label → arrays siempre en sync
+      ideal.push({ label, value: parseFloat((idealDailyRate * (i + 1)).toFixed(2)) });
 
-    // Obtenemos las transacciones específicas de este ciclo
-    const cycleTransactions = getAccoutTransactionsByCycle(
-      accountSelected,
-      start,
-      end
-    );
+      cumulativeReal += spendByDay[key] || 0;
+      real.push({ label, value: parseFloat(cumulativeReal.toFixed(2)) });
+    }
 
-    // Le pasamos las transacciones y las fechas a tu helper mejorado
-    return calculateDailyExpensesAcc(cycleTransactions, start, lastDate);
+    return { idealSpendingData: ideal, realSpendingData: real };
   }, [activeCycle, accountSelected, transactions, getAccoutTransactionsByCycle]);
-
 
   const avgSurplus = useMemo(
     () => history.length > 0
-        ? history.reduce((a, c) => a + (c.surplusAmount ?? 0), 0) / history.length
-        : 0,
+      ? history.reduce((a, c) => a + (c.surplusAmount ?? 0), 0) / history.length
+      : 0,
     [history]
   );
 
   const pendingSurplusCycle = useMemo(
     () => cycles.find(
-        (c) => c.status === 'closed' &&
-          !c.surplusDestination &&
-          (c.surplusAmount ?? 0) > 0 &&
-          c.accountId === accountSelected
-      ),
+      (c) => c.status === 'closed' &&
+        !c.surplusDestination &&
+        (c.surplusAmount ?? 0) > 0 &&
+        c.accountId === accountSelected
+    ),
     [cycles, accountSelected]
   );
 
@@ -192,13 +194,14 @@ export const useCreditCycleScreen = () => {
   return {
     allAccounts,
     accountSelected,
-    setAccountSelected, // Esto ahora llama a Zustand directo, evitando loops de estado local
+    setAccountSelected,
     selectedAccountObj,
     isAccountSelectorOpen,
     setIsAccountSelectorOpen,
     activeCycle,
     isActiveCycle,
     daysElapsed,
+    remainingDays,
     timeProgress,
     spendProgress,
     safeToSpendToday,
@@ -206,11 +209,8 @@ export const useCreditCycleScreen = () => {
     rollover,
     totalSaved,
     bufferBalance,
-
-    // Datos para el gráfico
     idealSpendingData,
-realSpendingData,
-
+    realSpendingData,
     avgSurplus,
     buckets,
     history,

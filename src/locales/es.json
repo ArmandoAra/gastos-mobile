@@ -529,6 +529,8 @@
     "you_would_have": "Te sobrarían",
     "tap_to_close_cycle": "Toca aquí para cerrar el ciclo y asignar tu sobrante",
     "touch_to_allocate": "Toca para distribuir tu sobrante",
-    "unallocated_surplus": "Tienes ${pendingSurplusCycle.surplusAmount} sin asignar"
+    "unallocated_surplus": "Tienes ${pendingSurplusCycle.surplusAmount} sin asignar",
+    "under_budget": "¡Estás por debajo del presupuesto!",
+    "over_budget": "¡Estás por encima del presupuesto!"
     }
 }

@@ -471,7 +471,7 @@ export function calculateDailyExpensesAcc(
         // 3. Empujamos el total ACUMULADO al gráfico
         realData.push({
             label: dayLabel,
-            value: parseFloat(runningTotal.toFixed(2)),
+            value: parseFloat(Math.abs(runningTotal).toFixed(2)),
         });
     }
 

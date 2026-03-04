@@ -20,7 +20,7 @@ import { t } from 'i18next';
 import { darkTheme, lightTheme } from '../../theme/colors';
 import { globalStyles } from '../../theme/global.styles';
 import { AccountModalSelector } from '../../components/forms/Inputs/AccountModalSelector';
-import { CycleLineChart } from './components/CycleLineChart';
+import { CycleBarChart } from './components/CycleBarChart';
 import { FixedExpenseRow } from './components/SpendingFixRow';
 import { CloseCycleCard } from './components/CloseCycleCard';
 import { HeroCard } from './components/HeroCard';
@@ -70,17 +70,8 @@ export default function CreditCycleScreen() {
     selectedAccountObj,
     isAccountSelectorOpen,
     setIsAccountSelectorOpen,
-    activeCycle,
     isActiveCycle,
     daysElapsed,
-    timeProgress,
-    spendProgress,
-    safeToSpendToday,
-    totalSpentInCycle,
-    rollover,
-    totalSaved,
-    bufferBalance,
-    avgSurplus,
     buckets,
     history,
     pendingSurplusCycle,
@@ -177,21 +168,11 @@ export default function CreditCycleScreen() {
           >
             {/* HERO — recibe todos los datos calculados como props */}
             <Animated.View entering={FadeInDown.delay(150).springify()}>
-              <HeroCard
-                activeCycle={activeCycle}
-                timeProgress={timeProgress}
-                spendProgress={spendProgress}
-                safeToSpendToday={safeToSpendToday}
-                totalSpentInCycle={totalSpentInCycle}
-                rollover={rollover}
-                totalSaved={totalSaved}
-                bufferBalance={bufferBalance}
-                avgSurplus={avgSurplus}
-              />
+              <HeroCard />
             </Animated.View>
 
             {/* CHART */}
-            <CycleLineChart />
+            <CycleBarChart />
 
             <View style={{ height: 16 }} />
 

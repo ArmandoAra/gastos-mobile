@@ -32,6 +32,7 @@ import {
 } from '../../../constants/icons';
 import { CycleDatePicker } from './CycleDatePicker';
 import { formatCycleDate } from '../../../utils/formatters';
+import { useCreditCycleScreen } from '../hooks/useCreditCycleScreen';
 
 // Para ajustar dinámicamente según el tamaño de la pantalla
 const { width } = Dimensions.get('window');
@@ -49,17 +50,16 @@ interface HeroCardProps {
   avgSurplus: number;
 }
 
-export function HeroCard({
-  activeCycle,
-  timeProgress,
-  spendProgress,
-  safeToSpendToday,
-  totalSpentInCycle,
-  rollover,
-  totalSaved,
-  bufferBalance,
-  avgSurplus,
-}: HeroCardProps) {
+export function HeroCard() {
+  const { activeCycle,
+    timeProgress,
+    spendProgress,
+    safeToSpendToday,
+    totalSpentInCycle,
+    rollover,
+    totalSaved,
+    bufferBalance,
+    avgSurplus, } = useCreditCycleScreen();
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
@@ -87,13 +87,14 @@ export function HeroCard({
     Keyboard.dismiss();
   };
 
+
   const isOverpacing = spendProgress > timeProgress;
 
   return (
     <>
       <Animated.View entering={FadeInDown.delay(50).springify()}>
         <LinearGradient
-          colors={[colors.primary, theme === 'dark' ? colors.accentSecondary : colors.accent]}
+          colors={[colors.background, theme === 'dark' ? colors.accentSecondary : colors.accent]}
           style={hero.card}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -168,7 +169,7 @@ export function HeroCard({
           <PacingBar timeProgress={timeProgress} spendProgress={spendProgress} />
 
           {/* ─── 3. MÉTRICAS DEL CICLO ─── */}
-          <View style={[hero.cycleStats, { backgroundColor: colors.surfaceSecondary + '40' }]}>
+          <View style={[hero.cycleStats, { backgroundColor: colors.accent + '40' }]}>
             <View
               style={hero.stat}
               accessible={true}
@@ -425,7 +426,7 @@ const hero = StyleSheet.create({
   stat: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 2, // Previene que textos largos se peguen al divider
+    paddingHorizontal: 1, // Previene que textos largos se peguen al divider
   },
   budgetInputContainer: {
     flexDirection: 'row',
