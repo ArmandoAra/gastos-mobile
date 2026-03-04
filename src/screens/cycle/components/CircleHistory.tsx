@@ -2,16 +2,16 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {  View ,Text, StyleSheet} from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { selectCycleHistory } from "../../../stores/useCycleStore";
 import { useMemo } from "react";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { darkTheme, lightTheme } from "../../../theme/colors";
 import { t } from "i18next";
 import { globalStyles } from "../../../theme/global.styles";
+import { selectCycleHistory } from "../selectors/cycleSelectors";
 
 
 
-export function CycleHistoryRow({ cycle, index }: { cycle: ReturnType<typeof selectCycleHistory>[0]; index: number }) {
+export function CycleHistoryRow({ cycle, index }: { cycle: ReturnType<ReturnType<typeof selectCycleHistory>>[0]; index: number }) {
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const surplus = cycle.surplusAmount ?? 0;
@@ -31,7 +31,7 @@ export function CycleHistoryRow({ cycle, index }: { cycle: ReturnType<typeof sel
           {cycle.rolloverBonus > 0 ? ` (+$${cycle.rolloverBonus} ${t('cycle_screen.rollover')})` : ''}
         </Text>
       </View>
-      <Text style={[hist_s.amount, { color: hasSurplus ? colors.success : colors.error }]}>
+      <Text style={[globalStyles.amountXs, { color: hasSurplus ? colors.success : colors.error }]}>
         {hasSurplus ? '+' : '-'}${hasSurplus ? surplus : deficit}
       </Text>
     </Animated.View>
@@ -48,7 +48,4 @@ const hist_s = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   indicator: { width: 4, height: 36, borderRadius: 2 },
-  range: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  detail: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 },
-  amount: { fontSize: 16, fontWeight: '800', letterSpacing: -0.5 },
 });

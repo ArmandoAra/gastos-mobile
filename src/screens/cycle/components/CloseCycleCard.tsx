@@ -2,15 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { t } from "i18next";
 import { useMemo } from "react";
-import { TouchableOpacity, View, Text } from "react-native";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { FadeInDown } from "react-native-reanimated";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { useCycleStore } from "../../../stores/useCycleStore";
 import { darkTheme, lightTheme } from "../../../theme/colors";
 import { globalStyles } from "../../../theme/global.styles";
-import { rollover_s, SAFE_TO_SPEND } from "../CreditCycleScreen";
 import Animated from "react-native-reanimated";
 import * as Haptics from 'expo-haptics';
+
+import { useCreditCycleScreen } from "../hooks/useCreditCycleScreen";
 
 export function CloseCycleCard() {
   const theme = useSettingsStore((s) => s.theme);
@@ -20,6 +21,8 @@ export function CloseCycleCard() {
   const closeCycle = useCycleStore((s) => s.closeCycle);
   const activeCycleId = useCycleStore((s) => s.activeCycles);
   const clearAllCycleData = useCycleStore((s) => s.clearAllCycleData);
+  const rollover = useCreditCycleScreen().rollover;
+  const safeToSpendToday = useCreditCycleScreen().safeToSpendToday;
 
   function closeCycleHandler() {
 
@@ -55,7 +58,7 @@ export function CloseCycleCard() {
           <View >
             <Text style={[globalStyles.bodyTextXl, { color: colors.text, fontWeight: 'bold' }]}>🎯 {t("cycle_screen.plan_your_surplus")}</Text>
             <Text style={[globalStyles.bodyTextXl, { color: colors.text, fontWeight: 'bold' }]}>
-              {t("cycle_screen.if_you_close_today")}{'\n'}{t("cycle_screen.you_would_have")} ${SAFE_TO_SPEND}
+              {t("cycle_screen.if_you_close_today")}{'\n'}{t("cycle_screen.you_would_have")} ${safeToSpendToday.toFixed(2)} {t("cycle_screen.unallocated_surplus")}
             </Text>
             <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>{t("cycle_screen.tap_to_close_cycle")}</Text>
           </View>
@@ -67,3 +70,21 @@ export function CloseCycleCard() {
     </Animated.View>
   );
 }
+
+
+const rollover_s = StyleSheet.create({
+  card: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginVertical: 10,
+  },
+  gradient: {
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  arrow: {
+    marginLeft: 16,
+  },
+});

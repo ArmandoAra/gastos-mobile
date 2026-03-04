@@ -1,5 +1,8 @@
 import { enUS, es, ptBR } from "date-fns/locale";
 import { LanguageCode } from "../constants/languages";
+import { Transaction } from "../interfaces/data.interface";
+import { differenceInDays } from "date-fns/differenceInDays";
+import { addDays } from "date-fns/addDays";
 
 const locales = { es, en: enUS, pt: ptBR };
 const minYear = 1900;
@@ -38,19 +41,19 @@ export function joinAndSortTransactions(transactions: Transaction[]): Transactio
     );
 }
 
-export interface Transaction {
-    id: string,
-    description: string,
-    amount: number,
-    type: "income" | "expense",
-    date: Date, //Formato ISO 8601
-    category_icon_name: string, //Id del icono de la categoría para hacer que sea visual con el icono
-    account_id: string,
-    transaction_group_id?: string, //si pertenece a un grupo de transacciones va a tener un id de grupo
-    quantity?: number, //Para transacciones recurrentes
-    static_category_id?: string, //Para vincular con categorías predefinidas
-    user_category_id?: string, //Para categorías personalizadas
-}
+// export interface Transaction {
+//     id: string,
+//     description: string,
+//     amount: number,
+//     type: "income" | "expense",
+//     date: Date, //Formato ISO 8601
+//     category_icon_name: string, //Id del icono de la categoría para hacer que sea visual con el icono
+//     account_id: string,
+//     transaction_group_id?: string, //si pertenece a un grupo de transacciones va a tener un id de grupo
+//     quantity?: number, //Para transacciones recurrentes
+//     static_category_id?: string, //Para vincular con categorías predefinidas
+//     user_category_id?: string, //Para categorías personalizadas
+// }
 
 export function filterTransactionsBySpecificDay(
     transactions: Transaction[],
@@ -431,3 +434,46 @@ export function dataByYearMonthOrDay(year: number, month?: number | null, day?: 
     }
 }
 
+export function calculateDailyExpensesAcc(
+    transactions: Transaction[],
+    startDate: Date,
+    lastDate: Date // Puede ser 'today'
+): { value: number; label: string }[] {
+
+    const dailyExpensesMap: { [key: string]: number } = {};
+
+    // 1. Sumamos los gastos en sus respectivos días
+    transactions.forEach(transaction => {
+        if (transaction.type === 'expense') {
+            const date = new Date(transaction.date);
+            // Evitamos procesar gastos fuera del rango (ej. antes del inicio)
+            if (date >= startDate && date <= lastDate) {
+                const dayLabel = `D${date.getDate()}`;
+                dailyExpensesMap[dayLabel] = (dailyExpensesMap[dayLabel] || 0) + transaction.amount;
+            }
+        }
+    });
+
+    const elapsedDays = differenceInDays(lastDate, startDate) + 1;
+    const realData = [];
+    let runningTotal = 0;
+
+    // 2. Iteramos día por día desde el inicio hasta la fecha tope
+    for (let i = 0; i < elapsedDays; i++) {
+        const currentDate = addDays(startDate, i);
+        const dayLabel = `D${currentDate.getDate()}`;
+
+        // Si hubo gastos ese día, los sumamos al total acumulado
+        if (dailyExpensesMap[dayLabel]) {
+            runningTotal += dailyExpensesMap[dayLabel];
+        }
+
+        // 3. Empujamos el total ACUMULADO al gráfico
+        realData.push({
+            label: dayLabel,
+            value: parseFloat(runningTotal.toFixed(2)),
+        });
+    }
+
+    return realData;
+}

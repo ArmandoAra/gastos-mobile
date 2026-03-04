@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Text, ThemeProvider, useTheme } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -6,48 +6,44 @@ import { DatePickerModal } from 'react-native-paper-dates';
 // Importa tus colores y store
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useSettingsStore } from '../../../stores/settingsStore';
-import { selectActiveCycle, useCycleStore } from '../../../stores/useCycleStore';
+import { useCycleStore } from '../../../stores/useCycleStore';
+import { selectActiveCycle } from '../selectors/cycleSelectors';
 
 export function CycleDatePicker() {
-  // 1. Obtenemos el tema global de Paper (fuentes, animaciones, etc.)
   const paperTheme = useTheme();
-  
-  // 2. Obtenemos la preferencia del usuario desde tu store
+
   const themeMode = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const isDark = themeMode === 'dark';
   const colors = useMemo(() => isDark ? darkTheme : lightTheme, [isDark]);
 
-  // 3. Estados para el modal y las fechas
+  // SOLO necesitamos estado local para abrir/cerrar el modal
   const [open, setOpen] = useState(false);
-  const [range, setRange] = useState<{ startDate: Date | undefined; endDate: Date | undefined }>({
-    startDate: undefined,
-    endDate: undefined,
-  });
 
-  // 3. Acción para iniciar un nuevo ciclo (si es necesario)
+  // 1. Obtenemos la cuenta seleccionada y las acciones
   const selectedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
-  const cycles = useCycleStore((s) => s.cycles);
   const startNewCycle = useCycleStore((s) => s.startNewCycle);
 
-  useEffect(() => {
-    console.log('Ciclo activo:', selectedCycleAccount);
-    console.log('Ciclos actuales:', cycles);
-  }, [cycles, selectedCycleAccount]);
+  //  Obtenemos el ciclo activo directamente del store
+  const activeCycle = useCycleStore((state) => selectActiveCycle(selectedCycleAccount)(state));
 
-  // 4. Callback cuando el usuario confirma las fechas
+  // 3. Derivamos las fechas para pasarlas al modal y mostrarlas en la UI
+  const currentStartDate = activeCycle?.startDate ? new Date(activeCycle.startDate) : undefined;
+  const currentEndDate = activeCycle?.endDate ? new Date(activeCycle.endDate) : undefined;
+
+  // 4. Callback: Al confirmar, creamos el ciclo en el store.
+  // Al hacer esto, "activeCycle" cambiará automáticamente y la UI se actualizará sin useEffects.
   const onConfirmRange = useCallback(
     ({ startDate, endDate }: { startDate: Date | undefined; endDate: Date | undefined }) => {
       setOpen(false);
-      if (startDate && endDate) {
-        setRange({ startDate, endDate });
 
+      if (startDate && endDate && selectedCycleAccount) {
         const startCycleData = {
           startDate,
           endDate,
-          cutoffDate: endDate,
-          baseBudget: 0, // Puedes ajustar esto según tu lógica
-          accountId: selectedCycleAccount, // Asegúrate de pasar el accountId correcto
+          cutoffDate: endDate, // O lógica ajustada (ej. subDays(endDate, 5))
+          baseBudget: 0,
+          accountId: selectedCycleAccount, 
         };
 
         startNewCycle(startCycleData);
@@ -56,7 +52,7 @@ export function CycleDatePicker() {
     [selectedCycleAccount, startNewCycle]
   );
 
-const datePickerTheme = useMemo(() => ({
+  const datePickerTheme = useMemo(() => ({
     ...paperTheme, 
     roundness: 12, 
     colors: {
@@ -66,21 +62,16 @@ const datePickerTheme = useMemo(() => ({
       onSurface: colors.text, 
       primaryContainer: colors.accent, 
       onPrimaryContainer: colors.text, 
-
-      // ─── AQUI ESTÁ EL COLOR DE "Desde" y "Hasta" ───
       onSurfaceVariant: colors.text, 
     },
     fonts: {
       ...paperTheme.fonts,
-
-      // ─── AQUI ESTÁ LA FUENTE DE "Desde" y "Hasta" ───
       labelSmall: {
         ...paperTheme.fonts.labelSmall,
         fontFamily: 'Tinos-Regular',
-        fontSize: 14, // Ajusta el tamaño como prefieras
+        fontSize: 14, 
         letterSpacing: 0.5,
       },
-
       titleSmall: {
         ...paperTheme.fonts.titleSmall,
         fontFamily: 'FiraSans-Regular',
@@ -89,7 +80,7 @@ const datePickerTheme = useMemo(() => ({
       labelMedium: {
         ...paperTheme.fonts.labelMedium,
         fontFamily: 'Tinos-Regular',
-        fontSize: 18, // Este en realidad afecta al título principal superior
+        fontSize: 18, 
       },
       labelLarge: {
         ...paperTheme.fonts.labelLarge,
@@ -123,8 +114,8 @@ const datePickerTheme = useMemo(() => ({
           onPress={() => setOpen(true)}
         >
           <Text style={{ color: colors.text, fontWeight: 'bold' }}>
-            {range.startDate && range.endDate 
-              ? `${range.startDate.toLocaleDateString()} - ${range.endDate.toLocaleDateString()}` 
+            {currentStartDate && currentEndDate
+              ? `${currentStartDate.toLocaleDateString()} - ${currentEndDate.toLocaleDateString()}` 
               : 'Seleccionar ciclo'}
           </Text>
         </TouchableOpacity>
@@ -135,11 +126,10 @@ const datePickerTheme = useMemo(() => ({
           mode="range"
           visible={open}
           onDismiss={() => setOpen(false)}
-          startDate={range.startDate}
-          endDate={range.endDate}
+          startDate={currentStartDate} // Pasamos la fecha derivada del store
+          endDate={currentEndDate}     // Pasamos la fecha derivada del store
           onConfirm={onConfirmRange}
-          
-          // Textos personalizados
+
           saveLabel="Confirmar"
           label="Seleccionar Periodo"
           startLabel="Desde"
@@ -155,7 +145,7 @@ const datePickerTheme = useMemo(() => ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
-    alignItems: 'center',
+    alignItems: 'flex-start', // Opcional, ajústalo según el diseño original
   },
   button: {
     paddingHorizontal: 16,

@@ -24,4 +24,9 @@ export function formatRelativeDate(dateString: string, locale: string = 'es'): s
     return formatDate(dateString, 'PP', locale);
 }
 
+// obtiene la fecha y retorna un string con el formato "dd MMM" (ej. "05 Sep") y en el idioma correcto
+export function formatCycleDate(dateString: string, locale: string = 'es'): string {
+    return formatDate(dateString, 'dd MMM', locale);
+}
+
 // export function 

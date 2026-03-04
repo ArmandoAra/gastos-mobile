@@ -511,6 +511,7 @@
     "deposit_short": "dep",
     "last": "Último",
     "deposit_history": "Historial de depósitos",
+    "no_active_cycle": "No hay un ciclo activo para esta cuenta.",
     "no_deposits_yet": "Sin depósitos aún",
     "allocated_to": "Asignado a",
     "max_available": "Máx. disponible",
@@ -526,6 +527,8 @@
     "if_you_close_today": "Si cierras hoy, ",
     "surplus_planning_description": "Decide cómo quieres usar el dinero que no gastaste este ciclo.",
     "you_would_have": "Te sobrarían",
-    "tap_to_close_cycle": "Toca aquí para cerrar el ciclo y asignar tu sobrante"
+    "tap_to_close_cycle": "Toca aquí para cerrar el ciclo y asignar tu sobrante",
+    "touch_to_allocate": "Toca para distribuir tu sobrante",
+    "unallocated_surplus": "Tienes ${pendingSurplusCycle.surplusAmount} sin asignar"
     }
 }

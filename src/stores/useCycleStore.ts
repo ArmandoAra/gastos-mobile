@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { createMMKV } from 'react-native-mmkv';
-import { subDays, set } from 'date-fns';
+import { subDays } from 'date-fns';
+import { DEFAULT_BUCKETS } from '../constants/cycle';
 
 // ─── MMKV Storage adapter for Zustand persist ────────────────────────────────
 export const cycleStorage = createMMKV({
@@ -61,6 +62,7 @@ export interface CycleStoreState {
   activeCycles: Record<string, string | null>; // { accountId: cycleId }
   bucketsByAccount: Record<string, Record<BucketType, Bucket>>; // { accountId: { savings: {...}, rollover: {...} } }
   bufferByAccount: Record<string, number>; // { accountId: balance }
+  updateCycleBudget: (cycleId: string, newBudget: number) => void;
   selectedCycleAccount: string; // Para UI, no es estrictamente necesario pero facilita las cosas
 }
 
@@ -101,19 +103,6 @@ export interface CycleStoreActions {
 
   clearAllCycleData: () => void;
 }
-
-// ─── DEFAULTS ────────────────────────────────────────────────────────────────
-
-const DEFAULT_BUCKETS: Record<BucketType, Bucket> = {
-  rollover: { id: 'rollover', label: 'Mes siguiente', emoji: '🔄', color: '#63B3ED', totalAccumulated: 0, deposits: [] },
-  savings: { id: 'savings', label: 'Ahorro', emoji: '🐷', color: '#68D391', totalAccumulated: 0, deposits: [] },
-  emergency: { id: 'emergency', label: 'Emergencias', emoji: '🛡️', color: '#F6AD55', totalAccumulated: 0, deposits: [] },
-  investment: { id: 'investment', label: 'Inversión', emoji: '📈', color: '#B794F4', totalAccumulated: 0, deposits: [] },
-  buffer: { id: 'buffer', label: 'Amortiguador', emoji: '🧲', color: '#FC8181', totalAccumulated: 0, deposits: [] },
-};
-
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -287,6 +276,15 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         });
       },
 
+      updateCycleBudget: (cycleId, newBudget) => {
+        set((state) => {
+          const cycle = state.cycles.find((c) => c.id === cycleId);
+          if (cycle) {
+            cycle.baseBudget = newBudget;
+          }
+        });
+      },
+
       clearAllCycleData: () => {
         set((state) => {
           state.cycles = [];
@@ -319,54 +317,3 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
 // ─── SELECTORS ───────────────────────────────────────────────────────────────
 // Los selectores ahora están currificados.
-// Ejemplo de uso: const activeCycle = useCycleStore(selectActiveCycle(accountId));
-
-export const selectActiveCycle = (accountId: string) => (state: CycleStoreState,) => {
-  const activeId = state.activeCycles[accountId];
-  if (!activeId) return null;
-  return state.cycles.find((c) => c.id === activeId && c.accountId === accountId) ?? null;
-};
-
-export const selectSafeToSpend = (accountId: string) => (state: CycleStoreState): number => {
-  const cycle = selectActiveCycle(accountId)(state);
-  if (!cycle) return 0;
-  return cycle.effectiveBudget - cycle.totalSpent - cycle.fixedExpenses;
-};
-
-export const selectTimeProgress = (accountId: string) => (state: CycleStoreState): number => {
-  const cycle = selectActiveCycle(accountId)(state);
-  if (!cycle) return 0;
-  const total = new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime();
-  const elapsed = Date.now() - new Date(cycle.startDate).getTime();
-  return Math.min(Math.max(elapsed / total, 0), 1);
-};
-
-export const selectSpendProgress = (accountId: string) => (state: CycleStoreState): number => {
-  const cycle = selectActiveCycle(accountId)(state);
-  if (!cycle || cycle.effectiveBudget === 0) return 0;
-  return Math.min(cycle.totalSpent / cycle.effectiveBudget, 1);
-};
-
-export const selectIsOverpacing = (accountId: string) => (state: CycleStoreState): boolean => {
-  return selectSpendProgress(accountId)(state) > selectTimeProgress(accountId)(state);
-};
-
-export const selectTotalSaved = (accountId: string) => (state: CycleStoreState): number => {
-  if (!state.bucketsByAccount[accountId]) return 0;
-
-  return (['savings', 'emergency', 'investment'] as BucketType[]).reduce(
-    (acc, id) => acc + (state.bucketsByAccount[accountId][id]?.totalAccumulated || 0),
-    0
-  );
-};
-
-export const selectCycleHistory = (accountId: string) => (state: CycleStoreState) => {
-  return [...state.cycles]
-    .filter((c) => c.status === 'closed' && c.accountId === accountId)
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-};
-
-// Si necesitas un selector para traer todos los buckets de una cuenta a la vez
-export const selectBuckets = (accountId: string) => (state: CycleStoreState) => {
-  return state.bucketsByAccount[accountId] || null;
-};

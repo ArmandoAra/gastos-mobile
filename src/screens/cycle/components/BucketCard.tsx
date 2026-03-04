@@ -4,22 +4,13 @@ import { es } from "date-fns/locale";
 import { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Bucket, BucketType } from "../../../stores/useCycleStore";
+import { Bucket } from "../../../stores/useCycleStore";
 import * as Haptics from "expo-haptics";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { darkTheme, lightTheme } from "../../../theme/colors";
 import { t } from "i18next";
 import { useAuthStore } from "../../../stores/authStore";
 import { globalStyles } from "../../../theme/global.styles";
-
-// ─── PALETTE ──────────────────────────────────────────────────────────────────
-const BUCKET_META: Record<BucketType, { gradient: [string, string]; glow: string }> = {
-  savings:    { gradient: ['#1a4731', '#2d6a4f'], glow: 'rgba(104,211,145,0.35)' },
-  emergency:  { gradient: ['#4a2c0a', '#7b4a1e'], glow: 'rgba(246,173,85,0.35)' },
-  investment: { gradient: ['#2d1b69', '#4a2c8a'], glow: 'rgba(183,148,244,0.35)' },
-  rollover:   { gradient: ['#0d2f4f', '#1a4a7a'], glow: 'rgba(99,179,237,0.35)' },
-  buffer:     { gradient: ['#4a1a1a', '#7a2b2b'], glow: 'rgba(252,129,129,0.35)' },
-};
 
 export function BucketCard({ bucket, index }: { bucket: Bucket; index: number }) {
   const currencySymbol = useAuthStore((s) => s.currencySymbol);

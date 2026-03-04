@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
 } from 'react-native';
 import { Text } from 'react-native-paper';
@@ -14,8 +13,6 @@ import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useAuthStore } from '../../../stores/authStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { globalStyles } from '../../../theme/global.styles';
-
-
 
 
 /** Categorías con barras de progreso */

@@ -1,17 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
 import {  View ,Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, Platform} from "react-native";
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
-import { Bucket, BucketType, useCycleStore } from "../../../stores/useCycleStore";
+import { BucketType, useCycleStore } from "../../../stores/useCycleStore";
 import * as Haptics from "expo-haptics";
 import { t } from "i18next";
 import { useAuthStore } from "../../../stores/authStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { darkTheme, lightTheme } from "../../../theme/colors";
 import { globalStyles } from "../../../theme/global.styles";
+import { useCreditCycleScreen } from "../hooks/useCreditCycleScreen";
 
 interface AllocationModalProps {
   cycleId: string;
@@ -29,7 +28,7 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
   
   const allocateSurplus = useCycleStore((s) => s.allocateSurplus);
   const applyRollover = useCycleStore((s) => s.applyRolloverToNextCycle);
-  const buckets = useCycleStore((s) => s.buckets);
+  const buckets = useCreditCycleScreen().buckets;
 
   useEffect(() => {
     if (available <= 0) {
@@ -76,8 +75,8 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
   const renderDone = () => (
     <Animated.View entering={ZoomIn.springify()} style={alloc.doneCard}>
       <Text style={alloc.doneEmoji}>✅</Text>
-      <Text style={alloc.doneTitle}>{t("cycle_screen.saved")}</Text>
-      <Text style={alloc.doneSub}>
+      <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>{t("cycle_screen.saved")}</Text>
+      <Text style={[globalStyles.bodyTextLg, { color: colors.text, textAlign: 'center' }]}>
         {currencySymbol}{customAmount} {t("cycle_screen.allocated_to")} {buckets[selected!]?.emoji} {buckets[selected!]?.label}
       </Text>
     </Animated.View>

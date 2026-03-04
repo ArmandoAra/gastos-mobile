@@ -71,6 +71,7 @@ type Actions = {
     // getAllTransactionsByUserId: (userId: string) => Transaction[]
     getUserTransactions: () => Transaction[]
     getTransactionsByAccount: (accountId: string) => Transaction[]
+    getAccoutTransactionsByCycle: (accountId: string, startDate: Date, endDate: Date) => Transaction[]
     clearTransactions: () => void
 
     // === Filter & UI State ===
@@ -366,6 +367,14 @@ const useDataStore = create<State & Actions>()(
 
                 getTransactionsByAccount: (accountId: string) => {
                     return get().transactions.filter(t => t.account_id === accountId)
+                },
+
+                getAccoutTransactionsByCycle: (accountId: string, startDate: Date, endDate: Date) => {
+                    return get().transactions.filter(t =>
+                        t.account_id === accountId &&
+                        new Date(t.date) >= startDate &&
+                        new Date(t.date) <= endDate
+                    );
                 },
 
                 clearTransactions: () => set({ transactions: [] }, false, 'clearTransactions'),
