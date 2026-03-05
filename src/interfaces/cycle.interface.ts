@@ -42,32 +42,31 @@ export type BucketType = 'rollover' | 'savings' | 'emergency' | 'investment' | '
 
 export interface Bucket {
   id: string;
-  user_id: string;
+  userId: string;
   type: BucketType;           // Tipo de cofre
   name: string;               // Ej: "Viaje a Japón" o "Emergencias"
-  icon_name: string;
-  color: string;
-  total_accumulated: number;  // Saldo actual del cofre
-  created_at: string;
-  updated_at: string;
+  iconName: string;
+  totalAccumulated: number;  // Saldo actual del cofre
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BucketTransaction {
   id: string;
-  bucket_id: string;      // A qué cofre entró/salió el dinero
-  cycle_id?: string;      // (Opcional) De qué ciclo provino el sobrante
-  user_id: string;
+  bucketId: string;      // A qué cofre entró/salió el dinero
+  cycleId?: string;      // (Opcional) De qué ciclo provino el sobrante
+  userId: string;
   amount: number;         // Positivo para depósitos, negativo para retiros
   type: 'deposit' | 'withdrawal';
   note?: string;          // Ej: "Sobrante de Octubre"
   date: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface FixedTransaction extends Transaction {
   id: string;
-  day_of_month: number; // Para saber cuándo "ocurre" dentro del ciclo
-  is_paid: boolean;     // Para marcar si ya se pagó este mes o no
-  is_active: boolean;   // Por si el usuario quiere pausar una suscripción
-  created_at: string;
+  dayOfMonth: number; // Para saber cuándo "ocurre" dentro del ciclo
+  isPaid: boolean;     // Para marcar si ya se pagó este mes o no
+  isActive: boolean;   // Por si el usuario quiere pausar una suscripción
+  createdAt: string;
 }

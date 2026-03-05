@@ -9,6 +9,7 @@ import { useSettingsStore } from '../../../stores/settingsStore';
 import { useCycleStore } from '../../../stores/useCycleStore';
 import { selectActiveCycle } from '../selectors/cycleSelectors';
 import { t } from 'i18next';
+import { useAuthStore } from '../../../stores/authStore';
 
 const MIN_CYCLE_DAYS = 7;
 
@@ -25,6 +26,7 @@ export function CycleDatePicker() {
   const selectedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
   const startNewCycle = useCycleStore((s) => s.startNewCycle);
   const allCycles = useCycleStore((s) => s.cycles);
+  const userId = useAuthStore((s) => s.user?.id);
 
   const activeCycle = useCycleStore((state) => selectActiveCycle(selectedCycleAccount)(state));
 
@@ -96,15 +98,17 @@ export function CycleDatePicker() {
       }
 
       setOpen(false);
+      if (!userId) return;
       startNewCycle({
-        startDate,
-        endDate,
-        cutoffDate: endDate,
         baseBudget: 0,
+        startDate: startDate,
+        endDate: endDate,
+        cutoffDate: endDate,
         accountId: selectedCycleAccount,
+        userId: userId,
       });
     },
-    [selectedCycleAccount, startNewCycle, disabledDates]
+    [selectedCycleAccount, startNewCycle, disabledDates, userId]
   );
 
   const onDismiss = useCallback(() => {

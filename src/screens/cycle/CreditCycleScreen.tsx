@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { subDays, addDays, differenceInDays } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { BucketType } from '../../stores/useCycleStore';
+import { useCycleStore } from '../../stores/useCycleStore';
 import { CategoryRow } from './components/CategoryRow';
 import { RolloverModal } from './components/RolloverModal';
 import { AllocationModal } from './components/AllocationModal';
@@ -33,6 +33,9 @@ import { CycleHistoryRow } from './components/CircleHistory';
 // Los datos se pasan hacia abajo como props a HeroCard y PacingBar.
 // Así todos los componentes ven exactamente el mismo estado en el mismo render.
 import { useCreditCycleScreen } from './hooks/useCreditCycleScreen';
+import { BucketType } from '../../interfaces/cycle.interface';
+import { FixedTransactionsManager } from './components/FixeTranasactionsManager';
+import { useAuthStore } from '../../stores/authStore';
 
 // ─── MOCK DATA (pendiente de conectar a datos reales) ─────────────────────────
 export const today = new Date();
@@ -56,6 +59,16 @@ export const gastosFijos = [
 export default function CreditCycleScreen() {
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
+  const currentUserId = useAuthStore((s) => s.user?.id);
+
+  if (!currentUserId) {
+    return (
+      <View style={[globalStyles.screenContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={globalStyles.bodyTextBase}>{t('cycle_screen.no_user')}</Text>
+      </View>
+    );
+  }
+
 
   const scrollY = useSharedValue(0);
   const scrollHandler = useAnimatedScrollHandler({
@@ -73,7 +86,9 @@ export default function CreditCycleScreen() {
     isActiveCycle,
     daysElapsed,
     buckets,
+    allBucketTransactions,
     history,
+    activeCycle,
     pendingSurplusCycle,
     showAlloc,
     setShowAlloc,
@@ -178,7 +193,7 @@ export default function CreditCycleScreen() {
 
             {/* GASTOS FIJOS */}
             <Animated.View
-              entering={FadeInDown.delay(350).springify()}
+              entering={FadeInDown.delay(150)}
               style={[screen.section, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary + '40' }]}
             >
               <LinearGradient
@@ -211,9 +226,11 @@ export default function CreditCycleScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                {gastosFijos.map((c, i) => (
-                  <FixedExpenseRow key={c.label} item={c} delay={400 + i * 60} onToggle={() => { }} />
-                ))}
+                <FixedTransactionsManager
+                  accountId={accountSelected}
+                  userId={currentUserId}
+                  cycleId={activeCycle?.id}
+                />
               </LinearGradient>
             </Animated.View>
 
@@ -266,9 +283,18 @@ export default function CreditCycleScreen() {
               initialExpanded={true}
               customStyles={{ borderColor: colors.accent, backgroundColor: colors.surfaceSecondary }}
             >
-              {bucketOrder.map((id, i) => (
-                <BucketCard key={id} bucket={buckets[id]} index={i} />
-              ))}
+              {buckets.map((bucket, index) => {
+                const thisBucketTxs = allBucketTransactions.filter(tx => tx.bucketId === bucket.id);
+
+                return (
+                  <BucketCard
+                    key={bucket.id}
+                    bucket={bucket}
+                    transactions={thisBucketTxs} // Pasamos el array de transacciones
+                    index={index}
+                  />
+                );
+              })}
             </CollapsibleSection>
 
             {/* FLUJO ESPECIAL */}
@@ -277,8 +303,12 @@ export default function CreditCycleScreen() {
               initialExpanded={true}
               customStyles={{ borderColor: colors.warning, backgroundColor: colors.surfaceSecondary }}
             >
-              {(['rollover', 'buffer'] as BucketType[]).map((id, i) => (
-                <BucketCard key={id} bucket={buckets[id]} index={i + 3} />
+              {buckets.map((bucket, i) => (
+                <BucketCard
+                  key={bucket.id}
+                  bucket={bucket}
+                  index={i + 3}
+                  transactions={allBucketTransactions} />
               ))}
             </CollapsibleSection>
 

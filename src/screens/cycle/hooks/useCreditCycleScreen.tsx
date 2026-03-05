@@ -20,15 +20,12 @@ export const useCreditCycleScreen = () => {
   const selectedAccountGlobal = useDataStore((s) => s.selectedAccount);
 
   // ── FUENTE DE VERDAD ÚNICA PARA LA CUENTA ──
-  // Leemos y escribimos DIRECTAMENTE en Zustand. Cero estados locales duplicados.
   const storedCycleAccount = useCycleStore((s) => s.selectedCycleAccount);
   const setAccountSelected = useCycleStore((s) => s.setSelectedCycleAccount);
   const cycles = useCycleStore((s) => s.cycles);
 
-  // Si storedCycleAccount está vacío (app recién instalada o borrada), usamos la cuenta global
   const accountSelected = storedCycleAccount || selectedAccountGlobal;
 
-  // Garantizamos que el store se inicialice con la cuenta actual sin causar loops
   useEffect(() => {
     if (!storedCycleAccount && selectedAccountGlobal) {
       setAccountSelected(selectedAccountGlobal);
@@ -37,13 +34,25 @@ export const useCreditCycleScreen = () => {
 
   // ── DATOS DEL STORE ──
   const activeCycle = useCycleStore((state) => selectActiveCycle(accountSelected)(state));
-  const buckets = useCycleStore((state) => selectBuckets(accountSelected)(state));
   const history = useCycleStore(useShallow((state) => selectCycleHistory(accountSelected)(state)));
   const totalSaved = useCycleStore((state) => selectTotalSaved(accountSelected)(state));
-  const bufferBalance = useCycleStore((state) => state.bufferByAccount[accountSelected] || 0);
-  const rollover = useCycleStore(
-    (state) => state.bucketsByAccount[accountSelected]?.rollover?.totalAccumulated || 0
-  );
+  const bufferBalance = useCycleStore((s) => {
+    const accountBuckets = s.bucketsByAccount[accountSelected] || [];
+    const bufferBucket = accountBuckets.find(b => b.type === 'buffer');
+    return bufferBucket ? bufferBucket.totalAccumulated : 0;
+  });
+
+  // FIX: El cofre ahora es un Array en el store, así que lo buscamos por su type
+  const rollover = useCycleStore((state) => {
+    const accountBuckets = state.bucketsByAccount[accountSelected] || [];
+    const rolloverBucket = accountBuckets.find(b => b.type === 'rollover');
+    return rolloverBucket ? rolloverBucket.totalAccumulated : 0;
+  });
+
+  const allBucketTransactions = useCycleStore(s => s.bucketTransactions);
+  // FIX: Usamos el selector que creamos para que convierta el Array de cofres 
+  // en el diccionario que tu UI (BucketCard) necesita.
+  const buckets = useCycleStore((state) => selectBuckets(accountSelected)(state));
 
   const selectedAccountObj = useMemo(
     () => allAccounts.find((acc) => acc.id === accountSelected),
@@ -52,6 +61,7 @@ export const useCreditCycleScreen = () => {
 
   const isActiveCycle = !!activeCycle;
 
+  // ── FIX: REEMPLAZO MASIVO A SNAKE_CASE EN EL CICLO ──
   const daysElapsed = useMemo(() => {
     if (!activeCycle) return 0;
     return differenceInDays(new Date(activeCycle.endDate), new Date(activeCycle.startDate));
@@ -95,16 +105,6 @@ export const useCreditCycleScreen = () => {
     return parseFloat((expectedSpendByToday - totalSpentInCycle).toFixed(2));
   }, [activeCycle, totalSpentInCycle]);
 
-  // ── DATOS PARA LA GRÁFICA ──────────────────────────────────────────────────
-  // REGLA CRÍTICA gifted-charts: data y data2 DEBEN tener exactamente la
-  // misma longitud o data2 simplemente no se renderiza sin error visible.
-  //
-  // FIX: generamos AMBOS arrays en el MISMO loop — longitud idéntica garantizada.
-  // Antes eran dos useMemo independientes que podían divergir (calculateDailyExpensesAcc
-  // omite días sin transacciones, idealSpendingData incluye todos los días → lengths distintos).
-  //
-  // También normalizamos a valores positivos: gifted-charts no puede
-  // mezclar eje negativo (real) con positivo (ideal) en el mismo chart.
   const { idealSpendingData, realSpendingData } = useMemo(() => {
     if (!activeCycle) return { idealSpendingData: [], realSpendingData: [] };
 
@@ -113,19 +113,16 @@ export const useCreditCycleScreen = () => {
     const today = new Date();
     const lastDate = today < end ? today : end;
 
-    // Días a mostrar: desde el inicio hasta hoy (o fin de ciclo si ya terminó)
     const daysToShow = Math.max(differenceInDays(lastDate, start) + 1, 1);
     const totalDays = Math.max(differenceInDays(end, start) + 1, 1);
 
     const variableBudget = activeCycle.baseBudget - (activeCycle.fixedExpenses || 0);
     const idealDailyRate = variableBudget / totalDays;
 
-    // Pre-agrupar transacciones por fecha local → O(n) en vez de O(n²)
     const cycleTransactions = getAccoutTransactionsByCycle(accountSelected, start, end);
     const spendByDay: Record<string, number> = {};
     for (const tx of cycleTransactions) {
       const d = new Date(tx.date);
-      // Fecha LOCAL para evitar desfases por zona horaria UTC (toISOString da UTC)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       spendByDay[key] = (spendByDay[key] || 0) + Math.abs(tx.amount);
     }
@@ -139,9 +136,7 @@ export const useCreditCycleScreen = () => {
       const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
       const label = `D${day.getDate()}`;
 
-      // Mismo índice, mismo label → arrays siempre en sync
       ideal.push({ label, value: parseFloat((idealDailyRate * (i + 1)).toFixed(2)) });
-
       cumulativeReal += spendByDay[key] || 0;
       real.push({ label, value: parseFloat(cumulativeReal.toFixed(2)) });
     }
@@ -159,7 +154,7 @@ export const useCreditCycleScreen = () => {
   const pendingSurplusCycle = useMemo(
     () => cycles.find(
       (c) => c.status === 'closed' &&
-        !c.surplusDestination &&
+      // !c.surplus_destination &&
         (c.surplusAmount ?? 0) > 0 &&
         c.accountId === accountSelected
     ),
@@ -213,6 +208,7 @@ export const useCreditCycleScreen = () => {
     realSpendingData,
     avgSurplus,
     buckets,
+    allBucketTransactions,
     history,
     pendingSurplusCycle,
     showAlloc,

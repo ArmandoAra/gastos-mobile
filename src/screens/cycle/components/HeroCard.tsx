@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PacingBar } from './PacingBar';
-import { useCycleStore, Cycle } from '../../../stores/useCycleStore';
+import { useCycleStore } from '../../../stores/useCycleStore';
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { t } from 'i18next';
@@ -37,18 +37,6 @@ import { useCreditCycleScreen } from '../hooks/useCreditCycleScreen';
 // Para ajustar dinámicamente según el tamaño de la pantalla
 const { width } = Dimensions.get('window');
 const isSmallScreen = width < 375;
-
-interface HeroCardProps {
-  activeCycle: Cycle | null;
-  timeProgress: number;
-  spendProgress: number;
-  safeToSpendToday: number;
-  totalSpentInCycle: number;
-  rollover: number;
-  totalSaved: number;
-  bufferBalance: number;
-  avgSurplus: number;
-}
 
 export function HeroCard() {
   const { activeCycle,

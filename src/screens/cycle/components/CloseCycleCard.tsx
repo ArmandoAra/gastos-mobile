@@ -31,7 +31,7 @@ export function CloseCycleCard() {
 
   // Calculamos cuánto sobraría si cerramos AHORA MISMO
   // (Presupuesto efectivo - lo que llevamos gastado hasta hoy)
-  const currentSurplus = activeCycle.effectiveBudget - totalSpentInCycle;
+  const currentSurplus = activeCycle.baseBudget - totalSpentInCycle;
 
   function closeCycleHandler() {
     if (!activeCycle) return;

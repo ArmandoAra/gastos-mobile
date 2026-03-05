@@ -33,18 +33,26 @@ export const selectIsOverpacing = (accountId: string) => (state: CycleStoreState
 };
 
 export const selectTotalSaved = (accountId: string) => (state: CycleStoreState): number => {
-  if (!state.bucketsByAccount[accountId]) return 0;
+  // 1. Obtenemos el array de cofres de forma segura (si es undefined, usamos [])
+  const bucketsArray = state.bucketsByAccount[accountId] || [];
 
-  return (['savings', 'emergency', 'investment'] as BucketType[]).reduce(
-    (acc, id) => acc + (state.bucketsByAccount[accountId][id]?.totalAccumulated || 0),
-    0
-  );
+  // 2. Sumamos el acumulado de todos los cofres (excepto el rollover, si quieres)
+  return bucketsArray.reduce((sum, bucket) => {
+    // Normalmente el rollover (sobrante para el mes siguiente) no se cuenta como "ahorro" neto.
+    // Si tú sí quieres contarlo, simplemente quita este 'if'
+    if (bucket.type === 'rollover') return sum;
+
+    return sum + (bucket.totalAccumulated || 0);
+  }, 0);
 };
 
 export const selectCycleHistory = (accountId: string) => (state: CycleStoreState) => {
-  return [...state.cycles]
-    .filter((c) => c.status === 'closed' && c.accountId === accountId)
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  const allCycles = state.cycles || [];
+
+  return allCycles
+    .filter((c) => c.accountId === accountId && c.status === 'closed')
+    // Ordenar de más reciente a más antiguo
+    .sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
 };
 
 // Si necesitas un selector para traer todos los buckets de una cuenta a la vez

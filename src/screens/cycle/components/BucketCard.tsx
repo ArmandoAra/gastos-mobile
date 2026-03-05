@@ -4,7 +4,6 @@ import { es } from "date-fns/locale";
 import { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Bucket } from "../../../stores/useCycleStore";
 import * as Haptics from "expo-haptics";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { darkTheme, lightTheme } from "../../../theme/colors";
@@ -12,13 +11,32 @@ import { t } from "i18next";
 import { useAuthStore } from "../../../stores/authStore";
 import { globalStyles } from "../../../theme/global.styles";
 
-export function BucketCard({ bucket, index }: { bucket: Bucket; index: number }) {
+// Importamos las nuevas interfaces
+import { Bucket, BucketTransaction } from "../../../interfaces/cycle.interface";
+
+// Ajustamos los props para que reciba el cofre y sus transacciones correspondientes
+export function BucketCard({
+  bucket,
+  transactions,
+  index
+}: {
+  bucket: Bucket;
+  transactions: BucketTransaction[]; // <-- Pasamos el historial desde afuera
+  index: number;
+}) {
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
 
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
   const [expanded, setExpanded] = useState(false);
-  const lastDeposit = bucket.deposits[bucket.deposits.length - 1];
+
+  // Filtramos solo los depósitos (si quieres mostrar retiros, quita este filtro)
+  const deposits = useMemo(() => {
+    return transactions.filter(tx => tx.type === 'deposit');
+  }, [transactions]);
+
+  // El último depósito (asumiendo que vienen ordenados, o tomamos el último del array filtrado)
+  const lastDeposit = deposits.length > 0 ? deposits[deposits.length - 1] : null;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()} >
@@ -27,20 +45,22 @@ export function BucketCard({ bucket, index }: { bucket: Bucket; index: number })
           Haptics.selectionAsync();
           setExpanded((v) => !v);
         }}
-        style={[bucket_s.card, { marginBottom: 12, backgroundColor: bucket.color + "30" }]}
+        style={[bucket_s.card, { marginBottom: 12 }]}//Utilizar el color del icono para el background
       >
           {/* Orb decorativo */}
-          <View style={[bucket_s.orb, { backgroundColor: bucket.color + '18' }]} />
+        <View style={[bucket_s.orb,]} />
 
           <View style={bucket_s.topRow}>
-            <View style={[bucket_s.emojiBox, { backgroundColor: bucket.color + '25' }]}>
-              <Text style={bucket_s.emoji}>{bucket.emoji}</Text>
-
+          <View style={[bucket_s.emojiBox]}>
+            {/* Fallback de icono en caso de que iconName sea un string de Ionicons o emoji */}
+            <Text style={bucket_s.emoji}>
+              {bucket.iconName.length <= 2 ? bucket.iconName : '💰'}
+            </Text>
             </View>
-          <Text style={[globalStyles.bodyTextXl, { color: colors.text, fontWeight: 'bold' }]}>{bucket.label}</Text>
+          <Text style={[globalStyles.bodyTextXl, { color: colors.text, fontWeight: 'bold' }]}>{bucket.name}</Text>
             <View style={bucket_s.badge}>
             <Text style={[globalStyles.amountXs, { color: colors.text }]}>
-              {bucket.deposits.length} {t("cycle_screen.deposit_short")}.
+              {deposits.length} {t("cycle_screen.deposit_short")}.
               </Text>
             </View>
           </View>
@@ -61,10 +81,11 @@ export function BucketCard({ bucket, index }: { bucket: Bucket; index: number })
             <Animated.View entering={FadeInDown.springify()} style={bucket_s.historyBlock}>
               <View style={bucket_s.divider} />
             <Text style={[globalStyles.headerTitleSm, { color: colors.text }]}>{t("cycle_screen.deposit_history")}</Text>
-              {bucket.deposits.length === 0 ? (
+            {deposits.length === 0 ? (
               <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>{t("cycle_screen.no_deposits_yet")}</Text>
               ) : (
-                [...bucket.deposits].reverse().slice(0, 5).map((d) => (
+                // Revertimos para mostrar los más recientes arriba
+                [...deposits].reverse().slice(0, 5).map((d) => (
                   <View key={d.id} style={bucket_s.depositRow}>
                     <Text style={[globalStyles.amountSm, { color: colors.text }]}>
                       {format(new Date(d.date), 'dd MMM yyyy', { locale: es })}
