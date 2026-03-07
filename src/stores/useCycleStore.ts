@@ -388,7 +388,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       // ── Fixed Transactions ─────────────────────────────────────────────────
 
       addFixedTransaction: (tx) => {
-        const newTx: FixedTransaction = { ...tx, id: generateId(), createdAt: nowISO() };
+        const newTx: FixedTransaction = { ...tx, id: generateId(), created_at: nowISO() };
         set((state) => { state.fixedTransactions.push(newTx); });
         return newTx;
       },

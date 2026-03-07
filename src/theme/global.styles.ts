@@ -51,6 +51,19 @@ export const globalStyles = StyleSheet.create({
     alignItems: 'center',
     elevation: 2,
   },
+  btnClose: {
+    position: 'absolute',
+    left: 20,
+    top: 5,
+    padding: 6,
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderRadius: 24,
+  },
+
 
   // Text
   headerTitleSm: { fontSize: fontSizes.lg, fontFamily: 'Tinos-Bold' },

@@ -6,6 +6,8 @@ import Animated, {
   FadeInDown,
   useSharedValue,
   useAnimatedScrollHandler,
+  FadeOutDown,
+  LinearTransition,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { subDays, addDays, differenceInDays } from 'date-fns';
@@ -36,6 +38,10 @@ import { useCreditCycleScreen } from './hooks/useCreditCycleScreen';
 import { BucketType } from '../../interfaces/cycle.interface';
 import { FixedTransactionsManager } from './components/FixedTranasactionsManager';
 import { useAuthStore } from '../../stores/authStore';
+import { useDailyExpenseLogic } from '../../hooks/useDailyExpenseLogic';
+import { isSmallScreen } from '../analytics/components/styles';
+import { formatCurrency } from '../../utils/helpers';
+import { DetailsModal } from '../../components/charts/DetailsModal';
 
 // ─── MOCK DATA (pendiente de conectar a datos reales) ─────────────────────────
 export const today = new Date();
@@ -95,8 +101,15 @@ export default function CreditCycleScreen() {
     showRollover,
     setShowRollover,
   } = useCreditCycleScreen();
+  const { setCurrentPeriod, transactionsData, stats, selectedCategory, handleCategorySelect, modalData, handleCloseModal } = useDailyExpenseLogic();
+  const { currencySymbol } = useAuthStore();
 
-  const bucketOrder: BucketType[] = ['savings', 'emergency', 'investment'];
+
+
+  useEffect(() => {
+    console.log(transactionsData)
+    setCurrentPeriod('custom'); // Forzamos el periodo a 'custom' para que use las fechas del ciclo
+  }, [activeCycle]);
 
   return (
     <View style={main.root}>
@@ -194,6 +207,7 @@ export default function CreditCycleScreen() {
             {/* GASTOS FIJOS */}
             <Animated.View
               entering={FadeInDown.delay(150)}
+              exiting={FadeOutDown.delay(200)}
               style={[screen.section, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary + '40' }]}
             >
               <LinearGradient
@@ -205,27 +219,8 @@ export default function CreditCycleScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
               >
-                <View style={screen.sectionHeader}>
-                  <Text style={[globalStyles.headerTitleBase, { color: colors.text }]}>
-                    {t('cycle_screen.fixed_expenses')}
-                  </Text>
-                  <TouchableOpacity>
-                    <Text
-                      style={[
-                        globalStyles.bodyTextXs,
-                        {
-                          color: colors.primary,
-                          backgroundColor: colors.textSecondary,
-                          paddingHorizontal: 4,
-                          paddingVertical: 2,
-                          borderRadius: 25,
-                        },
-                      ]}
-                    >
-                      {t('cycle_screen.view_all')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <View style={{ height: 8 }} />
+
                 <FixedTransactionsManager
                   accountId={accountSelected}
                   userId={currentUserId}
@@ -269,9 +264,102 @@ export default function CreditCycleScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                {categories.map((c, i) => (
+                {/* {categories.map((c, i) => (
                   <CategoryRow key={c.label} item={c} delay={400 + i * 60} />
-                ))}
+                ))} */}
+                {transactionsData.map((item, idx) => {
+                  const percentage = ((item.value / stats.totalExpenses) * 100).toFixed(1);
+                  const isSelected = selectedCategory === item.text;
+
+                  return (
+                    <Animated.View
+                      key={`${item.text}-${idx}`}
+                      entering={FadeInDown.delay(idx * 50).springify()}
+                      exiting={FadeOutDown.delay(150)}
+                    >
+                      <TouchableOpacity
+                        onPress={() => handleCategorySelect(item.text, item.value, item.color)}
+                        activeOpacity={0.82}
+                        style={[
+                          screen.categoryRow,
+                          {
+                            backgroundColor: isSelected
+                              ? item.color + '18'
+                              : colors.surfaceSecondary,
+                            borderColor: isSelected
+                              ? item.color + '55'
+                              : 'transparent',
+                          }
+                        ]}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.text}, ${currencySymbol} ${item.value.toFixed(2)}, ${percentage}% ${t('common.of')} ${t('common.total')}`}
+                        accessibilityHint={t('accessibility.tap_view_details', 'Tap to view transaction details')}
+                        accessibilityState={{ selected: isSelected }}
+                      >
+                        {/* Dot de color — reemplaza el borde lateral */}
+                        <View style={[screen.catAccentBar, { backgroundColor: item.color }]} />
+
+                        <View style={screen.catInner}>
+                          <View style={screen.catRowTop}>
+                            {/* Nombre con avatar de color */}
+                            <View style={screen.catNameContainer}>
+                              <View style={[screen.catDotBox, { backgroundColor: item.color + '22' }]}>
+                                <View style={[screen.colorDot, { backgroundColor: item.color }]} />
+                              </View>
+                              <Text
+                                style={[
+                                  screen.catName,
+                                  { color: colors.text },
+                                  isSmallScreen && screen.catNameSmall
+                                ]}
+                                numberOfLines={2}
+                                ellipsizeMode="tail"
+                              >
+                                {t(`icons.${item.text}`, item.text)}
+                              </Text>
+                            </View>
+
+                            {/* Monto + % */}
+                            <View style={screen.catRight}>
+                              <Text
+                                style={[
+                                  screen.catValue,
+                                  { color: colors.expense },
+                                  isSmallScreen && screen.catValueSmall
+                                ]}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.8}
+                              >
+                                -{currencySymbol}{formatCurrency(item.value)}
+                              </Text>
+                              {/* Chip de porcentaje — mismo pill que chips del resto de la app */}
+                              <View style={[screen.percentChip, { backgroundColor: item.color + '22' }]}>
+                                <Text style={[screen.catPercent, { color: item.color }]}>
+                                  {percentage.replace('.', ',')}%
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+
+                          {/* Barra de progreso — h6 radius 99, igual que CategoryRow */}
+                          <View style={[screen.progressBarBg, { backgroundColor: colors.border }]}>
+                            <View
+                              style={[
+                                screen.progressBarFill,
+                                {
+                                  width: `${percentage}%` as `${number}%`,
+                                  backgroundColor: item.color
+                                }
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    </Animated.View>
+                  );
+                })}
               </LinearGradient>
             </Animated.View>
 
@@ -280,7 +368,7 @@ export default function CreditCycleScreen() {
             {/* COFRES */}
             <CollapsibleSection
               title="Cofres de ahorro"
-              initialExpanded={true}
+              initialExpanded={false}
               customStyles={{ borderColor: colors.accent, backgroundColor: colors.surfaceSecondary }}
             >
               {buckets.map((bucket, index) => {
@@ -300,7 +388,7 @@ export default function CreditCycleScreen() {
             {/* FLUJO ESPECIAL */}
             <CollapsibleSection
               title="Flujo especial"
-              initialExpanded={true}
+              initialExpanded={false}
               customStyles={{ borderColor: colors.warning, backgroundColor: colors.surfaceSecondary }}
             >
               {buckets.map((bucket, i) => (
@@ -345,6 +433,13 @@ export default function CreditCycleScreen() {
 
             <View style={{ height: 40 }} />
           </Animated.ScrollView>
+          <DetailsModal
+            modalVisible={!!selectedCategory}
+            handleCloseModal={handleCloseModal}
+            modalData={modalData}
+            colors={colors}
+            currencySymbol={currencySymbol}
+          /> 
         </SafeAreaView>
       </LinearGradient>
     </View>
@@ -368,6 +463,98 @@ const screen = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderRadius: 25,
+    borderWidth: 0.3,
+    overflow: 'hidden',
+    minHeight: 72,
+    marginVertical: 3
+  },
+  catAccentBar: {
+    width: 4,
+    borderRadius: 0,
+    flexShrink: 0,
+  },
+  catInner: {
+    flex: 1,
+    padding: 12,
+    gap: 10,
+  },
+  catRowTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  catNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  // Mini avatar cuadrado — igual que iconBox de CategoryRow
+  catDotBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    flexShrink: 0,
+  },
+  catName: {
+    fontSize: 14,
+    fontFamily: 'FiraSans-Bold',
+    flex: 1,
+    lineHeight: 20,
+  },
+  catNameSmall: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  catRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+    flexShrink: 0,
+  },
+  catValue: {
+    fontSize: 14,
+    fontFamily: 'FiraSans-Bold',
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+  catValueSmall: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  // Chip de porcentaje — pill como en el resto de la app
+  percentChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 99,
+  },
+  catPercent: {
+    fontSize: 11,
+    fontFamily: 'FiraSans-Bold',
+    lineHeight: 14,
+  },
+  // Barra — h6 radius 99, igual que CategoryRow / BudgetCard
+  progressBarBg: {
+    height: 6,
+    borderRadius: 99,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 99,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar, View } from 'react-native';
+import { Platform, StatusBar, UIManager, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -29,6 +29,9 @@ registerTranslation('en', en);
 registerTranslation('es', es);
 registerTranslation('pt', pt);
 
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 
 import { Buffer } from 'buffer';
 global.Buffer = global.Buffer || Buffer;

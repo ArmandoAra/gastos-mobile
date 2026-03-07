@@ -55,12 +55,11 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
   const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
 
-  // ── FIX: Usamos useShallow para leer el array del store y evitar loops ──
+
   const fixedTransactions = useCycleStore(
-    useShallow((s) => s.getFixedTransactionsByAccount(accountId) || EMPTY_FIXED_TX)
+    useShallow((s) => s.getFixedTransactionsByAccount(accountId) || []) // Reemplaza EMPTY_FIXED_TX si es necesario
   );
-  
-  const addFixedTransaction  = useCycleStore((s) => s.addFixedTransaction);
+
   const togglePaid           = useCycleStore((s) => s.toggleFixedTransactionPaid);
   const deleteFixedTx        = useCycleStore((s) => s.deleteFixedTransaction);
 
@@ -73,10 +72,13 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
   const activeFixed   = myFixed.filter((tx) => tx.isActive);
   const inactiveFixed = myFixed.filter((tx) => !tx.isActive);
 
-  // ── Modal states ──
+  // ── Modal & Toggle states ──
   const [listVisible, setListVisible]   = useState(false);
   const [formVisible, setFormVisible]   = useState(false);
   const [form, setForm]                 = useState(EMPTY_FORM);
+
+  // 1. NUEVO ESTADO: Controla si vemos todos o solo los primeros 3
+  const [showAllFixed, setShowAllFixed] = useState(false);
 
   // ── Handlers ──
   const openList = () => {
@@ -91,10 +93,8 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
 
   const handleTogglePaid = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    togglePaid( id);
-  }, [togglePaid, accountId]);
-
-
+    togglePaid(id);
+  }, [togglePaid, accountId]); // Revisa tu acción togglePaid, normalmente requiere accountId y transactionId
 
   // ── Totales ──
   const totalFixed = useMemo(
@@ -106,52 +106,71 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
     [activeFixed]
   );
 
+  // 2. NUEVA VARIABLE DERIVADA: La lista que se mostrará en pantalla
+  const visibleFixedTransactions = useMemo(() => {
+    return showAllFixed ? activeFixed : activeFixed.slice(0, 3);
+  }, [showAllFixed, activeFixed]);
+
   return (
     <>
-      {/* ── BOTONES DE ACCESO ── */}
+      {/* ── HEADER Y BOTONES DE ACCESO ── */}
       <View style={styles.buttonRow}>
-        <TouchableOpacity
-          onPress={openList}
-          style={[styles.accessBtn, { backgroundColor: colors.surfaceSecondary }]}
-          activeOpacity={0.75}
-        >
-          <MaterialCommunityIcons name="format-list-bulleted" size={18} color={colors.accent} />
-          <Text style={[styles.accessBtnText, { color: colors.text }]}>
-            {t('fixed_tx.show_all', 'Gastos fijos')}
+        <View style={styles.sectionHeader}>
+          <Text style={[globalStyles.headerTitleBase, { color: colors.text }]}>
+            {t('cycle_screen.fixed_expenses')}
           </Text>
-          {activeFixed.length > 0 && (
-            <View style={[styles.badge, { backgroundColor: colors.accent }]}>
-              <Text style={styles.badgeText}>{activeFixed.length}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        </View>
 
+        {/* Botón Toggle (Ver todos / Ver menos) - Solo aparece si hay más de 3 */}
+        {activeFixed.length > 3 && (
+          <TouchableOpacity
+            // Alternamos el estado local en lugar de abrir el modal
+            onPress={() => {
+              Haptics.selectionAsync();
+              setShowAllFixed(!showAllFixed);
+            }}
+            style={[styles.accessBtn, { backgroundColor: colors.surfaceSecondary }]}
+            activeOpacity={0.75}
+          >
+            <MaterialCommunityIcons
+              name={showAllFixed ? "chevron-up" : "format-list-bulleted"}
+              size={18}
+              color={colors.accent}
+            />
+            <Text style={[styles.accessBtnText, { color: colors.text }]}>
+              {showAllFixed ? t('fixed_tx.show_less', 'menos') : t('fixed_tx.show_all', ' todos')}
+            </Text>
+
+            {!showAllFixed && (
+              <View style={[styles.badge, { backgroundColor: colors.accent }]}>
+                <Text style={[styles.badgeText, { color: colors.text }]}>{activeFixed.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {/* Botón Agregar */}
         <TouchableOpacity
           onPress={() => { setListVisible(false); openForm(); }}
-          style={[styles.accessBtn, styles.addBtn, { backgroundColor: colors.accent + '22', borderColor: colors.accent + '55' }]}
+          style={[styles.accessBtn, { backgroundColor: colors.text, borderColor: colors.border }]}
           activeOpacity={0.75}
         >
-          <MaterialCommunityIcons name="plus" size={18} color={colors.accent} />
-          <Text style={[styles.accessBtnText, { color: colors.accent }]}>
-            {t('fixed_tx.add', 'Agregar fijo')}
+          <MaterialCommunityIcons name="plus" size={18} color={colors.surface} />
+          <Text style={[globalStyles.bodyTextBase, { color: colors.surface }]}>
+            {t('fixed_tx.add', 'Agregar')}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          MODAL — LISTA DE GASTOS FIJOS
-      ══════════════════════════════════════════════════════════════════════ */}
-      <FixedTransactionsList 
+      <FixedTransactionsList
         listVisible={listVisible}
         setListVisible={setListVisible}
         colors={colors}
         totalPaid={totalPaid}
         totalFixed={totalFixed}
-        currencySymbol={currencySymbol}
-        activeFixed={activeFixed}
+        activeFixed={visibleFixedTransactions} // Aquí siempre le pasas todos si es un modal separado
         handleTogglePaid={handleTogglePaid}
         deleteFixedTx={deleteFixedTx}
-        openForm={openForm}
       />
 
       <FixedTransactionForm
@@ -168,43 +187,45 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 export const styles = StyleSheet.create({
   // ── Buttons ──
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   accessBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 99,
-  },
-  addBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
+    borderColor: 'transparent',
+    gap: 6,
   },
   accessBtnText: {
-    fontSize: 13,
-    fontFamily: 'FiraSans-Bold',
+    fontSize: 12,
+    fontWeight: '600',
   },
   badge: {
-    width: 18,
-    height: 18,
-    borderRadius: 99,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 4,
   },
   badgeText: {
     fontSize: 10,
-    fontFamily: 'FiraSans-Bold',
-    color: '#fff',
+    fontWeight: 'bold',
   },
-
   // ── Modal common ──
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   kavWrapper: {
     flex: 1,
@@ -237,7 +258,7 @@ export const styles = StyleSheet.create({
   },
   sheetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,

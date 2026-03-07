@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -56,12 +56,10 @@ export function FixedExpenseRow({ item, delay, onToggle }: Props) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onToggle();
   };
-
-  console.log(item)
-
   return (
     <Animated.View
-      entering={FadeInDown.delay(delay).springify().damping(18)}
+      entering={FadeInUp.delay(delay).springify().damping(60)}
+      exiting={FadeOutUp.delay(delay).springify()}
       style={[styles.row, { borderBottomColor: colors.border }]}
     >
       <TouchableOpacity

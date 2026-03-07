@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { t } from "i18next";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -232,16 +232,16 @@ export const FixedTransactionForm = ({
                 {t("fixed_tx.new", "Nuevo gasto fijo")}
               </Text>
               <TouchableOpacity
-                onPress={() => setFormVisible(false)}
-                style={styles.closeBtn}
+                onPress={handleClose}
+                style={[globalStyles.btnClose, { backgroundColor: colors.text, borderColor: colors.border }]}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close')}
               >
-                <MaterialCommunityIcons
-                  name="close"
-                  size={20}
-                  color={colors.textSecondary}
-                />
+                <MaterialIcons name="close" size={24} color={colors.surface} />
               </TouchableOpacity>
             </View>
+
+            <View style={{ height: 8 }} />
 
             <CategoryAndAmountInput
               isReady={true}
@@ -255,12 +255,14 @@ export const FixedTransactionForm = ({
 
             <DayAndDescriptionInput 
               isReady={true}
-              dayOfMonth={form.dayOfMonth}
+              // dayOfMonth={form.dayOfMonth}
               onDayChange={handleDayChange}
               description={form.description}
               onDescriptionChange={handleDescriptionChange}
               colors={colors}
             />
+
+            <View style={{ height: 18 }} />
 
             <SubmitButton
               disabled={!amount || !selectedCategory}
@@ -399,5 +401,17 @@ const formStyles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "FiraSans-Bold",
     color: "#fff",
+  },
+  closeButton: {
+    position: 'absolute',
+    left: 12,
+    top: 5,
+    padding: 6,
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderRadius: 24,
   },
 });

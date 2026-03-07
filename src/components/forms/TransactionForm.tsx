@@ -57,6 +57,7 @@ import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/
 import useCategoriesStore from '../../stores/useCategoriesStore';
 import { useCalculator } from '../../hooks/useCalculator';
 import { is } from 'date-fns/locale';
+import { globalStyles } from '../../theme/global.styles';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -177,15 +178,6 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         }
     }, [isOpen]);
 
-    // Cerrar calculadora si aparece el teclado
-    // useEffect(() => {
-    //     if (isKeyboardVisible) setShowCalculator(false);
-    // }, [isKeyboardVisible]);
-
-    // --- 3. LOGICA DE NEGOCIO ---
-
-    // Determinar si es Gasto o Ingreso
-    // En edición usamos el tipo de la transacción, en creación usamos el toggle global
     const isExpense = transactionToEdit 
         ? transactionToEdit.type === TransactionType.EXPENSE 
         : inputNameActive === InputNameActive.SPEND;
@@ -194,15 +186,6 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         month: '2-digit', day: '2-digit', year: 'numeric'
     });
 
-    // const handleOpenCalculator = () => {
-    //     Keyboard.dismiss();
-    //     setTimeout(() => {
-    //         setShowCalculator(true);
-    //         if (Platform.OS !== 'web') {
-    //             AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened'));
-    //         }
-    //     }, 100);
-    // };
 
     const handleCloseForm = () => {
         setToTransactBudget(null);
@@ -345,7 +328,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                             <View style={[styles.header, { borderBottomColor: colors.border }]}>
                                 <TouchableOpacity
                                     onPress={handleCloseForm}
-                                    style={[styles.closeButton, { backgroundColor: colors.text, borderColor: colors.border }]}
+                                    style={[globalStyles.btnClose, { backgroundColor: colors.text, borderColor: colors.border }]}
                                     accessibilityRole="button"
                                     accessibilityLabel={t('common.close')}
                                 >

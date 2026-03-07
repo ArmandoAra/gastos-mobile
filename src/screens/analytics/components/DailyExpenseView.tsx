@@ -15,9 +15,8 @@ import Animated, {
     ZoomIn
 } from 'react-native-reanimated';
 import { PieChart } from 'react-native-gifted-charts';
-import { Ionicons } from '@expo/vector-icons';
 import { isTablet, styles } from './styles';
-import { StatCard, TopCategories } from './subcomponents/StatsCard';
+import { StatCard } from './subcomponents/StatsCard';
 import { InsightCard } from './subcomponents/InsightCard';
 import { EmptyState } from './subcomponents/EmptyState';
 import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogic';
@@ -25,7 +24,6 @@ import PeriodSelector from './subcomponents/PeriodSelector';
 import { ViewPeriod } from '../../../interfaces/date.interface';
 import { formatCurrency } from '../../../utils/helpers';
 import CloseModalButton from './subcomponents/CloseModalButton';
-import { format } from 'date-fns';
 
 export default function DailyExpenseViewMobile({ handlePeriodChange }: { handlePeriodChange: (p: ViewPeriod) => void }) {
     const {
@@ -176,7 +174,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                         accessibilityLabel={`${t('overviews.categoryBreakdown')}. ${t('common.total')} ${t('common.expenses')}: ${currencySymbol} ${stats.totalExpenses.toFixed(0)}`}
                                     >
                                     <PieChart
-                                        data={pieData}
+                                            data={pieData}
                                         donut
                                         radius={pieRadius}
                                         innerRadius={pieInnerRadius}
@@ -217,7 +215,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                             </Text>
                                     </View>
 
-                                    {pieData.map((item, idx) => {
+                                        {pieData.map((item, idx) => {
                                         const percentage = ((item.value / stats.totalExpenses) * 100).toFixed(1);
                                         const isSelected = selectedCategory === item.text;
 

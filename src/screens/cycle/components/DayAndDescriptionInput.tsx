@@ -25,7 +25,7 @@ import { globalStyles } from '../../../theme/global.styles';
 
 interface Props {
   isReady?: boolean;
-  dayOfMonth: number;           // 1–31
+  // dayOfMonth: number;           // 1–31
   onDayChange: (day: number) => void;
   description: string;
   onDescriptionChange: (value: string) => void;
@@ -34,7 +34,7 @@ interface Props {
 
 export function DayAndDescriptionInput({
   isReady,
-  dayOfMonth,
+  // dayOfMonth,
   onDayChange,
   description,
   onDescriptionChange,
@@ -43,8 +43,11 @@ export function DayAndDescriptionInput({
   const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
 
-  // Generamos un array del 1 al 31
-  const daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
+  const today = new Date();
+  // Al pasar el mes + 1 y el día 0, nos da el último día del mes actual
+  const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+  const daysArray = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
 
   const handleOpenPicker = () => {
     Keyboard.dismiss(); // Escondemos el teclado si estaba escribiendo la descripción
@@ -67,11 +70,11 @@ export function DayAndDescriptionInput({
             <Text
               style={[
                 globalStyles.bodyTextSm,
-                { color: colors.textSecondary, fontWeight: 'bold', marginBottom: 8, marginLeft: 4 },
+                { color: colors.textSecondary, marginBottom: 8, marginLeft: 4, fontWeight: 'bold' },
               ]}
               numberOfLines={1}
             >
-              {t('fixed_tx.day_label', 'DÍA')}
+              {t('fixed_tx.day_label', 'Dia')}
             </Text>
           </Animated.View>
         )}
@@ -81,15 +84,15 @@ export function DayAndDescriptionInput({
             <TouchableOpacity
               onPress={handleOpenPicker}
               activeOpacity={0.7}
-              style={[styles.dayPicker, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.dayPicker, { backgroundColor: colors.accentSecondary, borderColor: colors.border }]}
             >
-              <MaterialCommunityIcons name="calendar-blank" size={18} color={colors.textSecondary} />
+              <MaterialCommunityIcons name="calendar-blank" size={18} color={colors.text} />
               
               <Text style={[styles.dayValue, { color: colors.text }]}>
-                {String(dayOfMonth).padStart(2, '0')}
+                {String(today.getDate()).padStart(2, '0')}
               </Text>
               
-              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textSecondary} />
+              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.text} />
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -102,11 +105,11 @@ export function DayAndDescriptionInput({
             <Text
               style={[
                 globalStyles.bodyTextSm,
-                { color: colors.textSecondary, fontWeight: 'bold', marginBottom: 8, marginLeft: 4 },
+                { color: colors.textSecondary, marginBottom: 8, fontWeight: 'bold', marginLeft: 4 },
               ]}
               numberOfLines={1}
             >
-              {t('fixed_tx.description_label', 'DESCRIPCIÓN')}
+              {t('fixed_tx.description_label', 'Descripcion')}
             </Text>
           </Animated.View>
         )}
@@ -148,7 +151,7 @@ export function DayAndDescriptionInput({
 
             <View style={styles.gridContainer}>
               {daysArray.map((d) => {
-                const isSelected = d === dayOfMonth;
+                const isSelected = d === today.getDate();
                 return (
                   <TouchableOpacity
                     key={d}
@@ -156,12 +159,12 @@ export function DayAndDescriptionInput({
                     onPress={() => handleSelectDay(d)}
                     style={[
                       styles.gridItem,
-                      { backgroundColor: isSelected ? colors.accent : colors.surfaceSecondary }
+                      { backgroundColor: isSelected ? colors.accent : 'transparent' }
                     ]}
                   >
                     <Text style={[
                       styles.gridItemText, 
-                      { color: isSelected ? '#fff' : colors.text }
+                      { color: isSelected ? colors.text : colors.text }
                     ]}>
                       {d}
                     </Text>
@@ -197,8 +200,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 16, // Más moderno que 50 para botones con iconos
-    borderWidth: 1, // Más visible
+    borderRadius: 50, // Más moderno que 50 para botones con iconos
+    borderWidth: 0.3, 
     height: 58,
     paddingHorizontal: 12,
   },
@@ -214,8 +217,8 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     height: 58,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 50,
+    borderWidth: 0.5,
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
@@ -259,12 +262,13 @@ const styles = StyleSheet.create({
   gridItem: {
     width: '12%', // Permite acomodar unos 7 días por fila tipo calendario
     aspectRatio: 1,
-    borderRadius: 12,
+    borderRadius: 99,
     alignItems: 'center',
     justifyContent: 'center',
   },
   gridItemText: {
+    paddingVertical: 6,
     fontSize: 16,
-    fontFamily: 'FiraSans-Bold',
+    fontFamily: 'FiraSans-Regular',
   },
 });
