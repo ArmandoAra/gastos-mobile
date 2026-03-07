@@ -6,12 +6,9 @@ import {
     ActivityIndicator,
     View,
     Platform,
-    Pressable
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
+import { 
     useSharedValue, 
-    useAnimatedStyle, 
     withSpring,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
@@ -60,12 +57,12 @@ export default function SubmitButton({
 
 
     return (
-        <Pressable
+        <TouchableOpacity
                 onPress={handleSave}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 disabled={disabled || loading}
-            style={[globalStyles.btnPrimary, { backgroundColor: disabled ? colors.textSecondary : selectedCategory?.color || colors.income, elevation: disabled ? 0 : 4 }]}
+            style={[globalStyles.btnPrimary, { backgroundColor: disabled ? colors.textSecondary : selectedCategory?.color || colors.income, elevation: disabled ? 0 : 4, zIndex: 999 }]}
                 // Accesibilidad
                 accessibilityRole="button"
                 accessibilityLabel={loading ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -86,7 +83,7 @@ export default function SubmitButton({
                         </Text>
                     )}
                 </View>
-        </Pressable>
+        </TouchableOpacity>
     );
 }
 

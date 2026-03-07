@@ -1,16 +1,21 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { globalStyles } from '../../../theme/global.styles';
 import { useAuthStore } from '../../../stores/authStore';
+import { useTransactionForm } from '../../transactions/constants/hooks/useTransactionForm';
+import { useTransactionItemLogic } from '../../transactions/hooks/useTransactionItemLogic';
+import useCategoriesStore from '../../../stores/useCategoriesStore';
+import { defaultCategories } from '../../../constants/categories';
+import { ICON_OPTIONS } from '../../../constants/icons';
 
-// Definimos la estructura de tus datos
 export type GastoFijo = {
+  categoryId: string;
   icon: string;
   label: string;
   spent: number;
@@ -20,93 +25,127 @@ export type GastoFijo = {
 type Props = {
   item: GastoFijo;
   delay: number;
-  onToggle: (label: string) => void; // Emitimos el evento al padre
+  onToggle: () => void;
 };
 
 export function FixedExpenseRow({ item, delay, onToggle }: Props) {
-    const currencySymbol = useAuthStore((s) => s.currencySymbol);
+  const currencySymbol = useAuthStore((s) => s.currencySymbol);
   const theme = useSettingsStore((s) => s.theme);
-    const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
-  
+  const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
+  const { getUserCategories } = useCategoriesStore();
+  const { iconsOptions } = useSettingsStore();
+
+  const categoryIconData = useMemo(() => {
+    // Sacamos el nombre original de la categoria de la transaccion, lo mismo si es personalizada o por defecto, esta se guarda en slug_category_name[0]
+    const customCategory = getUserCategories()
+    const allCategories = [...defaultCategories, ...customCategory];
+
+    // buscar la categoria que coincida con el id guardado en la transaccion
+    const matchCategory = allCategories.find(cat => cat.id === item.categoryId);
+    const iconDefinition = ICON_OPTIONS[iconsOptions].find(opt => opt.label === matchCategory?.icon);
+    return {
+      IconComponent: iconDefinition?.icon,
+      color: matchCategory?.color || '#B0BEC5',
+      displayName: matchCategory?.name || ''
+    };
+  }, [item.categoryId, iconsOptions]);
+
+  const { IconComponent, color, displayName } = categoryIconData;
+
   const handlePress = () => {
-    // Añadimos feedback háptico (vibración ligera) para mejor UX
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onToggle(item.label);
+    onToggle();
   };
 
+  console.log(item)
+
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.row}>
-      {/* Icono */}
-      <View style={styles.iconBox}> {/* Definir el color por la propiedad del icono que sera buscado en la base de los iconos */}
-        <MaterialCommunityIcons name={item.icon as any} size={18} color={colors.text} />
-      </View>
+    <Animated.View
+      entering={FadeInDown.delay(delay).springify().damping(18)}
+      style={[styles.row, { borderBottomColor: colors.border }]}
+    >
+      <TouchableOpacity
+        style={styles.touchableArea}
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.iconBox, { backgroundColor: color + '22' }]}>
+          {IconComponent ? (
+            <IconComponent
+              color={color}
+              style={{
+                width: iconsOptions === 'painted' ? 52 : 26,
+                height: iconsOptions === 'painted' ? 52 : 26,
+                backgroundColor: 'transparent',
+                borderRadius: 50,
+              }}
+            />
+          ) : (
+            <MaterialIcons name="shopping-bag" size={20} color={color} />
+          )}
+        </View>
 
-      {/* Información central (Nombre y Estado) */}
-      <View style={styles.infoContainer}>
-        <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>{item.label}</Text>
-        <Text style={[styles.statusText, { color: item.paid ? colors.success : colors.textSecondary }]}>
-          {item.paid ? 'Pagado' : 'Pendiente'}
-        </Text>
-      </View>
+        <View style={styles.infoContainer}>
+          <Text
+            style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}
+            numberOfLines={1}
+          >
+            {item.label}
+          </Text>
+          <Text style={[styles.statusText, { color: item.paid ? colors.success : colors.textSecondary }]}>
+            {item.paid ? 'Pagado' : 'Pendiente'}
+          </Text>
+        </View>
 
-      {/* Monto y Checkbox */}
-      <View style={styles.rightAction}>
-        <Text style={[styles.amount, { color: item.paid ? colors.textSecondary : colors.text }]}>
-          {currencySymbol}{item.spent}
-        </Text>
-        
-        <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.checkboxButton}>
+        <View style={styles.rightAction}>
+          <Text style={[styles.amount, { color: item.paid ? colors.textSecondary : colors.text }]}>
+            {currencySymbol}{Number(item.spent).toFixed(2)}
+          </Text>
+
           <MaterialCommunityIcons 
-            name={item.paid ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"} 
+            name={item.paid ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'} 
             size={24} 
             color={item.paid ? colors.success : colors.textSecondary} 
           />
-        </TouchableOpacity>
-      </View>
+        </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { 
+    borderBottomWidth: StyleSheet.hairlineWidth, // Usa la línea más fina posible del dispositivo
+  },
+  touchableArea: {
     flexDirection: 'row', 
     alignItems: 'center', 
     gap: 12, 
-    paddingVertical: 10, 
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)', // Opcional: línea separadora
+    paddingVertical: 12, // Un poco más de espacio para tocar cómodamente
   },
   iconBox: { 
-    width: 38, 
-    height: 38, 
+    width: 40,
+    height: 40, 
     borderRadius: 12, 
     alignItems: 'center', 
-    justifyContent: 'center' 
+    justifyContent: 'center',
   },
   infoContainer: { 
     flex: 1, 
-    justifyContent: 'center' 
-  },
-  name: { 
-    color: '#fff', 
-    fontSize: 14, 
-    fontWeight: '600',
-    marginBottom: 2 
+    justifyContent: 'center',
   },
   statusText: { 
     fontSize: 12,
-    fontWeight: '500'
+    fontWeight: '500',
+    marginTop: 2,
   },
   rightAction: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 12 
+    gap: 10,
   },
   amount: { 
     fontSize: 14, 
-    fontWeight: 'bold' 
+    fontWeight: 'bold',
   },
-  checkboxButton: {
-    padding: 2, // Área táctil extra
-  }
 });

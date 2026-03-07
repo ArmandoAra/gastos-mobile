@@ -44,7 +44,6 @@ export function useTransactionForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const amountInputRef = useRef<TextInput | null>(null);
     const userCategories: Category[] = getUserCategories();
-    const { addCategory } = useCategoriesStore();
     const activeCategories: Category[] = getActivesUserCategories();
 
     const defaultCategoriesOptions: Category[] = filterCategoriesByType(defaultCategories, inputNameActive);

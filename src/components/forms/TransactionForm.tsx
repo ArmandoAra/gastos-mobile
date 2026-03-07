@@ -55,6 +55,8 @@ import InfoPopUp from '../messages/InfoPopUp';
 import { defaultCategories } from '../../constants/categories';
 import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/categories.interface';
 import useCategoriesStore from '../../stores/useCategoriesStore';
+import { useCalculator } from '../../hooks/useCalculator';
+import { is } from 'date-fns/locale';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -101,6 +103,14 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         handleClose: resetForm 
     } = useTransactionForm();
 
+    // Calculator Hook
+    const {
+        isCalculatorOpen,
+        isKeyboardVisible,
+        setIsCalculatorOpen,
+        handleOpenCalculator,
+    } = useCalculator();
+
     // Store de Presupuestos (Solo para Crear)
     const toTransactBudget = useBudgetsStore(state => state.toTransactBudget);
     const setToTransactBudget = useBudgetsStore(state => state.setToTransactBudget);
@@ -108,11 +118,11 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     const { getUserCategories } = useCategoriesStore();
 
     // Estados Locales UI
-    const [showCalculator, setShowCalculator] = useState(false);
+    // const [showCalculator, setShowCalculator] = useState(false);
     const [isLoadingEdit, setIsLoadingEdit] = useState(false); // Estado de carga específico para edición
 
     // Monitor de Teclado
-    const isKeyboardVisible = useKeyboardStatus();
+    // const isKeyboardVisible = useKeyboardStatus();
 
     // --- 2. INICIALIZACIÓN (EFECTO UNIFICADO) ---
     useEffect(() => {
@@ -162,15 +172,15 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
             resetForm();
             setIsReady(false);
             setIsLoadingEdit(false);
-            setShowCalculator(false);   
+            setIsCalculatorOpen(false);   
             setToTransactBudget(null);
         }
     }, [isOpen]);
 
     // Cerrar calculadora si aparece el teclado
-    useEffect(() => {
-        if (isKeyboardVisible) setShowCalculator(false);
-    }, [isKeyboardVisible]);
+    // useEffect(() => {
+    //     if (isKeyboardVisible) setShowCalculator(false);
+    // }, [isKeyboardVisible]);
 
     // --- 3. LOGICA DE NEGOCIO ---
 
@@ -184,19 +194,19 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
         month: '2-digit', day: '2-digit', year: 'numeric'
     });
 
-    const handleOpenCalculator = () => {
-        Keyboard.dismiss();
-        setTimeout(() => {
-            setShowCalculator(true);
-            if (Platform.OS !== 'web') {
-                AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened'));
-            }
-        }, 100);
-    };
+    // const handleOpenCalculator = () => {
+    //     Keyboard.dismiss();
+    //     setTimeout(() => {
+    //         setShowCalculator(true);
+    //         if (Platform.OS !== 'web') {
+    //             AccessibilityInfo.announceForAccessibility(t('accessibility.calculator_opened'));
+    //         }
+    //     }, 100);
+    // };
 
     const handleCloseForm = () => {
         setToTransactBudget(null);
-        setShowCalculator(false);
+        setIsCalculatorOpen(false);
         onClose(false);
         resetForm(); // Limpia el hook useTransactionForm
     };
@@ -362,7 +372,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                             <ScrollView
                                 contentContainerStyle={[
                                     styles.scrollContent,
-                                    { paddingBottom: (isKeyboardVisible || showCalculator) ? 370 : 100 }
+                                    { paddingBottom: (isKeyboardVisible || isCalculatorOpen) ? 370 : 100 }
                                 ]}
                                 keyboardShouldPersistTaps="handled"
                                 showsVerticalScrollIndicator={false}
@@ -374,7 +384,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                                     amount={amount}
                                     setAmount={setAmount}
                                     amountInputRef={amountInputRef}
-                                    handleCategoryClick={handleCategoryClick} // O handleCategoryClick si usas el del hook
+                                    handleCategoryClick={handleCategoryClick} 
                                     colors={colors}
                                     onOpenCalculator={handleOpenCalculator}
                                 />
@@ -422,7 +432,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                             {/* --- EXTRAS (Calculadora, Popover) --- */}
                             
                             {/* Calculadora */}
-                            {showCalculator && (
+                            {isCalculatorOpen && (
                                 <Animated.View
                                     entering={SlideInDown.duration(300)}
                                     exiting={SlideOutDown.duration(200)}
@@ -444,7 +454,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
                                         colors={colors}
                                         value={amount}
                                         onChange={setAmount}
-                                        onClose={() => setShowCalculator(false)}
+                                        onClose={() => setIsCalculatorOpen(false)}
                                     />
                                 </Animated.View>
                             )}

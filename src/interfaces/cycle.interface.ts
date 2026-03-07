@@ -5,28 +5,29 @@ export type CycleStatus = 'active' | 'closed' | 'pending';
 
 export interface Cycle {
   id: string;
-  account_id: string;
-  user_id: string;
+  accountId: string;
+  userId: string;
   name: string;
   
   // Fechas
-  start_date: string;
-  end_date: string;   
-  cutoff_date?: string; // Opcional: Fecha de corte real si es tarjeta de crédito
+  startDate: string;
+  endDate: string;
+  cutoffDate?: string; // Opcional: Fecha de corte real si es tarjeta de crédito
   
   // Finanzas del ciclo
-  base_budget: number;      // El presupuesto original asignado
-  rollover_bonus: number;   // Lo que sobró del mes pasado y se sumó a este
-  total_spent: number;      // Total gastado hasta ahora
-  fixed_expenses: number;   // Gastos fijos comprometidos en este ciclo
+  baseBudget: number;      // El presupuesto original asignado
+  effectiveBudget: number;
+  rolloverBonus: number;   // Lo que sobró del mes pasado y se sumó a este
+  totalSpent: number;      // Total gastado hasta ahora
+  fixedExpenses: number;   // Gastos fijos comprometidos en este ciclo
   
   // Cierre de ciclo
   status: CycleStatus;
-  surplus_amount?: number;        // Cuánto sobró al cerrar
+  surplusAmount?: number;        // Cuánto sobró al cerrar
   
   // Auditoría
-  created_at: string; 
-  updated_at: string; 
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SurplusDestination {
@@ -35,7 +36,7 @@ export interface SurplusDestination {
   bucketId: string;
   amount: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export type BucketType = 'rollover' | 'savings' | 'emergency' | 'investment' | 'buffer';
@@ -68,5 +69,4 @@ export interface FixedTransaction extends Transaction {
   dayOfMonth: number; // Para saber cuándo "ocurre" dentro del ciclo
   isPaid: boolean;     // Para marcar si ya se pagó este mes o no
   isActive: boolean;   // Por si el usuario quiere pausar una suscripción
-  createdAt: string;
 }

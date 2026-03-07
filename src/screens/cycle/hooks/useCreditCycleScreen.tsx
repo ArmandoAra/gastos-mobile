@@ -13,7 +13,7 @@ import useDataStore from '../../../stores/useDataStore';
 
 export const useCreditCycleScreen = () => {
   const [todayString, setTodayString] = useState(new Date().toDateString());
-
+  const [amount, setAmount] = useState('');
   const getAccoutTransactionsByCycle = useDataStore((s) => s.getAccoutTransactionsByCycle);
   const transactions = useDataStore((s) => s.transactions);
   const allAccounts = useDataStore((s) => s.allAccounts);
@@ -187,6 +187,8 @@ export const useCreditCycleScreen = () => {
   }, []);
 
   return {
+    amount,
+    setAmount,
     allAccounts,
     accountSelected,
     setAccountSelected,

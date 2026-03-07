@@ -4,7 +4,7 @@ import { immer } from 'zustand/middleware/immer';
 import { createMMKV } from 'react-native-mmkv';
 import { subDays } from 'date-fns';
 import { DEFAULT_BUCKETS } from '../constants/cycle';
-import { FixedTransaction } from '../interfaces/cycle.interface';
+import { Bucket, BucketTransaction, BucketType, Cycle, FixedTransaction, SurplusDestination } from '../interfaces/cycle.interface';
 
 // ─── MMKV ────────────────────────────────────────────────────────────────────
 export const cycleStorage = createMMKV({ id: 'categories-storage' });
@@ -22,84 +22,6 @@ function generateId(): string {
 function nowISO(): string {
   return new Date().toISOString();
 }
-
-// ─── TYPES ───────────────────────────────────────────────────────────────────
-
-export type BucketType = 'rollover' | 'savings' | 'emergency' | 'investment' | 'buffer';
-export type CycleStatus = 'active' | 'closed' | 'pending';
-
-export interface SurplusDeposit {
-  id: string;
-  amount: number;
-  fromCycleId: string;
-  date: string;
-  note?: string;
-}
-
-export interface Bucket {
-  id: string;
-  userId: string;
-  type: BucketType;
-  name: string;
-  iconName: string;
-  totalAccumulated: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface BucketTransaction {
-  id: string;
-  bucketId: string;
-  cycleId?: string;
-  userId: string;
-  amount: number;           // Positivo depósito, negativo retiro
-  type: 'deposit' | 'withdrawal';
-  note?: string;
-  date: string;
-  createdAt: string;
-}
-
-export interface SurplusDestination {
-  id: string;
-  cycleId: string;
-  bucketId: string;
-  amount: number;
-  createdAt: string;
-}
-
-export interface Cycle {
-  id: string;
-  accountId: string;
-  userId: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  cutoffDate: string;
-  baseBudget: number;
-  rolloverBonus: number;
-  effectiveBudget: number;
-  totalSpent: number;
-  fixedExpenses: number;
-  status: CycleStatus;
-  surplusAmount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// export interface FixedTransaction {
-//   id: string;
-//   userId: string;
-//   accountId: string;
-//   description: string;
-//   amount: number;
-//   iconName: string;
-//   color: string;
-//   dayOfMonth: number;
-//   category: string;
-//   isPaid: boolean;
-//   isActive: boolean;
-//   createdAt: string;
-// }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 export interface CycleStoreState {

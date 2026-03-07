@@ -34,7 +34,7 @@ import { CycleHistoryRow } from './components/CircleHistory';
 // Así todos los componentes ven exactamente el mismo estado en el mismo render.
 import { useCreditCycleScreen } from './hooks/useCreditCycleScreen';
 import { BucketType } from '../../interfaces/cycle.interface';
-import { FixedTransactionsManager } from './components/FixeTranasactionsManager';
+import { FixedTransactionsManager } from './components/FixedTranasactionsManager';
 import { useAuthStore } from '../../stores/authStore';
 
 // ─── MOCK DATA (pendiente de conectar a datos reales) ─────────────────────────

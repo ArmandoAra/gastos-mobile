@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect } from 'react';
+import React from 'react';
 import { 
     View, 
     Text, 
@@ -16,21 +16,16 @@ import Animated, {
     useSharedValue, 
     withSpring, 
     FadeInLeft,
-    FadeInRight,
     SlideInRight,
     SlideOutLeft,
     SlideInLeft,
-    SlideOutRight,
     FadeIn
 } from 'react-native-reanimated';
 import { ThemeColors } from '../../../types/navigation';
 import { useTranslation } from 'react-i18next';
 import { Category } from '../../../interfaces/data.interface';
 import { ICON_OPTIONS } from '../../../constants/icons';
-import useCategoriesStore from '../../../stores/useCategoriesStore';
-import { defaultCategories } from '../../../constants/categories';
 import { useSettingsStore } from '../../../stores/settingsStore';
-import { formatCurrency } from '../../../utils/helpers';
 import { globalStyles } from '../../../theme/global.styles';
 
 interface CategoryAndAmountInputProps {
@@ -38,8 +33,6 @@ interface CategoryAndAmountInputProps {
     selectedCategory: Category | null;
     amount: string;
     setAmount: (value: string) => void;
-    // Aunque ya no usamos TextInput, mantengo el tipo RefObject por si lo usas en el padre,
-    // pero idealmente deberías quitarlo de las props si no se usa para focus.
     amountInputRef?: any; 
     handleCategoryClick: (event: any) => void;
     colors: ThemeColors;
@@ -107,7 +100,7 @@ export default function CategoryAndAmountInput({
                     <Animated.View entering={FadeInLeft} style={styles.iconContainer}>
                         {isReady && <Animated.View
                             entering={SlideInLeft.duration(200)}
-                            exiting={SlideOutRight.duration(300)}
+                            exiting={SlideOutLeft.duration(300)}
                             style={animatedIconStyle}>
                             <View
                                 style={[styles.gradient, {
