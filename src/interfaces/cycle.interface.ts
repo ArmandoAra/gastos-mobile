@@ -70,3 +70,12 @@ export interface FixedTransaction extends Transaction {
   isPaid: boolean;     // Para marcar si ya se pagó este mes o no
   isActive: boolean;   // Por si el usuario quiere pausar una suscripción
 }
+
+export interface CategoryLimit {
+  id: string;
+  cycleId: string;
+  categoryId: string;
+  limitAmount: number;
+  createdAt: string;
+  updatedAt?: string;
+}

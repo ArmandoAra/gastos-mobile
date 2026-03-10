@@ -4,7 +4,7 @@ import { immer } from 'zustand/middleware/immer';
 import { createMMKV } from 'react-native-mmkv';
 import { subDays } from 'date-fns';
 import { DEFAULT_BUCKETS } from '../constants/cycle';
-import { Bucket, BucketTransaction, BucketType, Cycle, FixedTransaction, SurplusDestination } from '../interfaces/cycle.interface';
+import { Bucket, BucketTransaction, BucketType, CategoryLimit, Cycle, FixedTransaction, SurplusDestination } from '../interfaces/cycle.interface';
 
 // ─── MMKV ────────────────────────────────────────────────────────────────────
 export const cycleStorage = createMMKV({ id: 'categories-storage' });
@@ -31,6 +31,7 @@ export interface CycleStoreState {
   bucketTransactions: BucketTransaction[];
   surplusDestinations: SurplusDestination[];
   fixedTransactions: FixedTransaction[];
+  categoryLimits: CategoryLimit[];
   selectedCycleAccount: string;
 }
 
@@ -104,6 +105,8 @@ export interface CycleStoreActions {
   toggleFixedTransactionActive: (id: string) => void;
   deleteFixedTransaction: (id: string) => void;
 
+  setCategoryLimit: (params: Omit<CategoryLimit, 'id' | 'createdAt' | 'updatedAt'>) => void;
+
   // Dev
   clearAllCycleData: () => void;
 }
@@ -119,6 +122,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       bucketTransactions: [],
       surplusDestinations: [],
       fixedTransactions: [],
+      categoryLimits: [],
       selectedCycleAccount: '',
 
       // ── Setup ──────────────────────────────────────────────────────────────
@@ -425,6 +429,41 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           state.fixedTransactions = state.fixedTransactions.filter((t) => t.id !== id);
         });
       },
+      // ── Category Limits (NUEVO) ────────────────────────────────────────────
+
+      setCategoryLimit: ({ cycleId, categoryId, limitAmount }) => {
+        set((state) => {
+          // Buscamos si ya existe un límite para esa categoría en ese ciclo
+          const existingLimit = state.categoryLimits.find(
+            (l) => l.cycleId === cycleId && l.categoryId === categoryId
+          );
+
+          if (existingLimit) {
+            // Si existe, lo actualizamos
+            existingLimit.limitAmount = limitAmount;
+            existingLimit.updatedAt = nowISO();
+          } else {
+            // Si no existe, creamos uno nuevo
+            state.categoryLimits.push({
+              id: generateId(),
+              cycleId,
+              categoryId,
+              limitAmount,
+              createdAt: nowISO(),
+            });
+          }
+        });
+      },
+
+      deleteCategoryLimit: (limitId: string) => {
+        set((state) => {
+          state.categoryLimits = state.categoryLimits.filter((l) => l.id !== limitId);
+        });
+      },
+
+      getCategoryLimitsByCycle: (cycleId: string) => {
+        return get().categoryLimits.filter((l) => l.cycleId === cycleId);
+      },
 
       // ── Dev ────────────────────────────────────────────────────────────────
 
@@ -436,6 +475,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           state.bucketTransactions = [];
           state.surplusDestinations = [];
           state.fixedTransactions = [];
+          state.categoryLimits = [];
         });
         const currentAccount = get().selectedCycleAccount;
         if (currentAccount) {
@@ -444,7 +484,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       },
     })),
     {
-      name: 'cycle-store-v4',
+      name: 'cycle-store-v5',
       storage: createJSONStorage(() => mmkvStorage),
       partialize: (state) => ({
         cycles: state.cycles,
@@ -453,6 +493,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         bucketTransactions: state.bucketTransactions,
         surplusDestinations: state.surplusDestinations,
         fixedTransactions: state.fixedTransactions,
+        categoryLimits: state.categoryLimits,
       }),
     }
   )

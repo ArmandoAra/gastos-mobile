@@ -12,7 +12,6 @@ import { months, weekDaysFull } from '../constants/date';
 import { darkTheme, lightTheme } from '../theme/colors';
 import { Transaction } from '../interfaces/data.interface';
 import { CATEGORY_COLORS } from '../constants/categories';
-import { useCycleStore } from '../stores/useCycleStore';
 import { useCreditCycleScreen } from '../screens/cycle/hooks/useCreditCycleScreen';
 
 export interface CategoryModalData {
@@ -116,14 +115,25 @@ export const useDailyExpenseLogic = () => {
         const totalIncome = income.reduce((sum, t) => sum + Math.abs(t.amount), 0);
         const balance = totalIncome - totalExpenses;
 
-        const categoryTotals: Record<string, number> = {};
+        // const categoryTotals: Record<string, number> = {};
+        // expenses.forEach(t => {
+        //     const amount = Math.abs(t.amount);
+        //     categoryTotals[t.category_icon_name] = (categoryTotals[t.category_icon_name] || 0) + amount;
+        // });
+
+        const categoryTotalsWithIds: Record<string, { total: number; categoryId: string | null }> = {};
         expenses.forEach(t => {
             const amount = Math.abs(t.amount);
-            categoryTotals[t.category_icon_name] = (categoryTotals[t.category_icon_name] || 0) + amount;
+            if (!categoryTotalsWithIds[t.category_icon_name]) {
+                categoryTotalsWithIds[t.category_icon_name] = { total: amount, categoryId: t.categoryId || null };
+            } else {
+                categoryTotalsWithIds[t.category_icon_name].total += amount;
+            }
         });
 
-        const topCategory = Object.entries(categoryTotals).reduce(
-            (max, [cat, amount]) => amount > max.amount ? { category: cat, amount } : max,
+
+        const topCategory = Object.entries(categoryTotalsWithIds).reduce(
+            (max, [cat, { total }]) => total > max.amount ? { category: cat, amount: total } : max,
             { category: '', amount: 0 }
         );
 
@@ -139,7 +149,7 @@ export const useDailyExpenseLogic = () => {
             incomeCount: income.length,
             topCategory,
             largestTransaction,
-            categoryTotals,
+            categoryTotalsWithIds,
             expensesList: expenses
         };
     }, [filteredTransactions]);
@@ -176,17 +186,18 @@ export const useDailyExpenseLogic = () => {
 
     // --- 5. DATOS GRÁFICO ---
     const transactionsData = useMemo(() => {
-        return Object.entries(stats.categoryTotals).map(([name, value], index) => {
+        return Object.entries(stats.categoryTotalsWithIds).map(([name, { total, categoryId }], index) => {
             const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
             return {
-                value,
+                value: total,
                 color,
                 text: name,
+                categoryId,
                 focused: selectedCategory === name,
-                onPress: () => handleCategorySelect(name, value, color)
+                onPress: () => handleCategorySelect(name, total, color)
             };
         });
-    }, [stats.categoryTotals, selectedCategory, handleCategorySelect]);
+    }, [stats.categoryTotalsWithIds, selectedCategory, handleCategorySelect]);
 
     return {
         // UI Helpers

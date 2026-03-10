@@ -53,7 +53,6 @@ interface Props {
 export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) {
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
-  const currencySymbol = useAuthStore((s) => s.currencySymbol);
 
 
   const fixedTransactions = useCycleStore(

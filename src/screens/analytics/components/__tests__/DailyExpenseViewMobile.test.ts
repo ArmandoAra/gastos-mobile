@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import DailyExpenseViewMobile from '../DailyExpenseView';
-import { useDailyExpenseLogic } from '../../hooks/useDailyExpenseLogic';
+import { useDailyExpenseLogic } from '../../hooks/useDailyExpenseLogicDESUSO';
 
 // ==========================================
 // 1. MOCK GLOBAL DE i18next

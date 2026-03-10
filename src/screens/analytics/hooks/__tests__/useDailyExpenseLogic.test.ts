@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-native';
-import { useDailyExpenseLogic } from '../useDailyExpenseLogic';
+import { useDailyExpenseLogic } from '../useDailyExpenseLogicDESUSO';
 
 // Mocks de Stores
 import useDataStore from '../../../../stores/useDataStore';

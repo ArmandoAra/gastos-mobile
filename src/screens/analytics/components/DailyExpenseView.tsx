@@ -19,11 +19,14 @@ import { isTablet, styles } from './styles';
 import { StatCard } from './subcomponents/StatsCard';
 import { InsightCard } from './subcomponents/InsightCard';
 import { EmptyState } from './subcomponents/EmptyState';
-import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogic';
 import PeriodSelector from './subcomponents/PeriodSelector';
 import { ViewPeriod } from '../../../interfaces/date.interface';
 import { formatCurrency } from '../../../utils/helpers';
 import CloseModalButton from './subcomponents/CloseModalButton';
+import { CategoryTransactionRow } from '../../cycle/components/CategoryTransactionRow';
+import { useDailyExpenseLogic } from '../../../hooks/useDailyExpenseLogic';
+// import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogicDESUSO';
+
 
 export default function DailyExpenseViewMobile({ handlePeriodChange }: { handlePeriodChange: (p: ViewPeriod) => void }) {
     const {
@@ -34,7 +37,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
         filteredTransactions,
         dateInfo,
         stats,
-        pieData,
+        transactionsData,
         modalVisible,
         modalData,
         selectedCategory,
@@ -174,7 +177,7 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                         accessibilityLabel={`${t('overviews.categoryBreakdown')}. ${t('common.total')} ${t('common.expenses')}: ${currencySymbol} ${stats.totalExpenses.toFixed(0)}`}
                                     >
                                     <PieChart
-                                            data={pieData}
+                                            data={transactionsData}
                                         donut
                                         radius={pieRadius}
                                         innerRadius={pieInnerRadius}
@@ -214,99 +217,19 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                                                 {t('overviews.categoryBreakdown')}
                                             </Text>
                                     </View>
-
-                                        {pieData.map((item, idx) => {
-                                        const percentage = ((item.value / stats.totalExpenses) * 100).toFixed(1);
-                                        const isSelected = selectedCategory === item.text;
-
-                                        return (
-                                            <Animated.View
+                                        {transactionsData.map((item, idx) => (
+                                            <CategoryTransactionRow
                                                 key={`${item.text}-${idx}`}
-                                                entering={FadeInDown.delay(idx * 50).springify()}
-                                            >
-                                                <TouchableOpacity
-                                                    onPress={() => handleCategorySelect(item.text, item.value, item.color)}
-                                                    activeOpacity={0.82}
-                                                    style={[
-                                                        localStyles.categoryRow,
-                                                        {
-                                                            backgroundColor: isSelected
-                                                                ? item.color + '18'
-                                                                : colors.surfaceSecondary,
-                                                            borderColor: isSelected
-                                                                ? item.color + '55'
-                                                                : 'transparent',
-                                                        }
-                                                    ]}
-                                                    accessible={true}
-                                                    accessibilityRole="button"
-                                                    accessibilityLabel={`${item.text}, ${currencySymbol} ${item.value.toFixed(2)}, ${percentage}% ${t('common.of')} ${t('common.total')}`}
-                                                    accessibilityHint={t('accessibility.tap_view_details', 'Tap to view transaction details')}
-                                                    accessibilityState={{ selected: isSelected }}
-                                                >
-                                                    {/* Dot de color — reemplaza el borde lateral */}
-                                                    <View style={[localStyles.catAccentBar, { backgroundColor: item.color }]} />
-
-                                                    <View style={localStyles.catInner}>
-                                                        <View style={localStyles.catRowTop}>
-                                                            {/* Nombre con avatar de color */}
-                                                            <View style={localStyles.catNameContainer}>
-                                                                <View style={[localStyles.catDotBox, { backgroundColor: item.color + '22' }]}>
-                                                                    <View style={[localStyles.colorDot, { backgroundColor: item.color }]} />
-                                                                </View>
-                                                                <Text
-                                                                    style={[
-                                                                        localStyles.catName,
-                                                                        { color: colors.text },
-                                                                        isSmallScreen && localStyles.catNameSmall
-                                                                    ]}
-                                                                    numberOfLines={2}
-                                                                    ellipsizeMode="tail"
-                                                                >
-                                                                    {t(`icons.${item.text}`, item.text)}
-                                                                </Text>
-                                                            </View>
-
-                                                            {/* Monto + % */}
-                                                            <View style={localStyles.catRight}>
-                                                                <Text
-                                                                    style={[
-                                                                        localStyles.catValue,
-                                                                        { color: colors.expense },
-                                                                        isSmallScreen && localStyles.catValueSmall
-                                                                    ]}
-                                                                    numberOfLines={1}
-                                                                    adjustsFontSizeToFit
-                                                                    minimumFontScale={0.8}
-                                                                >
-                                                                    -{currencySymbol}{formatCurrency(item.value)}
-                                                                </Text>
-                                                                {/* Chip de porcentaje — mismo pill que chips del resto de la app */}
-                                                                <View style={[localStyles.percentChip, { backgroundColor: item.color + '22' }]}>
-                                                                    <Text style={[localStyles.catPercent, { color: item.color }]}>
-                                                                        {percentage.replace('.', ',')}%
-                                                                    </Text>
-                                                                </View>
-                                                            </View>
-                                                        </View>
-
-                                                        {/* Barra de progreso — h6 radius 99, igual que CategoryRow */}
-                                                        <View style={[localStyles.progressBarBg, { backgroundColor: colors.border }]}>
-                                                            <View
-                                                                style={[
-                                                                    localStyles.progressBarFill,
-                                                                    {
-                                                                        width: `${percentage}%` as `${number}%`,
-                                                                        backgroundColor: item.color
-                                                                    }
-                                                                ]}
-                                                            />
-                                                        </View>
-                                                    </View>
-                                                </TouchableOpacity>
-                                            </Animated.View>
-                                        );
-                                    })}
+                                                item={item}
+                                                idx={idx}
+                                                totalExpenses={stats.totalExpenses}
+                                                isSelected={selectedCategory === item.text}
+                                                onPress={handleCategorySelect}
+                                                currencySymbol={currencySymbol}
+                                                colors={colors}
+                                                isSmallScreen={isSmallScreen}
+                                            />
+                                        ))}
                                 </View>
                             </View>
                         )}

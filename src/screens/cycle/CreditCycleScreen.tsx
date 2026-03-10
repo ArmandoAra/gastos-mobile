@@ -13,8 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { subDays, addDays, differenceInDays } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { useCycleStore } from '../../stores/useCycleStore';
-import { CategoryRow } from './components/CategoryRow';
 import { RolloverModal } from './components/RolloverModal';
 import { AllocationModal } from './components/AllocationModal';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -23,7 +21,6 @@ import { darkTheme, lightTheme } from '../../theme/colors';
 import { globalStyles } from '../../theme/global.styles';
 import { AccountModalSelector } from '../../components/forms/Inputs/AccountModalSelector';
 import { CycleBarChart } from './components/CycleBarChart';
-import { FixedExpenseRow } from './components/SpendingFixRow';
 import { CloseCycleCard } from './components/CloseCycleCard';
 import { HeroCard } from './components/HeroCard';
 import { BucketCard } from './components/BucketCard';
@@ -35,13 +32,14 @@ import { CycleHistoryRow } from './components/CircleHistory';
 // Los datos se pasan hacia abajo como props a HeroCard y PacingBar.
 // Así todos los componentes ven exactamente el mismo estado en el mismo render.
 import { useCreditCycleScreen } from './hooks/useCreditCycleScreen';
-import { BucketType } from '../../interfaces/cycle.interface';
 import { FixedTransactionsManager } from './components/FixedTranasactionsManager';
 import { useAuthStore } from '../../stores/authStore';
 import { useDailyExpenseLogic } from '../../hooks/useDailyExpenseLogic';
 import { isSmallScreen } from '../analytics/components/styles';
-import { formatCurrency } from '../../utils/helpers';
 import { DetailsModal } from '../../components/charts/DetailsModal';
+import { CategoryTransactionRow } from './components/CategoryTransactionRow';
+import { CategoryCycleExpensesView } from './components/CategoryCycleExpensesView';
+import { FixedExpensesCycleView } from './components/FixedExpensesCycleView';
 
 // ─── MOCK DATA (pendiente de conectar a datos reales) ─────────────────────────
 export const today = new Date();
@@ -49,12 +47,6 @@ export const cycleStart = subDays(today, 10);
 export const cycleEnd = addDays(today, 20);
 export const cycleDays = differenceInDays(cycleEnd, cycleStart);
 
-export const categories = [
-  { icon: 'coffee', label: 'Café', spent: 120, limit: 80, color: '#FF6B6B' },
-  { icon: 'food', label: 'Comida', spent: 180, limit: 300, color: '#4ECDC4' },
-  { icon: 'car', label: 'Transporte', spent: 60, limit: 150, color: '#E5B7D1' },
-  { icon: 'shopping', label: 'Compras', spent: 40, limit: 200, color: '#96CEB4' },
-];
 
 export const gastosFijos = [
   { icon: 'phone', label: 'Internet', spent: 120, color: '#FF6B6B', paid: true },
@@ -85,10 +77,8 @@ export default function CreditCycleScreen() {
   const {
     allAccounts,
     accountSelected,
-    setAccountSelected,
     selectedAccountObj,
     isAccountSelectorOpen,
-    setIsAccountSelectorOpen,
     isActiveCycle,
     daysElapsed,
     buckets,
@@ -97,8 +87,10 @@ export default function CreditCycleScreen() {
     activeCycle,
     pendingSurplusCycle,
     showAlloc,
-    setShowAlloc,
     showRollover,
+    setShowAlloc,
+    setIsAccountSelectorOpen,
+    setAccountSelected,
     setShowRollover,
   } = useCreditCycleScreen();
   const { setCurrentPeriod, transactionsData, stats, selectedCategory, handleCategorySelect, modalData, handleCloseModal } = useDailyExpenseLogic();
@@ -107,7 +99,6 @@ export default function CreditCycleScreen() {
 
 
   useEffect(() => {
-    console.log(transactionsData)
     setCurrentPeriod('custom'); // Forzamos el periodo a 'custom' para que use las fechas del ciclo
   }, [activeCycle]);
 
@@ -133,7 +124,6 @@ export default function CreditCycleScreen() {
           {/* ── HEADER ── */}
           <Animated.View style={[screen.topBar, { backgroundColor: colors.surfaceSecondary + '80' }]}>
             <View style={screen.titleBlock}>
-              {/* selectedAccountObj siempre coincide con accountSelected */}
               <Text style={[globalStyles.headerTitleBase, { color: colors.text }]}>
                 {selectedAccountObj?.name}
               </Text>
@@ -147,6 +137,7 @@ export default function CreditCycleScreen() {
               </Text>
             </View>
 
+            {/* MENU SELECTOR DE CUENTAS */}
             <TouchableOpacity
               style={[
                 globalStyles.smallButton,
@@ -156,6 +147,7 @@ export default function CreditCycleScreen() {
             >
               <Ionicons name="menu" size={24} color={colors.surface} />
             </TouchableOpacity>
+
           </Animated.View>
 
           {/* ── ALERTA DE SURPLUS PENDIENTE ── */}
@@ -194,7 +186,7 @@ export default function CreditCycleScreen() {
             contentContainerStyle={screen.scroll}
             showsVerticalScrollIndicator={false}
           >
-            {/* HERO — recibe todos los datos calculados como props */}
+            {/* HERO*/}
             <Animated.View entering={FadeInDown.delay(150).springify()}>
               <HeroCard />
             </Animated.View>
@@ -205,163 +197,15 @@ export default function CreditCycleScreen() {
             <View style={{ height: 16 }} />
 
             {/* GASTOS FIJOS */}
-            <Animated.View
-              entering={FadeInDown.delay(150)}
-              exiting={FadeOutDown.delay(200)}
-              style={[screen.section, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary + '40' }]}
-            >
-              <LinearGradient
-                colors={[
-                  theme === 'dark' ? colors.accentSecondary + '40' : colors.accent + '40',
-                  colors.primary,
-                ]}
-                style={{ flex: 1, borderRadius: 22, padding: 22 }}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              >
-                <View style={{ height: 8 }} />
-
-                <FixedTransactionsManager
-                  accountId={accountSelected}
-                  userId={currentUserId}
-                  cycleId={activeCycle?.id}
-                />
-              </LinearGradient>
-            </Animated.View>
+            <FixedExpensesCycleView />
 
             {/* CATEGORÍAS */}
-            <Animated.View
-              entering={FadeInDown.delay(350).springify()}
-              style={[screen.section, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary + '40' }]}
-            >
-              <LinearGradient
-                colors={[
-                  colors.primary,
-                  theme === 'dark' ? colors.accentSecondary + '40' : colors.accent + '40',
-                ]}
-                style={{ flex: 1, borderRadius: 22, padding: 22 }}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={screen.sectionHeader}>
-                  <Text style={[globalStyles.headerTitleBase, { color: colors.text }]}>
-                    {t('cycle_screen.by_category')}
-                  </Text>
-                  <TouchableOpacity>
-                    <Text
-                      style={[
-                        globalStyles.bodyTextXs,
-                        {
-                          color: colors.primary,
-                          backgroundColor: colors.textSecondary,
-                          paddingHorizontal: 4,
-                          paddingVertical: 2,
-                          borderRadius: 25,
-                        },
-                      ]}
-                    >
-                      {t('cycle_screen.view_all')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {/* {categories.map((c, i) => (
-                  <CategoryRow key={c.label} item={c} delay={400 + i * 60} />
-                ))} */}
-                {transactionsData.map((item, idx) => {
-                  const percentage = ((item.value / stats.totalExpenses) * 100).toFixed(1);
-                  const isSelected = selectedCategory === item.text;
-
-                  return (
-                    <Animated.View
-                      key={`${item.text}-${idx}`}
-                      entering={FadeInDown.delay(idx * 50).springify()}
-                      exiting={FadeOutDown.delay(150)}
-                    >
-                      <TouchableOpacity
-                        onPress={() => handleCategorySelect(item.text, item.value, item.color)}
-                        activeOpacity={0.82}
-                        style={[
-                          screen.categoryRow,
-                          {
-                            backgroundColor: isSelected
-                              ? item.color + '18'
-                              : colors.surfaceSecondary,
-                            borderColor: isSelected
-                              ? item.color + '55'
-                              : 'transparent',
-                          }
-                        ]}
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${item.text}, ${currencySymbol} ${item.value.toFixed(2)}, ${percentage}% ${t('common.of')} ${t('common.total')}`}
-                        accessibilityHint={t('accessibility.tap_view_details', 'Tap to view transaction details')}
-                        accessibilityState={{ selected: isSelected }}
-                      >
-                        {/* Dot de color — reemplaza el borde lateral */}
-                        <View style={[screen.catAccentBar, { backgroundColor: item.color }]} />
-
-                        <View style={screen.catInner}>
-                          <View style={screen.catRowTop}>
-                            {/* Nombre con avatar de color */}
-                            <View style={screen.catNameContainer}>
-                              <View style={[screen.catDotBox, { backgroundColor: item.color + '22' }]}>
-                                <View style={[screen.colorDot, { backgroundColor: item.color }]} />
-                              </View>
-                              <Text
-                                style={[
-                                  screen.catName,
-                                  { color: colors.text },
-                                  isSmallScreen && screen.catNameSmall
-                                ]}
-                                numberOfLines={2}
-                                ellipsizeMode="tail"
-                              >
-                                {t(`icons.${item.text}`, item.text)}
-                              </Text>
-                            </View>
-
-                            {/* Monto + % */}
-                            <View style={screen.catRight}>
-                              <Text
-                                style={[
-                                  screen.catValue,
-                                  { color: colors.expense },
-                                  isSmallScreen && screen.catValueSmall
-                                ]}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                                minimumFontScale={0.8}
-                              >
-                                -{currencySymbol}{formatCurrency(item.value)}
-                              </Text>
-                              {/* Chip de porcentaje — mismo pill que chips del resto de la app */}
-                              <View style={[screen.percentChip, { backgroundColor: item.color + '22' }]}>
-                                <Text style={[screen.catPercent, { color: item.color }]}>
-                                  {percentage.replace('.', ',')}%
-                                </Text>
-                              </View>
-                            </View>
-                          </View>
-
-                          {/* Barra de progreso — h6 radius 99, igual que CategoryRow */}
-                          <View style={[screen.progressBarBg, { backgroundColor: colors.border }]}>
-                            <View
-                              style={[
-                                screen.progressBarFill,
-                                {
-                                  width: `${percentage}%` as `${number}%`,
-                                  backgroundColor: item.color
-                                }
-                              ]}
-                            />
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    </Animated.View>
-                  );
-                })}
-              </LinearGradient>
-            </Animated.View>
+            <CategoryCycleExpensesView
+              data={transactionsData}
+              stats={stats}
+              handleCategorySelect={handleCategorySelect}
+              selectedCategory={selectedCategory}
+            />
 
             <View style={{ height: 16 }} />
 
@@ -433,6 +277,9 @@ export default function CreditCycleScreen() {
 
             <View style={{ height: 40 }} />
           </Animated.ScrollView>
+
+
+          {/* DETALLES DE GASTOS */}
           <DetailsModal
             modalVisible={!!selectedCategory}
             handleCloseModal={handleCloseModal}

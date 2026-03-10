@@ -508,7 +508,8 @@
     "by_category": "Por categoría",
     "no_transactions": "No hay transacciones en este ciclo",
     "fixed_expenses": "Gastos fijos",
-    "view_all": "Ver todo",
+    "view_all": "Todo",
+    "view_less": "Menos",
     "deposit_short": "dep",
     "last": "Último",
     "deposit_history": "Historial de depósitos",
@@ -533,6 +534,7 @@
     "unallocated_surplus": "Tienes ${pendingSurplusCycle.surplusAmount} sin asignar",
     "under_budget": "¡Estás por debajo del presupuesto!",
     "over_budget": "¡Estás por encima del presupuesto!",
-    "days_left": "días restantes"
+    "days_left": "días restantes",
+    "category_limit": "Límite de categoría"
     }
 }
