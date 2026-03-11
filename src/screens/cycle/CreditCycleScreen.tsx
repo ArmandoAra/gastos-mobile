@@ -93,7 +93,7 @@ export default function CreditCycleScreen() {
     setAccountSelected,
     setShowRollover,
   } = useCreditCycleScreen();
-  const { setCurrentPeriod, transactionsData, stats, selectedCategory, handleCategorySelect, modalData, handleCloseModal } = useDailyExpenseLogic();
+  const { setCurrentPeriod, transactionsCycleData, statsByCycle, selectedCategory, handleCategorySelectByCycle, modalData, handleCloseModal } = useDailyExpenseLogic();
   const { currencySymbol } = useAuthStore();
 
 
@@ -201,9 +201,9 @@ export default function CreditCycleScreen() {
 
             {/* CATEGORÍAS */}
             <CategoryCycleExpensesView
-              data={transactionsData}
-              stats={stats}
-              handleCategorySelect={handleCategorySelect}
+              data={transactionsCycleData}
+              statsByCycle={statsByCycle}
+              handleCategorySelect={handleCategorySelectByCycle}
               selectedCategory={selectedCategory}
             />
 

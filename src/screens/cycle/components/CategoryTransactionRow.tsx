@@ -16,11 +16,9 @@ interface CategoryTransactionItem {
 }
 
 interface CategoryTransactionRowProps {
-  isCycleSection?: boolean;
   item: CategoryTransactionItem;
   limit?: number;
   idx: number;
-  // test: string;
   totalExpenses: number;
   isSelected: boolean;
   onPress: (text: string, value: number, color: string) => void;
@@ -30,9 +28,7 @@ interface CategoryTransactionRowProps {
 }
 
 export function CategoryTransactionRow({
-  isCycleSection = false,
   limit,
-  // test,
   item,
   idx,
   totalExpenses,
@@ -52,8 +48,7 @@ export function CategoryTransactionRow({
   const ratio     = hasLimit ? item.value / limit : percentageOfTotal / 100;
   const over      = hasLimit && item.value > limit;
   const barWidth  = `${Math.min(ratio * 100, 100)}%` as `${number}%`;
-  const barColor  = over ? colors.expense : item.color;
-  // console.log("limit",test)
+  const barColor = over ? colors.expense : item.color;
 
   return (
     <Animated.View

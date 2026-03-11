@@ -62,7 +62,7 @@ export default function FixedTransactionsList({
       {/* Progress bar */}
       {totalFixed > 0 && (
         <Animated.View
-          layout={LinearTransition.springify().damping(18).stiffness(120)}
+          layout={LinearTransition.springify().damping(90).stiffness(120)}
           style={[styles.progressTrack, { backgroundColor: colors.border }]}
         >
           <View
@@ -103,8 +103,13 @@ export default function FixedTransactionsList({
               />
             </View>
 
-            <TouchableOpacity
+            {
+              !tx.isPaid && (
+                <TouchableOpacity
               onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  onLongPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                 deleteFixedTx(tx.id);
               }}
@@ -113,6 +118,8 @@ export default function FixedTransactionsList({
             >
               <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.expense} />
             </TouchableOpacity>
+              )
+            }
           </Animated.View>
         ))}
       </Animated.View>

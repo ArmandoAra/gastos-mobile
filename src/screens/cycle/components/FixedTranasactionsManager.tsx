@@ -20,8 +20,6 @@ import { useShallow } from 'zustand/react/shallow'; // <-- IMPORTANTE PARA EVITA
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { globalStyles } from '../../../theme/global.styles';
-import { useAuthStore } from '../../../stores/authStore';
-import { FixedExpenseRow } from './SpendingFixRow';
 import { useCycleStore } from '../../../stores/useCycleStore';
 import { FixedTransaction } from '../../../interfaces/cycle.interface';
 import { TransactionType } from '../../../interfaces/data.interface';
@@ -40,20 +38,17 @@ const EMPTY_FORM: Omit<FixedTransaction, 'id' | 'isActive' | 'created_at' | 'upd
   amount: 0,
 };
 
-// Constante vacía para evitar loops de re-renderizado en Zustand
-const EMPTY_FIXED_TX: FixedTransaction[] = [];
-
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 interface Props {
   accountId: string;
   userId: string;
+  availableCycleDays: number[]; // Nuevas prop para pasar los días disponibles del ciclo
   cycleId?: string; // Si existe ciclo activo, se puede marcar cuál ya se pagó
 }
 
-export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) {
+export function FixedTransactionsManager({ accountId, userId, availableCycleDays, cycleId }: Props) {
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
-
 
   const fixedTransactions = useCycleStore(
     useShallow((s) => s.getFixedTransactionsByAccount(accountId) || []) // Reemplaza EMPTY_FIXED_TX si es necesario
@@ -80,19 +75,23 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
   const [showAllFixed, setShowAllFixed] = useState(false);
 
   // ── Handlers ──
-  const openList = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setListVisible(true);
-  };
+  // const openList = () => {
+  //   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  //   setListVisible(true);
+  // };
 
   const openForm = () => {
-    setForm(EMPTY_FORM);
+    // setForm(EMPTY_FORM);
     setFormVisible(true);
   };
 
   const handleTogglePaid = useCallback((id: string) => {
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     togglePaid(id);
+
+
+
   }, [togglePaid, accountId]); // Revisa tu acción togglePaid, normalmente requiere accountId y transactionId
 
   // ── Totales ──
@@ -175,8 +174,9 @@ export function FixedTransactionsManager({ accountId, userId, cycleId }: Props) 
       <FixedTransactionForm
         visible={formVisible}
         setFormVisible={setFormVisible}
-        form={form}
-        setForm={setForm}
+        availableCycleDays={availableCycleDays}
+        // form={form}
+        // setForm={setForm}
         colors={colors}
       />     
     </>

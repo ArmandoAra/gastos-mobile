@@ -115,7 +115,7 @@ export const CategoryLimitForm = ({
           style={[
             styles.sheet,
             styles.formSheet,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
           ]}
         >
           <View style={[styles.handle, { backgroundColor: colors.border }]} />

@@ -5,6 +5,8 @@ import { createMMKV } from 'react-native-mmkv';
 import { subDays } from 'date-fns';
 import { DEFAULT_BUCKETS } from '../constants/cycle';
 import { Bucket, BucketTransaction, BucketType, CategoryLimit, Cycle, FixedTransaction, SurplusDestination } from '../interfaces/cycle.interface';
+import useDataStore from './useDataStore';
+import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../interfaces/categories.interface';
 
 // ─── MMKV ────────────────────────────────────────────────────────────────────
 export const cycleStorage = createMMKV({ id: 'categories-storage' });
@@ -155,8 +157,8 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       // ── Cycles ─────────────────────────────────────────────────────────────
 
       startNewCycle: ({ accountId, userId, name, baseBudget, startDate, endDate, cutoffDate, fixedExpenses = 0 }) => {
-        get().initAccountDataIfMissing(accountId, userId);
 
+        get().initAccountDataIfMissing(accountId, userId);
         const buckets = get().bucketsByAccount[accountId] ?? [];
         const rolloverBucket = buckets.find((b) => b.type === 'rollover');
         const rolloverBonus = rolloverBucket?.totalAccumulated ?? 0;
@@ -411,10 +413,53 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       },
 
       toggleFixedTransactionPaid: (id) => {
+        // 1. OBTENER LAS ACCIONES DEL OTRO STORE ANTES (Usando getState)
+        const { addTransactionStore, deleteTransaction } = useDataStore.getState();
+
+        // 2. ACTUALIZAR ESTE STORE (Puro, sin efectos secundarios)
         set((state) => {
           const tx = state.fixedTransactions.find((t) => t.id === id);
-          if (tx) tx.isPaid = !tx.isPaid;
+          if (tx) {
+            tx.isPaid = !tx.isPaid;
+          }
         });
+
+        // 3. LEER EL ESTADO ACTUALIZADO (Para no trabajar con el Proxy de Immer)
+        const updatedTx = get().fixedTransactions.find((t) => t.id === id);
+        if (!updatedTx) return;
+
+        // 4. EJECUTAR EL EFECTO SECUNDARIO EN EL OTRO STORE
+        if (updatedTx.isPaid) {
+          // Gestión de slugs para categorías
+          const defaultCategoriesSlug: string[] = [
+            CategoryLabelSpanish[updatedTx.category_icon_name as keyof typeof CategoryLabelSpanish] || "",
+            CategoryLabelPortuguese[updatedTx.category_icon_name as keyof typeof CategoryLabelPortuguese] || "",
+          ];
+
+          const isNewCategory = !defaultCategoriesSlug.includes(updatedTx.category_icon_name as string);
+
+          addTransactionStore({
+            id: updatedTx.id,
+            account_id: updatedTx.account_id,
+            user_id: updatedTx.user_id,
+            amount: updatedTx.amount,
+            type: updatedTx.type,
+            date: updatedTx.dayOfMonth
+              ? new Date(new Date().setDate(updatedTx.dayOfMonth)).toISOString()
+              : new Date().toISOString(),
+            description: updatedTx.description,
+            categoryId: updatedTx.categoryId,
+            slug_category_name: isNewCategory
+              ? [updatedTx.category_icon_name as string, ...defaultCategoriesSlug]
+              : defaultCategoriesSlug,
+            category_icon_name: updatedTx.category_icon_name,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        } else {
+          // Si se desmarcó, la eliminamos de las transacciones globales
+          deleteTransaction(updatedTx.id);
+        }
       },
 
       toggleFixedTransactionActive: (id) => {
@@ -426,6 +471,14 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       deleteFixedTransaction: (id) => {
         set((state) => {
+          // 1. Buscamos la transacción que el usuario quiere eliminar
+          const txToDelete = state.fixedTransactions.find((t) => t.id === id);
+
+          // 2. Si la encontramos y YA ESTÁ PAGADA, bloqueamos la eliminación
+          if (txToDelete && txToDelete.isPaid) {
+            return;
+          }
+          // 3. Si no está pagada, procedemos a filtrarla (eliminarla)
           state.fixedTransactions = state.fixedTransactions.filter((t) => t.id !== id);
         });
       },

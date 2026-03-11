@@ -3,6 +3,7 @@ import { LanguageCode } from "../constants/languages";
 import { Transaction } from "../interfaces/data.interface";
 import { differenceInDays } from "date-fns/differenceInDays";
 import { addDays } from "date-fns/addDays";
+import { eachDayOfInterval, format } from "date-fns";
 
 const locales = { es, en: enUS, pt: ptBR };
 const minYear = 1900;
@@ -477,3 +478,19 @@ export function calculateDailyExpensesAcc(
 
     return realData;
 }
+
+
+export const getCycleDays = (startDateIso: string, endDateIso: string) => {
+    // 1. Obtenemos el array con todos los objetos Date intermedios
+    const daysArray = eachDayOfInterval({
+        start: new Date(startDateIso),
+        end: new Date(endDateIso)
+    });
+
+    // convertir el array en un set
+    const daysSet = new Set(daysArray.map(date => date.getDate()));
+
+    // convertir el set de vuelta a un array ordenado
+    return Array.from(daysSet).sort((a, b) => a - b);
+}
+

@@ -29,10 +29,6 @@ registerTranslation('en', en);
 registerTranslation('es', es);
 registerTranslation('pt', pt);
 
-if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental?.(true);
-}
-
 import { Buffer } from 'buffer';
 global.Buffer = global.Buffer || Buffer;
 

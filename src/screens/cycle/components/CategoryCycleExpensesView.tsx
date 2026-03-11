@@ -30,7 +30,7 @@ interface HandleCategorySelect { (text: string, value: number, color: string): v
 
 interface Props {
     data: TransactionsData[];
-    stats: {
+  statsByCycle: {
         totalExpenses: number;
         categoryTotalsWithIds: Record<string, {
         total: number;
@@ -43,21 +43,18 @@ interface Props {
 
 const MAX_VISIBLE = 5;
 
-export const CategoryCycleExpensesView = ({data,stats, handleCategorySelect, selectedCategory}: Props) => {
+export const CategoryCycleExpensesView = ({ data, statsByCycle, handleCategorySelect, selectedCategory }: Props) => {
   const theme        = useSettingsStore((s) => s.theme);
   const colors       = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
   const categoryLimits = useCycleStore((s) => s.categoryLimits);
   const {activeCycle} = useCreditCycleScreen();
 
-
   const [showAll, setShowAll]           = useState(false);
   const [limitModalOpen, setLimitModalOpen] = useState(false); // conecta tu modal/sheet de límite aquí
 
   const visibleData = showAll ? data : data.slice(0, MAX_VISIBLE);
   const hasMore     = data.length > MAX_VISIBLE;
-
-  console.log('CategoryCycleExpensesView render - categoryLimits:', stats.categoryTotalsWithIds);
 
   return (
     <Animated.View
@@ -140,10 +137,10 @@ export const CategoryCycleExpensesView = ({data,stats, handleCategorySelect, sel
               layout={LinearTransition.springify().damping(18).stiffness(120)}
             >
               <CategoryTransactionRow
-                limit={categoryLimits.find(l => l.categoryId === stats.categoryTotalsWithIds[item.text]?.categoryId && l.cycleId === activeCycle?.id)?.limitAmount || 0}
+                limit={categoryLimits.find(l => l.categoryId === statsByCycle.categoryTotalsWithIds[item.text]?.categoryId && l.cycleId === activeCycle?.id)?.limitAmount || 0}
                 item={item}
                 idx={idx}
-                totalExpenses={stats.totalExpenses}
+                totalExpenses={statsByCycle.totalExpenses}
                 isSelected={selectedCategory === item.text}
                 onPress={handleCategorySelect}
                 currencySymbol={currencySymbol}

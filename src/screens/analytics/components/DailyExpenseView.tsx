@@ -25,6 +25,7 @@ import { formatCurrency } from '../../../utils/helpers';
 import CloseModalButton from './subcomponents/CloseModalButton';
 import { CategoryTransactionRow } from '../../cycle/components/CategoryTransactionRow';
 import { useDailyExpenseLogic } from '../../../hooks/useDailyExpenseLogic';
+import { DetailsModal } from '../../../components/charts/DetailsModal';
 // import { useDailyExpenseLogic } from '../hooks/useDailyExpenseLogicDESUSO';
 
 
@@ -278,77 +279,13 @@ export default function DailyExpenseViewMobile({ handlePeriodChange }: { handleP
                 )}
 
                 {/* ── MODAL DE DETALLES ── */}
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisible}
-                    onRequestClose={handleCloseModal}
-                    accessible={true}
-                    accessibilityViewIsModal={true}
-                >
-                    <View style={localStyles.modalOverlay}>
-                        <Animated.View
-                            entering={FadeInDown.springify()}
-                            style={[localStyles.modalContent, { backgroundColor: colors.surface }]}
-                        >
-                            {/* Drag handle */}
-                            <View style={[localStyles.dragHandle, { backgroundColor: colors.border }]} />
-
-                            {/* Header */}
-                            <View
-                                style={localStyles.modalHeader}
-                                accessible={false}
-                            >
-                                {/* Avatar de color de la categoría */}
-                                <View style={[localStyles.modalCatDot, { backgroundColor: modalData?.color + '28' }]}>
-                                    <View style={[localStyles.colorDot, { backgroundColor: modalData?.color }]} />
-                                </View>
-                                <Text
-                                    style={[localStyles.modalTitle, { color: colors.text }]}
-                                    numberOfLines={2}
-                                    adjustsFontSizeToFit
-                                    minimumFontScale={0.8}
-                                >
-                                    {t(`icons.${modalData?.categoryName}`, modalData?.categoryName || '')}
-                                </Text>
-                            </View>
-
-                            {/* Total */}
-                            <View
-                                style={[localStyles.modalSummary, { backgroundColor: (modalData?.color ?? '#ccc') + '12', borderColor: (modalData?.color ?? '#ccc') + '30' }]}
-                                accessible={true}
-                                accessibilityLabel={`${t('overviews.totalSpent')} ${currencySymbol} ${formatCurrency(modalData?.totalAmount || 0)}`}
-                            >
-                                <Text style={[localStyles.modalTotalLabel, { color: colors.textSecondary }]}>
-                                    {t('overviews.totalSpent')}
-                                </Text>
-                                <Text
-                                    style={[localStyles.modalTotalValue, { color: modalData?.color }]}
-                                    numberOfLines={1}
-                                    adjustsFontSizeToFit
-                                    minimumFontScale={0.7}
-                                >
-                                    -{currencySymbol}{formatCurrency(modalData?.totalAmount || 0)}
-                                </Text>
-                            </View>
-
-                            {/* Lista de transacciones */}
-                            <FlatList
-                                data={modalData?.transactions}
-                                keyExtractor={keyExtractor}
-                                style={localStyles.transactionList}
-                                showsVerticalScrollIndicator={false}
-                                renderItem={renderModalTransaction}
-                                accessible={false}
-                                removeClippedSubviews={true}
-                                maxToRenderPerBatch={10}
-                                windowSize={5}
-                            />
-
-                            <CloseModalButton handleCloseModal={handleCloseModal} colors={colors} t={t} />
-                        </Animated.View>
-                    </View>
-                </Modal>
+                <DetailsModal 
+                modalVisible={modalVisible} 
+                modalData={modalData} 
+                handleCloseModal={handleCloseModal} 
+                colors={colors} 
+                currencySymbol={currencySymbol} 
+                />
 
             </Animated.View>
         </ScrollView>

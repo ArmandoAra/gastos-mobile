@@ -53,7 +53,7 @@ export const globalStyles = StyleSheet.create({
   },
   btnClose: {
     position: 'absolute',
-    left: 20,
+    left: 5,
     top: 5,
     padding: 6,
     width: 46,

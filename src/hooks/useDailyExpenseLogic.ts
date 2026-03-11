@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, cache } from 'react';
 import { Platform, AccessibilityInfo } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -115,17 +115,11 @@ export const useDailyExpenseLogic = () => {
         const totalIncome = income.reduce((sum, t) => sum + Math.abs(t.amount), 0);
         const balance = totalIncome - totalExpenses;
 
-        // const categoryTotals: Record<string, number> = {};
-        // expenses.forEach(t => {
-        //     const amount = Math.abs(t.amount);
-        //     categoryTotals[t.category_icon_name] = (categoryTotals[t.category_icon_name] || 0) + amount;
-        // });
-
-        const categoryTotalsWithIds: Record<string, { total: number; categoryId: string | null }> = {};
+        const categoryTotalsWithIds: Record<string, { total: number; categoryId: string | null, cycleId: string | null, accountId: string | null }> = {};
         expenses.forEach(t => {
             const amount = Math.abs(t.amount);
             if (!categoryTotalsWithIds[t.category_icon_name]) {
-                categoryTotalsWithIds[t.category_icon_name] = { total: amount, categoryId: t.categoryId || null };
+                categoryTotalsWithIds[t.category_icon_name] = { total: amount, categoryId: t.categoryId || null, cycleId: activeCycle?.id || null, accountId: t.account_id || null };
             } else {
                 categoryTotalsWithIds[t.category_icon_name].total += amount;
             }
@@ -154,6 +148,77 @@ export const useDailyExpenseLogic = () => {
         };
     }, [filteredTransactions]);
 
+    const statsByCycle = useMemo(() => {
+        // 1. Definimos la estructura vacía idéntica a "stats"
+        const defaultStats = {
+            totalExpenses: 0,
+            totalIncome: 0,
+            balance: 0,
+            expenseCount: 0,
+            incomeCount: 0,
+            topCategory: { category: '', amount: 0 },
+            largestTransaction: null,
+            categoryTotalsWithIds: {},
+            expensesList: [] as Transaction[]
+        };
+
+        // Si no hay ciclo, retornamos la estructura vacía en lugar de null
+        if (!activeCycle) return defaultStats;
+
+        const cycleTransactions = transactions.filter(t => {
+            const txDate = new Date(t.date);
+            const startDate = new Date(activeCycle.startDate);
+            const endDate = new Date(activeCycle.endDate);
+            return txDate >= startDate && txDate <= endDate && t.account_id === activeCycle.accountId;
+        });
+
+        // 2. Separamos expenses e income como lo haces en "stats"
+        const expenses = cycleTransactions.filter(t => t.type === 'expense');
+        const income = cycleTransactions.filter(t => t.type === 'income');
+
+        const totalExpenses = expenses.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const totalIncome = income.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const balance = totalIncome - totalExpenses;
+
+        const categoryTotalsWithIds: Record<string, { total: number; categoryId: string | null, cycleId: string | null, accountId: string | null }> = {};
+
+        expenses.forEach(t => {
+            const amount = Math.abs(t.amount);
+            if (!categoryTotalsWithIds[t.category_icon_name]) {
+                categoryTotalsWithIds[t.category_icon_name] = {
+                    total: amount,
+                    categoryId: t.categoryId || null,
+                    cycleId: activeCycle.id,
+                    accountId: t.account_id || null
+                };
+            } else {
+                categoryTotalsWithIds[t.category_icon_name].total += amount;
+            }
+        });
+
+        // 3. Agregamos los cálculos faltantes para que coincida con "stats"
+        const topCategory = Object.entries(categoryTotalsWithIds).reduce(
+            (max, [cat, { total }]) => total > max.amount ? { category: cat, amount: total } : max,
+            { category: '', amount: 0 }
+        );
+
+        const largestTransaction = expenses.length > 0
+            ? expenses.reduce((max, t) => Math.abs(t.amount) > Math.abs(max.amount) ? t : max)
+            : null;
+
+        return {
+            totalExpenses,
+            totalIncome,
+            balance,
+            expenseCount: expenses.length,
+            incomeCount: income.length,
+            topCategory,
+            largestTransaction,
+            categoryTotalsWithIds,
+            expensesList: expenses
+        };
+    }, [transactions, activeCycle]);
+
     // --- 4. MANEJO DEL MODAL ---
     const handleCategorySelect = useCallback((categoryName: string, totalValue: number, color: string) => {
         setSelectedCategory(categoryName);
@@ -176,6 +241,27 @@ export const useDailyExpenseLogic = () => {
         }
     }, [stats.expensesList, currencySymbol, t]);
 
+    const handleCategorySelectByCycle = useCallback((categoryName: string, totalValue: number, color: string) => {
+        setSelectedCategory(categoryName);
+        const categoryTransactions = statsByCycle?.expensesList.filter(
+            t => t.category_icon_name === categoryName
+        ) || [];
+
+        setModalData({
+            categoryName,
+            totalAmount: totalValue,
+            color,
+            transactions: categoryTransactions
+        });
+        setModalVisible(true);
+
+        if (Platform.OS !== 'web') {
+            AccessibilityInfo.announceForAccessibility(
+                `${categoryName}, ${t('overviews.totalSpent')} ${currencySymbol} ${totalValue.toFixed(2)}, ${categoryTransactions.length} ${t('overviews.tsx')}`
+            );
+        }
+    }, [statsByCycle, currencySymbol, t]);
+
     const handleCloseModal = useCallback(() => {
         setModalVisible(false);
         setSelectedCategory(null);
@@ -186,18 +272,38 @@ export const useDailyExpenseLogic = () => {
 
     // --- 5. DATOS GRÁFICO ---
     const transactionsData = useMemo(() => {
-        return Object.entries(stats.categoryTotalsWithIds).map(([name, { total, categoryId }], index) => {
+        return Object.entries(stats.categoryTotalsWithIds).map(([name, { total, categoryId, cycleId, accountId }], index) => {
             const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
             return {
                 value: total,
                 color,
                 text: name,
                 categoryId,
+                cycleId,
+                accountId,
                 focused: selectedCategory === name,
                 onPress: () => handleCategorySelect(name, total, color)
             };
         });
-    }, [stats.categoryTotalsWithIds, selectedCategory, handleCategorySelect]);
+    }, [stats.categoryTotalsWithIds, selectedCategory, handleCategorySelect, activeCycle, transactions]);
+
+    const transactionsCycleData = useMemo(() => {
+        if (!activeCycle || !statsByCycle) return [];
+        return Object.entries(statsByCycle.categoryTotalsWithIds).map(([name, { total, categoryId, cycleId, accountId }], index) => {
+            const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
+            return {
+                value: total,
+                color,
+                text: name,
+                categoryId,
+                cycleId,
+                accountId,
+                focused: selectedCategory === name,
+                onPress: () => handleCategorySelect(name, total, color)
+            };
+        });
+    }, [transactions, activeCycle, statsByCycle]);
+
 
     return {
         // UI Helpers
@@ -210,7 +316,9 @@ export const useDailyExpenseLogic = () => {
         filteredTransactions,
         dateInfo,
         stats,
+        statsByCycle,
         transactionsData,
+        transactionsCycleData,
         
         // Period State (NUEVO: Exponemos el control del periodo)
         currentPeriod,
@@ -223,6 +331,7 @@ export const useDailyExpenseLogic = () => {
         
         // Actions
         handleCategorySelect,
+        handleCategorySelectByCycle,
         handleCloseModal
     };
 };

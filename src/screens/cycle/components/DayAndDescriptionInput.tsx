@@ -25,7 +25,8 @@ import { globalStyles } from '../../../theme/global.styles';
 
 interface Props {
   isReady?: boolean;
-  // dayOfMonth: number;           // 1–31
+  dayOfMonth: number;           // 1–31
+  availableCycleDays: number[]; // Nuevas prop para pasar los días disponibles del ciclo
   onDayChange: (day: number) => void;
   description: string;
   onDescriptionChange: (value: string) => void;
@@ -34,7 +35,8 @@ interface Props {
 
 export function DayAndDescriptionInput({
   isReady,
-  // dayOfMonth,
+  dayOfMonth,
+  availableCycleDays,
   onDayChange,
   description,
   onDescriptionChange,
@@ -47,7 +49,7 @@ export function DayAndDescriptionInput({
   // Al pasar el mes + 1 y el día 0, nos da el último día del mes actual
   const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-  const daysArray = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
+  const daysArray = availableCycleDays ?? Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
 
   const handleOpenPicker = () => {
     Keyboard.dismiss(); // Escondemos el teclado si estaba escribiendo la descripción
@@ -89,7 +91,7 @@ export function DayAndDescriptionInput({
               <MaterialCommunityIcons name="calendar-blank" size={18} color={colors.text} />
               
               <Text style={[styles.dayValue, { color: colors.text }]}>
-                {String(today.getDate()).padStart(2, '0')}
+                {dayOfMonth}
               </Text>
               
               <MaterialCommunityIcons name="chevron-down" size={18} color={colors.text} />

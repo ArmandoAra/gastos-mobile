@@ -1,14 +1,13 @@
 import { t } from 'i18next'
 import React, { JSX, useCallback } from 'react'
-import { Modal, View, FlatList, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native'
+import { Modal, View, FlatList, Text, StyleSheet, Pressable } from 'react-native'
 import { FadeInDown } from 'react-native-reanimated'
 import { formatCurrency } from '../../utils/helpers'
 import Animated from 'react-native-reanimated'
-import { Theme } from '@react-navigation/native'
 import { ThemeColors } from '../../types/navigation'
 import { CategoryModalData } from '../../hooks/useDailyExpenseLogic'
 import { globalStyles } from '../../theme/global.styles'
-import { MaterialIcons } from '@expo/vector-icons'
+import useDataStore from '../../stores/useDataStore'
 
 
 interface DetailsModalProps {
@@ -20,11 +19,15 @@ interface DetailsModalProps {
 }
 
 export const DetailsModal = ({ modalVisible, handleCloseModal, modalData, colors, currencySymbol }: DetailsModalProps) => {
-
+    const allAccounts = useDataStore((s) => s.allAccounts);
+    const accountNameById = useCallback((accountId: string | null) => {
+        const account = allAccounts.find(acc => acc.id === accountId);
+        return account ? account.name : t('common.unknownAccount');
+    }, [allAccounts, t]);
     const renderModalTransaction = useCallback(({ item, index }: { item: any; index: number }) => (
         <Animated.View
             entering={FadeInDown.delay(index * 40).springify()}
-            style={[localStyles.transactionRow]}
+            style={[localStyles.transactionRow, { backgroundColor: 'transparent', borderBottomColor: colors.border + '50', borderBottomWidth: 0.4 }]}
             accessible={true}
             accessibilityLabel={`${item.description || t('common.noDescription')}, ${currencySymbol} ${formatCurrency(Math.abs(item.amount))}, ${new Date(item.date).toLocaleDateString()}`}
         >
@@ -39,18 +42,26 @@ export const DetailsModal = ({ modalVisible, handleCloseModal, modalData, colors
                 >
                     {item.description || t('common.noDescription')}
                 </Text>
+                <View style={{ flexDirection: 'row', gap: 5, alignItems: 'flex-end' }}>
                 <Text style={[localStyles.txDate, { color: colors.textSecondary }]}>
                     {new Date(item.date).toLocaleDateString()}
                 </Text>
+                    <Text style={[localStyles.txAccount, globalStyles.bodyTextXs, { color: colors.text, backgroundColor: modalData?.color }]}>
+                        {accountNameById(item.account_id)}
+                    </Text>
+                </View>
             </View>
+            <View style={{ flexDirection: 'row', height: "100%", alignItems: 'flex-end' }}>
+
             <Text
-                style={[localStyles.txAmount, { color: colors.expense }]}
+                    style={[localStyles.txAmount, globalStyles.amountSm, { color: colors.expense }]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
             >
-                -{currencySymbol} {formatCurrency(Math.abs(item.amount))}
+                    {currencySymbol} {formatCurrency(Math.abs(item.amount))}
             </Text>
+            </View>
         </Animated.View>
     ), [colors, currencySymbol, t, modalData]);
 
@@ -71,7 +82,7 @@ export const DetailsModal = ({ modalVisible, handleCloseModal, modalData, colors
             <View style={localStyles.modalOverlay}>
                 <Animated.View
                     entering={FadeInDown.springify()}
-                    style={[localStyles.modalContent, { backgroundColor: colors.surface }]}
+                    style={[localStyles.modalContent, { backgroundColor: colors.surfaceSecondary }]}
                 >
                     {/* Drag handle */}
                     <View style={[localStyles.dragHandle, { backgroundColor: colors.border }]} />
@@ -110,7 +121,7 @@ export const DetailsModal = ({ modalVisible, handleCloseModal, modalData, colors
                             adjustsFontSizeToFit
                             minimumFontScale={0.7}
                         >
-                            -{currencySymbol}{formatCurrency(modalData?.totalAmount || 0)}
+                            {currencySymbol} {formatCurrency(modalData?.totalAmount || 0)}
                         </Text>
                     </View>
 
@@ -239,12 +250,15 @@ const localStyles = StyleSheet.create({
         lineHeight: 14,
     },
     txAmount: {
-        fontSize: 14,
-        fontFamily: 'FiraSans-Bold',
         textAlign: 'right',
         minWidth: 80,
         lineHeight: 20,
         flexShrink: 0,
     },
+    txAccount: {
+        paddingHorizontal: 6,
+        paddingVertical: 0,
+        borderRadius: 25,
+    }
 })
 

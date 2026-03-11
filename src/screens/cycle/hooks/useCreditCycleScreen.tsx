@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, use } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { differenceInDays, addDays, set } from 'date-fns';
 import { AppState } from 'react-native';
@@ -11,6 +11,7 @@ import {
 } from '../selectors/cycleSelectors';
 import useDataStore from '../../../stores/useDataStore';
 import { useDailyExpenseLogic } from '../../analytics/hooks/useDailyExpenseLogicDESUSO';
+import { getCycleDays } from '../../../utils/helpers';
 
 export const useCreditCycleScreen = () => {
   const [todayString, setTodayString] = useState(new Date().toDateString());
@@ -187,6 +188,12 @@ export const useCreditCycleScreen = () => {
     };
   }, []);
 
+  const availableCycleDays = useMemo(() => {
+    if (!activeCycle) return [];
+    const days = getCycleDays(activeCycle?.startDate, activeCycle?.endDate);
+    return days;
+  }, [activeCycle]);
+
   return {
     amount,
     setAmount,
@@ -197,6 +204,7 @@ export const useCreditCycleScreen = () => {
     isAccountSelectorOpen,
     setIsAccountSelectorOpen,
     activeCycle,
+    availableCycleDays,
     isActiveCycle,
     daysElapsed,
     remainingDays,

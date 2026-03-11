@@ -13,13 +13,11 @@ import {
   StyleSheet,
   Text,
 } from "react-native";
-import { SlideInDown, FadeIn, SlideOutDown } from "react-native-reanimated";
-import { ICON_OPTIONS } from "../../../constants/icons";
+import { SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { globalStyles } from "../../../theme/global.styles";
 import Animated from "react-native-reanimated";
 import { FixedTransaction } from "../../../interfaces/cycle.interface";
 import { ThemeColors } from "../../../types/navigation";
-import { styles } from "./FixedTranasactionsManager";
 import CategoryAndAmountInput from "../../../components/forms/Inputs/CategoryAndAmountInput";
 import { useTransactionForm } from "../../transactions/constants/hooks/useTransactionForm";
 import { useCalculator } from "../../../hooks/useCalculator";
@@ -31,7 +29,6 @@ import {
   CategoryLabelPortuguese,
 } from "../../../interfaces/categories.interface";
 import * as Haptics from "expo-haptics";
-import { set } from "date-fns";
 import { TransactionType } from "../../../interfaces/data.interface";
 import { useAuthStore } from "../../../stores/authStore";
 import { useCycleStore } from "../../../stores/useCycleStore";
@@ -40,66 +37,24 @@ import { DayAndDescriptionInput } from "./DayAndDescriptionInput";
 interface FixedTransactionFormProps {
   visible: boolean;
   setFormVisible: (visible: boolean) => void;
-  form: Omit<
-    FixedTransaction,
-    | "id"
-    | "isActive"
-    | "created_at"
-    | "updated_at"
-    | "isPaid"
-    | "date"
-    | "slug_category_name"
-  >;
-  setForm: (
-    form:
-      | Omit<
-          FixedTransaction,
-          | "id"
-          | "isActive"
-          | "created_at"
-          | "updated_at"
-          | "isPaid"
-          | "date"
-          | "slug_category_name"
-        >
-      | ((
-          prev: Omit<
-            FixedTransaction,
-            | "id"
-            | "isActive"
-            | "created_at"
-            | "updated_at"
-            | "isPaid"
-            | "date"
-            | "slug_category_name"
-          >,
-        ) => Omit<
-          FixedTransaction,
-          | "id"
-          | "isActive"
-          | "created_at"
-          | "updated_at"
-          | "isPaid"
-          | "date"
-          | "slug_category_name"
-        >),
-  ) => void;
+  availableCycleDays: number[]; // Nuevas prop para pasar los días disponibles del ciclo
   colors: ThemeColors;
 }
 
 export const FixedTransactionForm = ({
   visible,
   setFormVisible,
-  form,
-  setForm,
+  availableCycleDays,
+  // form,
+  // setForm,
   colors,
 }: FixedTransactionFormProps) => {
   const [formError, setFormError] = useState<string | null>(null);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const accountSelected = useCycleStore((s) => s.selectedCycleAccount);
   const addFixedTransaction = useCycleStore((s) => s.addFixedTransaction);
-  const [day, setDay] = useState(form.dayOfMonth);
-  const [description, setDescription] = useState(form.description);
+  const [day, setDay] = useState(availableCycleDays ? availableCycleDays[0] : 1);
+  const [description, setDescription] = useState('');
 
   const {
     amount,
@@ -118,25 +73,23 @@ export const FixedTransactionForm = ({
 
 
   const handleClose = useCallback(() => {
-    setFormVisible(false);
     setFormError(null);
     setAmount("");
-    setDay(1);
+    setDay(availableCycleDays ? availableCycleDays[0] : 1);
     setDescription("");
+    setFormVisible(false);
   }, [setFormVisible, setFormError, setAmount, setDay, setDescription]);
 
   const handleDayChange = (newDay: number) => {
     setDay(newDay);
-    setForm((prev) => ({ ...prev, dayOfMonth: newDay }));
   }
 
   const handleDescriptionChange = (newDesc: string) => {
     setDescription(newDesc);
-    setForm((prev) => ({ ...prev, description: newDesc }));
+    // setForm((prev) => ({ ...prev, description: newDesc }));
   }
 
   const handleSave = () => {
-    console.log("Validando gasto fijo:", amount);
 
     if (!currentUserId) {
       setFormError(t("fixed_tx.error_user", "Usuario no autenticado"));
@@ -145,11 +98,6 @@ export const FixedTransactionForm = ({
 
     if (parseFloat(amount) <= 0 || isNaN(parseFloat(amount))) {
       setFormError(t("fixed_tx.error_amount", "Ingresa un monto válido"));
-      return;
-    }
-    const day = form.dayOfMonth; //Tengo que validar el dia que si el mes tiene 30 dias no se pueda poner 31, etc
-    if (isNaN(day) || day < 1 || day > 31) {
-      setFormError(t("fixed_tx.error_day", "Día inválido (1-31)"));
       return;
     }
 
@@ -172,12 +120,12 @@ export const FixedTransactionForm = ({
       amount: Math.abs(parseFloat(amount)),
       account_id: accountSelected,
       user_id: currentUserId,
-      description: form.description,
+      description: description,
       category_icon_name: selectedCategory.icon,
       categoryId: selectedCategory.id,
       isPaid: false,
       isActive: true,
-      dayOfMonth: form.dayOfMonth,
+      dayOfMonth: day,
       slug_category_name: isNewCategory
         ? [selectedCategory.name as string, ...defaultCategoriesSlug]
         : defaultCategoriesSlug,
@@ -195,37 +143,37 @@ export const FixedTransactionForm = ({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={() => setFormVisible(false)}
+      onRequestClose={handleClose}
       style={{ flex: 1 }}
     >
       {/* Backdrop - cierra al tocar fuera */}
       <Pressable
-        style={styles.backdrop}
-        onPress={() => setFormVisible(false)}
+        style={formStyles.backdrop}
+        onPress={handleClose}
       />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.kavWrapper}
+        style={formStyles.kavWrapper}
         pointerEvents="box-none"
       >
         <Animated.View
           entering={SlideInDown.springify()}
           onStartShouldSetResponder={() => true}
           style={[
-            styles.sheet,
-            styles.formSheet,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            formStyles.sheet,
+            formStyles.formSheet,
+            { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
           ]}
         >
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <View style={[formStyles.handle, { backgroundColor: colors.border }]} />
 
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={formStyles.formContent}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.sheetHeader}>
+            <View style={formStyles.sheetHeader}>
               <Text
                 style={[globalStyles.headerTitleSm, { color: colors.text }]}
               >
@@ -255,9 +203,10 @@ export const FixedTransactionForm = ({
 
             <DayAndDescriptionInput 
               isReady={true}
-              // dayOfMonth={form.dayOfMonth}
+              availableCycleDays={availableCycleDays}
+              dayOfMonth={day}
               onDayChange={handleDayChange}
-              description={form.description}
+              description={description}
               onDescriptionChange={handleDescriptionChange}
               colors={colors}
             />
@@ -268,7 +217,6 @@ export const FixedTransactionForm = ({
               disabled={!amount || !selectedCategory}
               handleSave={() => handleSave()}
               selectedCategory={selectedCategory}
-              // option={isExpense ? addOption.Spend : addOption.Income}
               loading={false}
               colors={colors}
             />
@@ -324,6 +272,30 @@ export const FixedTransactionForm = ({
 };
 
 export const formStyles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  kavWrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    maxHeight: '85%',
+    minHeight: '75%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+  },
+  formSheet: {
+    // para el form usamos la misma base
+  },
   formContent: {
     paddingHorizontal: 20,
     paddingBottom: 16,
@@ -340,6 +312,21 @@ export const formStyles = StyleSheet.create({
   iconPicker: {
     flexGrow: 0,
     marginBottom: 4,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 99,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   iconOption: {
     width: 46,

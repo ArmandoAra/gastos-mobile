@@ -17,7 +17,9 @@ export const FixedExpensesCycleView = () => {
      const {
         accountSelected,
         activeCycle,
+       availableCycleDays
       } = useCreditCycleScreen();
+
 
   return (
     <Animated.View
@@ -40,6 +42,7 @@ export const FixedExpensesCycleView = () => {
                       accountId={accountSelected}
                       userId={currentUserId}
                       cycleId={activeCycle?.id}
+          availableCycleDays={availableCycleDays}
                     />
                   </LinearGradient>
                 </Animated.View>
