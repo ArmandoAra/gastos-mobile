@@ -56,8 +56,8 @@ import { defaultCategories } from '../../constants/categories';
 import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../../interfaces/categories.interface';
 import useCategoriesStore from '../../stores/useCategoriesStore';
 import { useCalculator } from '../../hooks/useCalculator';
-import { is } from 'date-fns/locale';
 import { globalStyles } from '../../theme/global.styles';
+import { useCycleStore } from '../../stores/useCycleStore';
 
 interface TransactionFormProps {
     isOpen: boolean;
@@ -66,7 +66,6 @@ interface TransactionFormProps {
 }
 
 export default function TransactionForm({ isOpen, onClose, transactionToEdit }: TransactionFormProps) {
-    // --- 1. CONFIGURACIÓN & HOOKS ---
     const { theme } = useSettingsStore();
     const colors: ThemeColors = theme === 'dark' ? darkTheme : lightTheme;
     const insets = useSafeAreaInsets();
@@ -119,11 +118,7 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     const { getUserCategories } = useCategoriesStore();
 
     // Estados Locales UI
-    // const [showCalculator, setShowCalculator] = useState(false);
     const [isLoadingEdit, setIsLoadingEdit] = useState(false); // Estado de carga específico para edición
-
-    // Monitor de Teclado
-    // const isKeyboardVisible = useKeyboardStatus();
 
     // --- 2. INICIALIZACIÓN (EFECTO UNIFICADO) ---
     useEffect(() => {
@@ -210,6 +205,17 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
     // Lógica específica de Actualización (Extraída del componente Edit original)
     const handleUpdateTransaction = async () => {
         if (!transactionToEdit || !selectedCategory) return;
+        const { fixedTransactions } = useCycleStore.getState();
+        // Debo comprobar que es una transaccion fija para modificarla solo si la cuenta es la misma, si cambia la cuenta entonces hay que eliminarla.
+        const currentFixedTransaction = fixedTransactions.filter(t => t.id === transactionToEdit.id);
+        if (currentFixedTransaction.length > 0 && transactionToEdit.id === currentFixedTransaction[0].id) {
+
+
+
+            console.log("Transacción fija detectada en edición. ID:", transactionToEdit.id);
+            // useCycleStore.getState().toggleFixedTransactionPaid(transactionToEdit.id);
+        }
+
 
         // Validar monto
         let finalAmountVal = 0;
@@ -289,7 +295,6 @@ export default function TransactionForm({ isOpen, onClose, transactionToEdit }: 
             handleCloseForm();
 
         } catch (error) {
-            console.error(error);
             showMessage(MessageType.ERROR, t('messages.error_updating', 'Error updating transaction'));
         } finally {
             setIsLoadingEdit(false);

@@ -536,5 +536,10 @@
     "over_budget": "¡Estás por encima del presupuesto!",
     "days_left": "días restantes",
     "category_limit": "Límite de categoría"
+    },
+    "fixed_tx": {
+        "paid": "Pagado",
+        "unpaid": "Pendiente",
+        "day_of_month": "Día del mes"
     }
 }

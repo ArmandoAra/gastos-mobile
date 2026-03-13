@@ -21,7 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import * as uuid from 'uuid';
+
 import { darkTheme, lightTheme } from '../../../theme/colors';
 import { COLOR_PICKER_PALETTE, defaultCategories } from '../../../constants/categories';
 import { ICON_OPTIONS } from '../../../constants/icons';
@@ -30,6 +30,9 @@ import { useSettingsStore } from '../../../stores/settingsStore';
 import useCategoriesStore from '../../../stores/useCategoriesStore';
 import { Category, TransactionType } from '../../../interfaces/data.interface';
 import { IconsOptions } from '../../../../../Gastos/frontend/app/dashboard/constants/icons';
+import { globalStyles } from '../../../theme/global.styles';
+import { useTransactionForm } from '../../../screens/transactions/constants/hooks/useTransactionForm';
+import { useFormLogic } from '../hooks/useNewCategoryForm';
 
 // --- CONSTANTES ---
 const SPRING_CONFIG = {
@@ -52,6 +55,7 @@ const ICON_SIZE = {
 interface CreateCategoryFormProps {
     type: TransactionType;
     closeInput: () => void;
+    handleSelectCategory: (category: Category) => void;
     setSelectingMyCategories: (value: boolean) => void;
     categoryToEdit?: Category | null;
 }
@@ -251,121 +255,15 @@ const IconItem = React.memo<IconItemProps>(({
 IconItem.displayName = 'IconItem';
 
 // --- HOOK PERSONALIZADO PARA LÓGICA DE FORMULARIO ---
-const useFormLogic = (
-    categoryToEdit: Category | null | undefined,
-    type: TransactionType,
-    user: any,
-    addCategory: (category: Category) => void,
-    updateCategory: (id: string, category: Category) => void,
-    closeInput: () => void,
-    setSelectingMyCategories: (value: boolean) => void,
-    iconsOptions: string
-) => {
-    const [name, setName] = useState('');
-    const [selectedColor, setSelectedColor] = useState(COLOR_PICKER_PALETTE[0]);
-    const [selectedIconItem, setSelectedIconItem] = useState<Category | null>(null);
-    const [isNameTouched, setIsNameTouched] = useState(false);
 
-    const isEditMode = !!categoryToEdit;
-
-    // Cargar datos en modo edición
-    useEffect(() => {
-        if (categoryToEdit) {
-            setName(categoryToEdit.name);
-            setSelectedColor(categoryToEdit.color || COLOR_PICKER_PALETTE[0]);
-            setIsNameTouched(true);
-
-            const allDefaultIcons = Object.values(defaultCategories).flat();
-            const foundIconItem = allDefaultIcons.find(
-                cat => cat.icon === categoryToEdit.icon
-            );
-
-            setSelectedIconItem(
-                foundIconItem || { ...categoryToEdit, id: 'temp' }
-            );
-        }
-    }, [categoryToEdit]);
-
-    // Validaciones memoizadas
-    const isNameValid = useMemo(() => name.trim().length > 0, [name]);
-    const isIconValid = useMemo(() => selectedIconItem !== null, [selectedIconItem]);
-    const isFormValid = useMemo(
-        () => isNameValid && isIconValid,
-        [isNameValid, isIconValid]
-    );
-
-    // Handler de submit optimizado
-    const handleSubmit = useCallback(() => {
-        if (!isFormValid || !user) return;
-
-        if (isEditMode && categoryToEdit) {
-            const updatedCat: Category = {
-                ...categoryToEdit, 
-                name: name.trim(),
-                icon: selectedIconItem?.icon || categoryToEdit.icon,
-                color: selectedColor,
-            };
-            updateCategory(categoryToEdit.id, updatedCat);
-        } else {
-            const newCategory: Category = {
-                id: uuid.v4(),
-                name: name.trim(),
-                icon: selectedIconItem?.icon || defaultCategories[0].icon,
-                color: selectedColor,
-                type: type,
-                isActive: true,
-                userId: user.id,
-            };
-            addCategory(newCategory);
-        }
-        
-        // Reset
-        setName('');
-        setSelectedIconItem(null);
-        setSelectedColor(COLOR_PICKER_PALETTE[0]);
-        setIsNameTouched(false);
-        Keyboard.dismiss();
-
-        closeInput();
-        setSelectingMyCategories(true);
-    }, [
-        isFormValid,
-        user,
-        isEditMode,
-        categoryToEdit,
-        name,
-        selectedIconItem,
-        selectedColor,
-        type,
-        addCategory,
-        updateCategory,
-        closeInput,
-        setSelectingMyCategories,
-    ]);
-
-    return {
-        name,
-        setName,
-        selectedColor,
-        setSelectedColor,
-        selectedIconItem,
-        setSelectedIconItem,
-        isNameTouched,
-        setIsNameTouched,
-        isEditMode,
-        isNameValid,
-        isIconValid,
-        isFormValid,
-        handleSubmit,
-    };
-};
 
 // --- COMPONENTE PRINCIPAL ---
 export default function CreateCategoryForm({
     type,
     closeInput,
     setSelectingMyCategories,
-    categoryToEdit
+    categoryToEdit,
+    handleSelectCategory,
 }: CreateCategoryFormProps) {
     const { t } = useTranslation();
 
@@ -403,7 +301,6 @@ export default function CreateCategoryForm({
         updateCategory,
         closeInput,
         setSelectingMyCategories,
-        iconsOptions
     );
 
     // Refs y Animaciones
@@ -485,7 +382,7 @@ export default function CreateCategoryForm({
             >
                 {/* HEADER */}
                 <Text
-                    style={[styles.headerTitle, { color: colors.text }]}
+                    style={[globalStyles.headerTitleXL, { color: colors.text }]}
                     maxFontSizeMultiplier={2}
                     accessibilityRole="header"
                 >
@@ -499,7 +396,7 @@ export default function CreateCategoryForm({
                 <View style={styles.topInputContainer}>
                     {/* PREVIEW ICONO */}
                     <View style={styles.iconColumn}>
-                        <Text style={[styles.label, { color: colors.textSecondary }]}>
+                        <Text style={[globalStyles.bodyTextBase, { color: colors.textSecondary }]}>
                             {t('common.icon', 'ICON')} {selectedIconItem ? '✓' : '*'}
                         </Text>
                         <IconPreview
@@ -515,12 +412,12 @@ export default function CreateCategoryForm({
 
                     {/* INPUT NOMBRE */}
                     <View style={styles.inputColumn}>
-                        <View style={styles.labelContainer}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                        <View style={[styles.labelContainer]}>
+                            <Text style={[globalStyles.bodyTextBase, { color: colors.textSecondary }]}>
                                 {t('auth.name', 'NAME')} *
                             </Text>
                             {!isNameValid && isNameTouched && (
-                                <Text style={[styles.errorText, { color: colors.expense }]}>
+                                <Text style={[globalStyles.bodyTextBase, { color: colors.expense }]}>
                                     {t('commonWarnings.requiredField')}
                                 </Text>
                             )}
@@ -581,7 +478,7 @@ export default function CreateCategoryForm({
             >
                 <TouchableOpacity
                     style={buttonStyle}
-                    onPress={handleSubmit}
+                    onPress={() => handleSubmit({ handleSelectCategory })}
                     activeOpacity={0.8}
                     disabled={!isFormValid}
                 >
@@ -641,7 +538,7 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
+        borderWidth: 0.3,
     },
     inputColumn: {
         flex: 1,
@@ -653,21 +550,14 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         flexWrap: 'wrap',
     },
-    label: {
-        fontSize: 12,
-        fontFamily: 'FiraSans-Bold',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        marginLeft: 4,
-    },
     errorText: {
         fontSize: 11,
         fontFamily: 'FiraSans-Regular',
     },
     inputWrapper: {
         minHeight: 68,
-        borderRadius: 22,
-        borderWidth: 1.5,
+        borderRadius: 50,
+        borderWidth: 0.5,
         justifyContent: 'center',
         paddingHorizontal: 20,
         paddingVertical: 10,
@@ -739,7 +629,7 @@ const styles = StyleSheet.create({
     },
     createButton: {
         minHeight: 56,
-        borderRadius: 18,
+        borderRadius: 50,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',

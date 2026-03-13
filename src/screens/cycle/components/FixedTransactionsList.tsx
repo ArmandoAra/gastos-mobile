@@ -1,35 +1,25 @@
 import React from 'react';
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  FadeOutUp,
-  LinearTransition,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { t } from 'i18next';
-import * as Haptics from 'expo-haptics';
 
 import { globalStyles } from '../../../theme/global.styles';
-import { FixedExpenseRow } from './SpendingFixRow';
 import { FixedTransaction } from '../../../interfaces/cycle.interface';
 import { ThemeColors } from '../../../types/navigation';
+import { FixedTransactionItem } from './FixedTransactionItem'; // Importamos el nuevo item
 
 interface Props {
   colors: ThemeColors;
   totalPaid: number;
   totalFixed: number;
   activeFixed: FixedTransaction[];
-  handleTogglePaid: (id: string) => void;
+  handleTogglePaid: (id: string, accountId: string, amount: number) => void;
   deleteFixedTx: (id: string) => void;
   listVisible?: boolean;
   setListVisible?: (v: boolean) => void;
+  openFormEdit: (tx: FixedTransaction) => void; // Nueva función para abrir el formulario de edición
 }
 
 export default function FixedTransactionsList({
@@ -39,6 +29,7 @@ export default function FixedTransactionsList({
   activeFixed,
   handleTogglePaid,
   deleteFixedTx,
+  openFormEdit,
 }: Props) {
 
   if (activeFixed.length === 0) {
@@ -77,6 +68,7 @@ export default function FixedTransactionsList({
         </Animated.View>
       )}
 
+      {/* Lista Animada */}
       <Animated.View
         layout={LinearTransition.springify().delay(100).stiffness(120)}
         style={styles.listContainer}
@@ -87,39 +79,14 @@ export default function FixedTransactionsList({
             entering={FadeInUp.delay(i * 40).springify()}
             exiting={FadeOutUp.duration(50)}
             layout={LinearTransition.springify()}
-            style={styles.rowWrap}
           >
-            <View style={{ flex: 1 }}>
-              <FixedExpenseRow
-                item={{
-                        categoryId: tx.categoryId || 'uncategorized',
-                      icon: tx.category_icon_name,
-                      label: tx.description,
-                      spent: tx.amount,
-                      paid: tx.isPaid,
-                    }}
-                delay={0} // El delay ya lo controla el Animated.View padre
-                onToggle={() => handleTogglePaid(tx.id)}
-              />
-            </View>
-
-            {
-              !tx.isPaid && (
-                <TouchableOpacity
-              onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  onLongPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                deleteFixedTx(tx.id);
-              }}
-              style={styles.deleteBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.expense} />
-            </TouchableOpacity>
-              )
-            }
+            <FixedTransactionItem
+              tx={tx}
+              colors={colors}
+              onToggle={handleTogglePaid}
+              onDelete={deleteFixedTx}
+              onEdit={openFormEdit}
+            />
           </Animated.View>
         ))}
       </Animated.View>
@@ -139,15 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 99,
   },
   listContainer: {
-  // Sin height fijo — se adapta al contenido y LinearTransition lo anima
-  },
-  rowWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  deleteBtn: {
-    padding: 8,
-    marginLeft: 4,
+    paddingBottom: 20,
   },
   emptyState: {
     alignItems: 'center',

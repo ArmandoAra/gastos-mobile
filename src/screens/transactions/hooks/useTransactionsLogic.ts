@@ -10,6 +10,7 @@ import useDateStore from "../../../stores/useDateStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { Transaction, TransactionType } from "../../../interfaces/data.interface";
 import { ViewPeriod } from "../../../interfaces/date.interface";
+import { useCycleStore } from "../../../stores/useCycleStore";
 
 type ViewMode = 'day' | 'month' | 'year';
 
@@ -21,6 +22,7 @@ export const useTransactionsLogic = () => {
     const language = useSettingsStore((state) => state.language);
 
     const { localSelectedDay } = useDateStore();
+
     const [selectedPeriod, setSelectedPeriod] = useState<ViewPeriod>('day');
     const { t } = useTranslation();
 
@@ -41,7 +43,6 @@ export const useTransactionsLogic = () => {
     // === 2. CERRAR EL MODAL ===
     const handleCloseEdit = useCallback(() => {
         setIsEditModalOpen(false);
-        // Limpiamos la data después de la animación para evitar parpadeos visuales
         setTimeout(() => setEditingTransaction(null), 300);
     }, []);
 
@@ -103,6 +104,7 @@ export const useTransactionsLogic = () => {
         // Ordenar por fecha (descendente)
         return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [filter, searchQuery, transactions, localSelectedDay, viewMode, t, accountSelected]);
+
     // --- 2. LÓGICA DE AGRUPACIÓN (FlashList Data) ---
     const listData = useMemo(() => {
         const groups: Record<string, Transaction[]> = {};
@@ -155,11 +157,15 @@ export const useTransactionsLogic = () => {
 
     // --- 3. MANEJADORES ---
     const handleDelete = useCallback(async (id: string, account_id?: string, amount?: number, transactionType?: TransactionType) => {
+        // Marcar como no pagada en caso de ser fija para que no se pierda el registro
+        useCycleStore.getState().toggleFixedTransactionPaid(id);
+
         try {
             deleteTransaction(id);
             if (account_id && amount && transactionType) {
                 deleteSomeAmountInAccount(account_id, Math.abs(amount), transactionType);
             }
+
             if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(t('common.deleted'));
         } catch (error) {
             console.error('Error deleting transaction:', error);

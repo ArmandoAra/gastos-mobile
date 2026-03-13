@@ -25,6 +25,10 @@ import { FixedTransaction } from '../../../interfaces/cycle.interface';
 import { TransactionType } from '../../../interfaces/data.interface';
 import { FixedTransactionForm } from './FixedTransactionForm';
 import FixedTransactionsList from './FixedTransactionsList';
+import { useTransactionsLogic } from '../../transactions/hooks/useTransactionsLogic';
+import useDataStore from '../../../stores/useDataStore';
+import { useCreditCycleScreen } from '../hooks/useCreditCycleScreen';
+import { useAuthStore } from '../../../stores/authStore';
 
 
 
@@ -40,69 +44,79 @@ const EMPTY_FORM: Omit<FixedTransaction, 'id' | 'isActive' | 'created_at' | 'upd
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 interface Props {
-  accountId: string;
-  userId: string;
   availableCycleDays: number[]; // Nuevas prop para pasar los días disponibles del ciclo
   cycleId?: string; // Si existe ciclo activo, se puede marcar cuál ya se pagó
 }
 
-export function FixedTransactionsManager({ accountId, userId, availableCycleDays, cycleId }: Props) {
-  const theme = useSettingsStore((s) => s.theme);
-  const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
+export function FixedTransactionsManager({ availableCycleDays }: Props) {
+  const currentUserId = useAuthStore((s) => s.user?.id || '');
+  const [txToEdit, setTxToEdit] = useState<FixedTransaction | null>(null);
 
-  const fixedTransactions = useCycleStore(
-    useShallow((s) => s.getFixedTransactionsByAccount(accountId) || []) // Reemplaza EMPTY_FIXED_TX si es necesario
-  );
-
-  const togglePaid           = useCycleStore((s) => s.toggleFixedTransactionPaid);
-  const deleteFixedTx        = useCycleStore((s) => s.deleteFixedTransaction);
-
-  // Filtramos las que pertenecen a este usuario (globales, no por cuenta)
-  const myFixed: FixedTransaction[] = useMemo(
-    () => fixedTransactions.filter((tx) => tx.user_id === userId),
-    [fixedTransactions, userId]
-  );
-
-  const activeFixed   = myFixed.filter((tx) => tx.isActive);
-  const inactiveFixed = myFixed.filter((tx) => !tx.isActive);
-
-  // ── Modal & Toggle states ──
-  const [listVisible, setListVisible]   = useState(false);
-  const [formVisible, setFormVisible]   = useState(false);
-  const [form, setForm]                 = useState(EMPTY_FORM);
-
-  // 1. NUEVO ESTADO: Controla si vemos todos o solo los primeros 3
-  const [showAllFixed, setShowAllFixed] = useState(false);
-
-  // ── Handlers ──
-  // const openList = () => {
-  //   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  //   setListVisible(true);
-  // };
-
-  const openForm = () => {
-    // setForm(EMPTY_FORM);
+  const openFormNew = () => {
+    setTxToEdit(null); // Asegura que esté vacío para Crear
     setFormVisible(true);
   };
 
-  const handleTogglePaid = useCallback((id: string) => {
+  const openFormEdit = (tx: FixedTransaction) => {
+    setTxToEdit(tx); // Le pasas los datos para Editar
+    setFormVisible(true);
+  };
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    togglePaid(id);
+  const theme = useSettingsStore((s) => s.theme);
+  const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
+  const { getMyFixedTransactions } = useCreditCycleScreen();
+  const myFixed: FixedTransaction[] = getMyFixedTransactions({ userId: currentUserId });
 
+  const toggleFixedTransactionPaid = useCycleStore((s) => s.toggleFixedTransactionPaid);
+  const deleteFixedTx = useCycleStore((s) => s.deleteFixedTransaction);
+  const updateAccountBalance = useDataStore((s) => s.updateAccountBalance);
 
-
-  }, [togglePaid, accountId]); // Revisa tu acción togglePaid, normalmente requiere accountId y transactionId
-
+  const activeFixed = myFixed.filter((tx) => tx.isActive);
   // ── Totales ──
   const totalFixed = useMemo(
     () => activeFixed.reduce((s, tx) => s + tx.amount, 0),
     [activeFixed]
   );
+
   const totalPaid = useMemo(
     () => activeFixed.filter((tx) => tx.isPaid).reduce((s, tx) => s + tx.amount, 0),
     [activeFixed]
   );
+
+  // ── Modal & Toggle states ──
+  const [listVisible, setListVisible]   = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
+
+  const [showAllFixed, setShowAllFixed] = useState(false);
+
+  const openForm = () => {
+    setFormVisible(true);
+  };
+
+  const handleTogglePaid = useCallback((id: string, accountId: string, amount: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Recibimos un simple true/false
+    const isNowPaid = toggleFixedTransactionPaid(id);
+
+    if (isNowPaid) {
+      // Se marcó como pagado -> Es un Gasto (Restamos a la cuenta)
+      updateAccountBalance(
+        accountId,
+        amount,
+        TransactionType.EXPENSE,
+      );
+    } else {
+      //  Se desmarcó -> Es un reembolso/error (Devolvemos el dinero a la cuenta)
+      updateAccountBalance(
+        accountId,
+        amount,
+        TransactionType.INCOME,
+      );
+    }
+
+  }, [toggleFixedTransactionPaid, updateAccountBalance]);
+
 
   // 2. NUEVA VARIABLE DERIVADA: La lista que se mostrará en pantalla
   const visibleFixedTransactions = useMemo(() => {
@@ -149,7 +163,7 @@ export function FixedTransactionsManager({ accountId, userId, availableCycleDays
 
         {/* Botón Agregar */}
         <TouchableOpacity
-          onPress={() => { setListVisible(false); openForm(); }}
+          onPress={() => { setListVisible(false); openFormNew(); }}
           style={[styles.accessBtn, { backgroundColor: colors.text, borderColor: colors.border }]}
           activeOpacity={0.75}
         >
@@ -166,18 +180,18 @@ export function FixedTransactionsManager({ accountId, userId, availableCycleDays
         colors={colors}
         totalPaid={totalPaid}
         totalFixed={totalFixed}
-        activeFixed={visibleFixedTransactions} // Aquí siempre le pasas todos si es un modal separado
+        activeFixed={visibleFixedTransactions}
         handleTogglePaid={handleTogglePaid}
         deleteFixedTx={deleteFixedTx}
+        openFormEdit={openFormEdit}
       />
 
       <FixedTransactionForm
         visible={formVisible}
         setFormVisible={setFormVisible}
         availableCycleDays={availableCycleDays}
-        // form={form}
-        // setForm={setForm}
         colors={colors}
+        initialData={txToEdit}
       />     
     </>
   );

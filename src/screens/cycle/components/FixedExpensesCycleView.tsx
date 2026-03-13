@@ -3,23 +3,21 @@ import { t } from 'i18next'
 import React, { useMemo } from 'react'
 import { Text,View,  StyleSheet} from 'react-native'
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated'
-import { FixedTransactionsManager } from './FixedTranasactionsManager'
+
 import { useAuthStore } from '../../../stores/authStore'
 import { useSettingsStore } from '../../../stores/settingsStore'
 import { darkTheme, lightTheme } from '../../../theme/colors'
 import { useCreditCycleScreen } from '../hooks/useCreditCycleScreen';
+import { FixedTransactionsManager } from './FixedTranasactionsManager'
 
 
 export const FixedExpensesCycleView = () => {
-    const theme = useSettingsStore((s) => s.theme);
-    const currentUserId = useAuthStore((s) => s.user?.id || '');
+  const theme = useSettingsStore((s) => s.theme);
     const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
-     const {
-        accountSelected,
+  const {
         activeCycle,
        availableCycleDays
       } = useCreditCycleScreen();
-
 
   return (
     <Animated.View
@@ -38,9 +36,7 @@ export const FixedExpensesCycleView = () => {
                   >
                     <View style={{ height: 8 }} />
     
-                    <FixedTransactionsManager
-                      accountId={accountSelected}
-                      userId={currentUserId}
+        <FixedTransactionsManager
                       cycleId={activeCycle?.id}
           availableCycleDays={availableCycleDays}
                     />

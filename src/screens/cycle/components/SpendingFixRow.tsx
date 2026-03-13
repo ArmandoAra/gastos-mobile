@@ -96,7 +96,7 @@ export function FixedExpenseRow({ item, delay, onToggle }: Props) {
         </View>
 
         <View style={styles.rightAction}>
-          <Text style={[styles.amount, { color: item.paid ? colors.textSecondary : colors.text }]}>
+          <Text style={[globalStyles.amountXs, { color: item.paid ? colors.textSecondary : colors.text }]}>
             {currencySymbol}{Number(item.spent).toFixed(2)}
           </Text>
 

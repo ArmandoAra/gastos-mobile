@@ -95,14 +95,13 @@ export function useTransactionForm() {
 
 
     const handleDisableCategory = useCallback((categoryId: string) => {
-        // Si la categoría eliminada es la seleccionada, cambiar a la primera disponible
         disableCategory(categoryId);
         if (selectedCategory.id === categoryId) {
             const remainingCategories = allCategories.filter(cat => cat.id !== categoryId);
             setSelectedCategory(remainingCategories[0] || null);
         }
 
-    }, [selectedCategory, allCategories]);
+    }, [selectedCategory, allCategories, disableCategory]);
 
     const handleClose = useCallback(() => {
         setInputNameActive(InputNameActive.NONE);

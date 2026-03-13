@@ -54,7 +54,7 @@ export const useTransactionItemLogic = ({ transaction, onDelete, colors }: UseTr
     const opacity = useSharedValue(1);
     const marginBottom = useSharedValue(8);
     const isExpense = transaction.type === TransactionType.EXPENSE;
-    const formattedDate = format(new Date(transaction.date), 'dd/MM/yyyy - HH:mm');
+    const formattedDate = format(new Date(transaction.updated_at), 'dd/MM/yyyy - HH:mm');
     const formattedAmount = `${isExpense ? '-' : '+'}${currencySymbol} ${formatCurrency(Math.abs(transaction.amount))}`;
 
     // --- Lógica de Datos (Memoizada) ---

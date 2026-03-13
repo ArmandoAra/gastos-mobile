@@ -1,13 +1,9 @@
-// Reemplaza el bloque {transactionsData.map(...)} con este componente
-
-import { Theme } from "@react-navigation/native";
 import { ThemeColors } from "../../../types/navigation";
-import { TouchableOpacity, View,Text,StyleSheet } from "react-native";
-import Animated, { FadeInDown, FadeOutDown, LinearTransition }from "react-native-reanimated";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import Animated, { FadeInDown, FadeOutDown, LinearTransition } from "react-native-reanimated";
 import { globalStyles } from "../../../theme/global.styles";
 import { formatCurrency } from "../../../utils/helpers";
 import { useTranslation } from "react-i18next";
-
 
 interface CategoryTransactionItem {
   text: string;
@@ -56,7 +52,6 @@ export function CategoryTransactionRow({
       entering={FadeInDown.delay(idx * 50).springify()}
       exiting={FadeOutDown.delay(150)}
       layout={LinearTransition.springify().damping(90)}
-
     >
       <TouchableOpacity
         onPress={() => onPress(item.text, item.value, item.color)}
@@ -81,39 +76,49 @@ export function CategoryTransactionRow({
         </View>
 
         {/* Contenido */}
-        <View style={{ flex: 1 }}>
-          {/* Fila superior: nombre + monto */}
+        <View style={{ flex: 1, paddingVertical: 2 }}>
+          {/* Fila superior: nombre + montos */}
           <View style={cat_s.labelRow}>
+            {/* Nombre de categoría (ocupa el espacio restante) */}
             <Text
-              style={[globalStyles.bodyTextBase, { color: colors.text }, isSmallScreen && cat_s.textSmall]}
+              style={[
+                globalStyles.bodyTextBase,
+                { color: colors.text, flex: 1, marginRight: 8 },
+                isSmallScreen && cat_s.textSmall
+              ]}
               numberOfLines={1}
             >
               {t(`icons.${item.text}`, item.text)}
             </Text>
 
+            {/* Grupo derecho (Montos apilados y Chip) */}
             <View style={cat_s.rightGroup}>
-              {/* Monto */}
-              <Text
-                style={[
-                  globalStyles.amountXs,
-                  { color: over ? colors.expense : colors.text },
-                  isSmallScreen && cat_s.textSmall,
-                ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                -{currencySymbol}{formatCurrency(item.value)}
+              {/* Montos en columna */}
+              <View style={cat_s.amountColumn}>
+                <Text
+                  style={[
+                    globalStyles.amountXs,
+                    { color: over ? colors.expense : colors.text },
+                    isSmallScreen && cat_s.textSmall,
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
+                  {currencySymbol} {formatCurrency(item.value)}
+                </Text>
+
                 {hasLimit && (
-                  <Text style={{ color: colors.textSecondary }}>
-                    {' '}/ {currencySymbol}{formatCurrency(limit!)}
+                  <Text style={[cat_s.limitText, { color: colors.textSecondary }]}>
+                    / {currencySymbol} {formatCurrency(limit!)}
                   </Text>
                 )}
-              </Text>
+              </View>
 
               {/* Chip de porcentaje */}
               <View style={[cat_s.percentChip, { backgroundColor: item.color }]}>
-                <Text style={[cat_s.percentText, { color: 'transparent' }]}>
+                {/* NOTA: Cambié el 'transparent' por '#fff' para que se vea el número */}
+                <Text style={[cat_s.percentText, { color: '#fff' }]}>
                   {hasLimit
                     ? `${Math.min(ratio * 100, 100).toFixed(0)}%`
                     : `${percentageOfTotal.toFixed(1).replace('.', ',')}%`
@@ -138,12 +143,13 @@ const cat_s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 8,
+    paddingVertical: 10, // Aumentado ligeramente para dar espacio a la columna
     paddingRight: 12,
+    paddingLeft: 4, // Un pequeño padding para la barra de acento
     borderRadius: 14,
     borderWidth: 1,
     marginBottom: 6,
-    overflow: 'hidden',
+    // overflow: 'hidden', <-- ELIMINADO para evitar cortes en los textos
   },
   accentBar: {
     width: 3,
@@ -167,19 +173,29 @@ const cat_s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
-    gap: 8,
+    marginBottom: 8, // Separación con la barra de progreso
   },
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     flexShrink: 0,
+  },
+  amountColumn: {
+    alignItems: 'flex-end', // Alinea los montos a la derecha
+    justifyContent: 'center',
+  },
+  limitText: {
+    fontSize: 10,
+    fontFamily: 'FiraSans-Regular',
+    marginTop: 2, // Pequeño espacio entre el valor y el límite
   },
   percentChip: {
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 99,
+    minWidth: 38, // Evita que el chip cambie bruscamente de tamaño
+    alignItems: 'center',
   },
   percentText: {
     fontSize: 10,

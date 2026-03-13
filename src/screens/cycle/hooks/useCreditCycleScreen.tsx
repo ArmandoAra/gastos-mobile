@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, use } from 'react';
+import { useState, useMemo, useEffect, use, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { differenceInDays, addDays, set } from 'date-fns';
 import { AppState } from 'react-native';
@@ -10,8 +10,8 @@ import {
   selectTotalSaved,
 } from '../selectors/cycleSelectors';
 import useDataStore from '../../../stores/useDataStore';
-import { useDailyExpenseLogic } from '../../analytics/hooks/useDailyExpenseLogicDESUSO';
 import { getCycleDays } from '../../../utils/helpers';
+import { FixedTransaction } from '../../../interfaces/cycle.interface';
 
 export const useCreditCycleScreen = () => {
   const [todayString, setTodayString] = useState(new Date().toDateString());
@@ -163,6 +163,22 @@ export const useCreditCycleScreen = () => {
     [cycles, accountSelected]
   );
 
+   const fixedTransactions = useCycleStore(
+      useShallow((s) => s.getFixedTransactionsByAccount(accountSelected) || [])
+    );
+
+    const getMyFixedTransactions = useCallback(({ userId }: { userId: string }) => (
+      fixedTransactions.filter((tx) => tx.user_id === userId)
+    ), [fixedTransactions, accountSelected]);
+  
+    // Filtramos las que pertenecen a este usuario (globales, no por cuenta)
+    // const myFixed: FixedTransaction[] = useMemo(
+    //   () => fixedTransactions.filter((tx) => tx.user_id === userId),
+    //   [fixedTransactions, userId]
+    // );
+  
+    // const activeFixed = myFixed.filter((tx) => tx.isActive);
+
   // ── ESTADO DE UI ──
   const [isAccountSelectorOpen, setIsAccountSelectorOpen] = useState(false);
   const [showRollover, setShowRollover] = useState(false);
@@ -225,6 +241,7 @@ export const useCreditCycleScreen = () => {
     showAlloc,
     setShowAlloc,
     showRollover,
+    getMyFixedTransactions,
     setShowRollover,
   };
 };

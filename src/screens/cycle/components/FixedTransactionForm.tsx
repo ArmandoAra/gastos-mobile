@@ -9,7 +9,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   StyleSheet,
   Text,
 } from "react-native";
@@ -37,22 +36,25 @@ import { DayAndDescriptionInput } from "./DayAndDescriptionInput";
 interface FixedTransactionFormProps {
   visible: boolean;
   setFormVisible: (visible: boolean) => void;
-  availableCycleDays: number[]; // Nuevas prop para pasar los días disponibles del ciclo
+  availableCycleDays: number[]; 
   colors: ThemeColors;
+  // ✨ NUEVO: Propiedad opcional para recibir los datos a editar
+  initialData?: FixedTransaction | null;
 }
 
 export const FixedTransactionForm = ({
   visible,
   setFormVisible,
   availableCycleDays,
-  // form,
-  // setForm,
   colors,
+  initialData = null, // Valor por defecto
 }: FixedTransactionFormProps) => {
   const [formError, setFormError] = useState<string | null>(null);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const accountSelected = useCycleStore((s) => s.selectedCycleAccount);
   const addFixedTransaction = useCycleStore((s) => s.addFixedTransaction);
+  const updateFixedTransaction = useCycleStore((s) => s.updateFixedTransaction);
+
   const [day, setDay] = useState(availableCycleDays ? availableCycleDays[0] : 1);
   const [description, setDescription] = useState('');
 
@@ -68,29 +70,43 @@ export const FixedTransactionForm = ({
     handleDisableCategory,
     userActivesCategoriesOptions,
   } = useTransactionForm();
-  const { isCalculatorOpen, handleOpenCalculator, setIsCalculatorOpen } =
-    useCalculator();
+  const { toggleFixedTransactionPaid } = useCycleStore();
 
+  const { isCalculatorOpen, handleOpenCalculator, setIsCalculatorOpen } = useCalculator();
+
+  // ✨ NUEVO: Efecto para rellenar los datos cuando se abre en modo edición
+  useEffect(() => {
+    if (visible) {
+      if (initialData) {
+        // Modo Edición: Poblar campos
+        setAmount(initialData.amount.toString());
+        setDay(initialData.dayOfMonth);
+        setDescription(initialData.description || '');
+
+        // Buscar y setear la categoría correcta
+        const allCategories = [...defaultCategoriesOptions, ...userActivesCategoriesOptions];
+        const cat = allCategories.find(c => c.id === initialData.categoryId);
+        if (cat) {
+          handleSelectCategory(cat);
+        }
+      } else {
+        // Modo Creación: Limpiar campos
+        setAmount("");
+        setDay(availableCycleDays ? availableCycleDays[0] : 1);
+        setDescription("");
+      }
+    }
+  }, [visible, initialData, availableCycleDays]);
 
   const handleClose = useCallback(() => {
     setFormError(null);
-    setAmount("");
-    setDay(availableCycleDays ? availableCycleDays[0] : 1);
-    setDescription("");
     setFormVisible(false);
-  }, [setFormVisible, setFormError, setAmount, setDay, setDescription]);
+  }, [setFormVisible]);
 
-  const handleDayChange = (newDay: number) => {
-    setDay(newDay);
-  }
-
-  const handleDescriptionChange = (newDesc: string) => {
-    setDescription(newDesc);
-    // setForm((prev) => ({ ...prev, description: newDesc }));
-  }
+  const handleDayChange = (newDay: number) => setDay(newDay);
+  const handleDescriptionChange = (newDesc: string) => setDescription(newDesc);
 
   const handleSave = () => {
-
     if (!currentUserId) {
       setFormError(t("fixed_tx.error_user", "Usuario no autenticado"));
       return;
@@ -101,38 +117,48 @@ export const FixedTransactionForm = ({
       return;
     }
 
-    // Gestión de slugs para categorías
     const defaultCategoriesSlug: string[] = [
-      CategoryLabelSpanish[
-        selectedCategory.name as keyof typeof CategoryLabelSpanish
-      ] || "",
-      CategoryLabelPortuguese[
-        selectedCategory.name as keyof typeof CategoryLabelPortuguese
-      ] || "",
+      CategoryLabelSpanish[selectedCategory.name as keyof typeof CategoryLabelSpanish] || "",
+      CategoryLabelPortuguese[selectedCategory.name as keyof typeof CategoryLabelPortuguese] || "",
     ];
-    const isNewCategory = !defaultCategoriesSlug.includes(
-      selectedCategory.name as string,
-    );
 
+    const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
     const now = new Date().toISOString();
-    addFixedTransaction({
-      type: TransactionType.EXPENSE,
-      amount: Math.abs(parseFloat(amount)),
-      account_id: accountSelected,
-      user_id: currentUserId,
-      description: description,
-      category_icon_name: selectedCategory.icon,
-      categoryId: selectedCategory.id,
-      isPaid: false,
-      isActive: true,
-      dayOfMonth: day,
-      slug_category_name: isNewCategory
-        ? [selectedCategory.name as string, ...defaultCategoriesSlug]
-        : defaultCategoriesSlug,
-      date: now,
-      created_at: now,
-      updated_at: now,
-    });
+
+    // ✨ NUEVO: Lógica condicional Editar vs Crear
+    if (initialData) {
+      updateFixedTransaction(initialData.id, {
+        amount: Math.abs(parseFloat(amount)),
+        description: description,
+        category_icon_name: selectedCategory.icon,
+        categoryId: selectedCategory.id,
+        dayOfMonth: day,
+        slug_category_name: isNewCategory
+          ? [selectedCategory.name as string, ...defaultCategoriesSlug]
+          : defaultCategoriesSlug,
+        updated_at: now,
+      });
+      toggleFixedTransactionPaid(initialData.id, true); // Asegura que el toggle se actualice si el monto cambia
+    } else {
+      addFixedTransaction({
+        type: TransactionType.EXPENSE,
+        amount: Math.abs(parseFloat(amount)),
+        account_id: accountSelected,
+        user_id: currentUserId,
+        description: description,
+        category_icon_name: selectedCategory.icon,
+        categoryId: selectedCategory.id,
+        isPaid: false,
+        isActive: true,
+        dayOfMonth: day,
+        slug_category_name: isNewCategory
+          ? [selectedCategory.name as string, ...defaultCategoriesSlug]
+          : defaultCategoriesSlug,
+        date: now,
+        created_at: now,
+        updated_at: now,
+      });
+    }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setFormVisible(false);
@@ -146,11 +172,7 @@ export const FixedTransactionForm = ({
       onRequestClose={handleClose}
       style={{ flex: 1 }}
     >
-      {/* Backdrop - cierra al tocar fuera */}
-      <Pressable
-        style={formStyles.backdrop}
-        onPress={handleClose}
-      />
+      <Pressable style={formStyles.backdrop} onPress={handleClose} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -174,10 +196,9 @@ export const FixedTransactionForm = ({
             keyboardShouldPersistTaps="handled"
           >
             <View style={formStyles.sheetHeader}>
-              <Text
-                style={[globalStyles.headerTitleSm, { color: colors.text }]}
-              >
-                {t("fixed_tx.new", "Nuevo gasto fijo")}
+              <Text style={[globalStyles.headerTitleSm, { color: colors.text }]}>
+                {/* ✨ NUEVO: Título dinámico según el modo */}
+                {initialData ? t("fixed_tx.edit", "Editar gasto fijo") : t("fixed_tx.new", "Nuevo gasto fijo")}
               </Text>
               <TouchableOpacity
                 onPress={handleClose}
@@ -215,7 +236,7 @@ export const FixedTransactionForm = ({
 
             <SubmitButton
               disabled={!amount || !selectedCategory}
-              handleSave={() => handleSave()}
+              handleSave={handleSave}
               selectedCategory={selectedCategory}
               loading={false}
               colors={colors}
@@ -270,7 +291,6 @@ export const FixedTransactionForm = ({
     </Modal>
   );
 };
-
 export const formStyles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,

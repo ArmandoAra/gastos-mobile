@@ -33,6 +33,7 @@ import {
 import { CycleDatePicker } from './CycleDatePicker';
 import { formatCycleDate } from '../../../utils/formatters';
 import { useCreditCycleScreen } from '../hooks/useCreditCycleScreen';
+import { FixedTransaction } from '../../../interfaces/cycle.interface';
 
 // Para ajustar dinámicamente según el tamaño de la pantalla
 const { width } = Dimensions.get('window');
@@ -48,8 +49,11 @@ export function HeroCard() {
     rollover,
     totalSaved,
     bufferBalance,
-    avgSurplus, } = useCreditCycleScreen();
+    avgSurplus,
+    getMyFixedTransactions
+  } = useCreditCycleScreen();
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
+  const currentUserId = useAuthStore((s) => s.user?.id || '');
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const colors = useMemo(() => (theme === 'dark' ? darkTheme : lightTheme), [theme]);
@@ -58,6 +62,15 @@ export function HeroCard() {
   const [isHelpVisible, setIsHelpVisible] = useState(false);
   const updateCycleBudget = useCycleStore((s) => s.updateCycleBudget);
   const [budgetValue, setBudgetValue] = useState('');
+
+  const myFixed: FixedTransaction[] = getMyFixedTransactions({ userId: currentUserId });
+  const activeFixed = myFixed.filter((tx) => tx.isActive);
+  // ── Totales ──
+  const totalFixed = useMemo(
+    () => activeFixed.reduce((s, tx) => s + tx.amount, 0),
+    [activeFixed]
+  );
+
 
   useEffect(() => {
     setBudgetValue(activeCycle ? activeCycle.baseBudget.toString() : '0');
@@ -188,7 +201,7 @@ export function HeroCard() {
                 {t('cycle_screen.fixed_upcoming')}
               </Text>
               <Text style={[globalStyles.bodyTextBase, { color: colors.expense }]} adjustsFontSizeToFit numberOfLines={1}>
-                {currencySymbol} {(activeCycle?.fixedExpenses ?? 0).toLocaleString()}
+                {currencySymbol} {(totalFixed ?? 0).toLocaleString()}
               </Text>
             </View>
 

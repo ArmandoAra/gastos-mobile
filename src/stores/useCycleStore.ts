@@ -1,15 +1,28 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import { createMMKV } from 'react-native-mmkv';
-import { subDays } from 'date-fns';
-import { DEFAULT_BUCKETS } from '../constants/cycle';
-import { Bucket, BucketTransaction, BucketType, CategoryLimit, Cycle, FixedTransaction, SurplusDestination } from '../interfaces/cycle.interface';
-import useDataStore from './useDataStore';
-import { CategoryLabelPortuguese, CategoryLabelSpanish } from '../interfaces/categories.interface';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import { createMMKV } from "react-native-mmkv";
+import { subDays } from "date-fns";
+import { DEFAULT_BUCKETS } from "../constants/cycle";
+import {
+  Bucket,
+  BucketTransaction,
+  BucketType,
+  CategoryLimit,
+  Cycle,
+  FixedTransaction,
+  SurplusDestination,
+} from "../interfaces/cycle.interface";
+import useDataStore from "./useDataStore";
+import {
+  CategoryLabelPortuguese,
+  CategoryLabelSpanish,
+} from "../interfaces/categories.interface";
+import { useTransactionsLogic } from "../screens/transactions/hooks/useTransactionsLogic";
+import { is } from "date-fns/locale";
 
 // ─── MMKV ────────────────────────────────────────────────────────────────────
-export const cycleStorage = createMMKV({ id: 'categories-storage' });
+export const cycleStorage = createMMKV({ id: "categories-storage" });
 
 const mmkvStorage = {
   getItem: (key: string) => cycleStorage.getString(key) ?? null,
@@ -28,8 +41,8 @@ function nowISO(): string {
 // ─── STATE ───────────────────────────────────────────────────────────────────
 export interface CycleStoreState {
   cycles: Cycle[];
-  activeCycles: Record<string, string | null>;   // { accountId: cycleId }
-  bucketsByAccount: Record<string, Bucket[]>;     // { accountId: Bucket[] }
+  activeCycles: Record<string, string | null>; // { accountId: cycleId }
+  bucketsByAccount: Record<string, Bucket[]>; // { accountId: Bucket[] }
   bucketTransactions: BucketTransaction[];
   surplusDestinations: SurplusDestination[];
   fixedTransactions: FixedTransaction[];
@@ -57,10 +70,13 @@ export interface CycleStoreActions {
   addExpense: (cycleId: string, amount: number) => void;
   updateCycleBudget: (cycleId: string, newBudget: number) => void;
   updateCycleFixedExpenses: (cycleId: string, amount: number) => void;
-  closeCycle: (cycleId: string, finalTotalSpent?: number) => {
+  closeCycle: (
+    cycleId: string,
+    finalTotalSpent?: number,
+  ) => {
     surplus: number;
     deficit: number;
-    status: 'surplus' | 'deficit' | 'exact';
+      status: "surplus" | "deficit" | "exact";
   };
 
   // Surplus
@@ -80,7 +96,7 @@ export interface CycleStoreActions {
   updateBucket: (
     bucketId: string,
     accountId: string,
-    updates: Partial<Pick<Bucket, 'name' | 'iconName'>>
+    updates: Partial<Pick<Bucket, "name" | "iconName">>,
   ) => void;
   depositToBucket: (params: {
     bucketId: string;
@@ -100,14 +116,22 @@ export interface CycleStoreActions {
   resetBucket: (bucketId: string, accountId: string) => void;
 
   // Fixed Transactions
-  addFixedTransaction: (tx: Omit<FixedTransaction, 'id' | 'createdAt'>) => FixedTransaction;
-  updateFixedTransaction: (id: string, updates: Partial<Omit<FixedTransaction, 'id' | 'createdAt'>>) => void;
+  addFixedTransaction: (
+    tx: Omit<FixedTransaction, "id" | "createdAt">,
+  ) => FixedTransaction;
+  updateFixedTransaction: (
+    id: string,
+    updates: Partial<Omit<FixedTransaction, "id" | "createdAt">>,
+  ) => void;
+  getFixedTransactionById: (id: string) => FixedTransaction | null;
   getFixedTransactionsByAccount: (accountId: string) => FixedTransaction[];
-  toggleFixedTransactionPaid: (id: string) => void;
+  toggleFixedTransactionPaid: (id: string, toNotPaid?: boolean) => boolean;
   toggleFixedTransactionActive: (id: string) => void;
   deleteFixedTransaction: (id: string) => void;
 
-  setCategoryLimit: (params: Omit<CategoryLimit, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  setCategoryLimit: (
+    params: Omit<CategoryLimit, "id" | "createdAt" | "updatedAt">,
+  ) => void;
 
   // Dev
   clearAllCycleData: () => void;
@@ -125,7 +149,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       surplusDestinations: [],
       fixedTransactions: [],
       categoryLimits: [],
-      selectedCycleAccount: '',
+      selectedCycleAccount: "",
 
       // ── Setup ──────────────────────────────────────────────────────────────
 
@@ -138,7 +162,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
               userId,
               type: b.type ?? b.id,
               name: b.name ?? b.label,
-              iconName: b.iconName ?? b.emoji ?? 'circle',
+              iconName: b.iconName ?? b.emoji ?? "circle",
               color: b.color,
               totalAccumulated: 0,
               createdAt: nowISO(),
@@ -156,11 +180,19 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       // ── Cycles ─────────────────────────────────────────────────────────────
 
-      startNewCycle: ({ accountId, userId, name, baseBudget, startDate, endDate, cutoffDate, fixedExpenses = 0 }) => {
-
+      startNewCycle: ({
+        accountId,
+        userId,
+        name,
+        baseBudget,
+        startDate,
+        endDate,
+        cutoffDate,
+        fixedExpenses = 0,
+      }) => {
         get().initAccountDataIfMissing(accountId, userId);
         const buckets = get().bucketsByAccount[accountId] ?? [];
-        const rolloverBucket = buckets.find((b) => b.type === 'rollover');
+        const rolloverBucket = buckets.find((b) => b.type === "rollover");
         const rolloverBonus = rolloverBucket?.totalAccumulated ?? 0;
 
         const newCycle: Cycle = {
@@ -176,15 +208,20 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           effectiveBudget: baseBudget + rolloverBonus,
           totalSpent: 0,
           fixedExpenses,
-          status: 'active',
+          status: "active",
           createdAt: nowISO(),
           updatedAt: nowISO(),
         };
 
         set((state) => {
           if (rolloverBonus > 0 && rolloverBucket) {
-            const b = state.bucketsByAccount[accountId].find((b) => b.type === 'rollover');
-            if (b) { b.totalAccumulated = 0; b.updatedAt = nowISO(); }
+            const b = state.bucketsByAccount[accountId].find(
+              (b) => b.type === "rollover",
+            );
+            if (b) {
+              b.totalAccumulated = 0;
+              b.updatedAt = nowISO();
+            }
           }
           state.cycles.push(newCycle);
           state.activeCycles[accountId] = newCycle.id;
@@ -196,7 +233,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       addExpense: (cycleId, amount) => {
         set((state) => {
           const cycle = state.cycles.find((c) => c.id === cycleId);
-          if (cycle?.status === 'active') {
+          if (cycle?.status === "active") {
             cycle.totalSpent += amount;
             cycle.updatedAt = nowISO();
           }
@@ -217,13 +254,16 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       updateCycleFixedExpenses: (cycleId, amount) => {
         set((state) => {
           const cycle = state.cycles.find((c) => c.id === cycleId);
-          if (cycle) { cycle.fixedExpenses = amount; cycle.updatedAt = nowISO(); }
+          if (cycle) {
+            cycle.fixedExpenses = amount;
+            cycle.updatedAt = nowISO();
+          }
         });
       },
 
       closeCycle: (cycleId, finalTotalSpent) => {
         const cycle = get().cycles.find((c) => c.id === cycleId);
-        if (!cycle) return { surplus: 0, deficit: 0, status: 'exact' };
+        if (!cycle) return { surplus: 0, deficit: 0, status: "exact" };
 
         const spent = finalTotalSpent ?? cycle.totalSpent;
         const surplus = cycle.effectiveBudget - spent;
@@ -231,7 +271,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         set((state) => {
           const c = state.cycles.find((c) => c.id === cycleId);
           if (c) {
-            c.status = 'closed';
+            c.status = "closed";
             c.totalSpent = spent;
             c.surplusAmount = surplus > 0 ? surplus : 0;
             c.updatedAt = nowISO();
@@ -239,22 +279,25 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           }
         });
 
-        if (surplus > 0) return { surplus, deficit: 0, status: 'surplus' };
-        if (surplus < 0) return { surplus: 0, deficit: Math.abs(surplus), status: 'deficit' };
-        return { surplus: 0, deficit: 0, status: 'exact' };
+        if (surplus > 0) return { surplus, deficit: 0, status: "surplus" };
+        if (surplus < 0)
+          return { surplus: 0, deficit: Math.abs(surplus), status: "deficit" };
+        return { surplus: 0, deficit: 0, status: "exact" };
       },
 
       // ── Surplus ────────────────────────────────────────────────────────────
 
       allocateSurplus: (cycleId, bucketId, amount) => {
         const cycle = get().cycles.find((c) => c.id === cycleId);
-        if (!cycle || cycle.status !== 'closed') return;
+        if (!cycle || cycle.status !== "closed") return;
 
         const available = cycle.surplusAmount ?? 0;
         const alloc = amount ?? available;
         if (alloc <= 0 || alloc > available) return;
 
-        const bucket = get().bucketsByAccount[cycle.accountId]?.find((b) => b.id === bucketId);
+        const bucket = get().bucketsByAccount[cycle.accountId]?.find(
+          (b) => b.id === bucketId,
+        );
         if (!bucket) return;
 
         const txn: BucketTransaction = {
@@ -263,7 +306,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           cycleId,
           userId: cycle.userId,
           amount: alloc,
-          type: 'deposit',
+          type: "deposit",
           note: `Sobrante ciclo ${cycle.name}`,
           date: nowISO(),
           createdAt: nowISO(),
@@ -279,9 +322,17 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
         set((state) => {
           const c = state.cycles.find((c) => c.id === cycleId);
-          if (c) { c.surplusAmount = (c.surplusAmount ?? 0) - alloc; c.updatedAt = nowISO(); }
-          const b = state.bucketsByAccount[cycle.accountId]?.find((b) => b.id === bucketId);
-          if (b) { b.totalAccumulated += alloc; b.updatedAt = nowISO(); }
+          if (c) {
+            c.surplusAmount = (c.surplusAmount ?? 0) - alloc;
+            c.updatedAt = nowISO();
+          }
+          const b = state.bucketsByAccount[cycle.accountId]?.find(
+            (b) => b.id === bucketId,
+          );
+          if (b) {
+            b.totalAccumulated += alloc;
+            b.updatedAt = nowISO();
+          }
           state.bucketTransactions.push(txn);
           state.surplusDestinations.push(destination);
         });
@@ -290,8 +341,11 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       applyRolloverToNextCycle: (fromCycleId, amount) => {
         const cycle = get().cycles.find((c) => c.id === fromCycleId);
         if (!cycle) return;
-        const rolloverBucket = get().bucketsByAccount[cycle.accountId]?.find((b) => b.type === 'rollover');
-        if (rolloverBucket) get().allocateSurplus(fromCycleId, rolloverBucket.id, amount);
+        const rolloverBucket = get().bucketsByAccount[cycle.accountId]?.find(
+          (b) => b.type === "rollover",
+        );
+        if (rolloverBucket)
+          get().allocateSurplus(fromCycleId, rolloverBucket.id, amount);
       },
 
       absorbDeficitWithBuffer: (cycleId) => {
@@ -299,23 +353,34 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         if (!cycle) return false;
 
         const deficit = cycle.totalSpent - cycle.effectiveBudget;
-        const bufferBucket = get().bucketsByAccount[cycle.accountId]?.find((b) => b.type === 'buffer');
-        if (!bufferBucket || deficit <= 0 || bufferBucket.totalAccumulated <= 0) return false;
+        const bufferBucket = get().bucketsByAccount[cycle.accountId]?.find(
+          (b) => b.type === "buffer",
+        );
+        if (!bufferBucket || deficit <= 0 || bufferBucket.totalAccumulated <= 0)
+          return false;
 
         const absorbed = Math.min(deficit, bufferBucket.totalAccumulated);
 
         set((state) => {
-          const b = state.bucketsByAccount[cycle.accountId]?.find((b) => b.type === 'buffer');
-          if (b) { b.totalAccumulated -= absorbed; b.updatedAt = nowISO(); }
+          const b = state.bucketsByAccount[cycle.accountId]?.find(
+            (b) => b.type === "buffer",
+          );
+          if (b) {
+            b.totalAccumulated -= absorbed;
+            b.updatedAt = nowISO();
+          }
           const c = state.cycles.find((c) => c.id === cycleId);
-          if (c) { c.totalSpent -= absorbed; c.updatedAt = nowISO(); }
+          if (c) {
+            c.totalSpent -= absorbed;
+            c.updatedAt = nowISO();
+          }
           state.bucketTransactions.push({
             id: generateId(),
             bucketId: bufferBucket.id,
             cycleId,
             userId: cycle.userId,
             amount: -absorbed,
-            type: 'withdrawal',
+            type: "withdrawal",
             note: `Absorción déficit ciclo ${cycle.name}`,
             date: nowISO(),
             createdAt: nowISO(),
@@ -339,7 +404,8 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           updatedAt: nowISO(),
         };
         set((state) => {
-          if (!state.bucketsByAccount[accountId]) state.bucketsByAccount[accountId] = [];
+          if (!state.bucketsByAccount[accountId])
+            state.bucketsByAccount[accountId] = [];
           state.bucketsByAccount[accountId].push(newBucket);
         });
         return newBucket;
@@ -347,38 +413,72 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       updateBucket: (bucketId, accountId, updates) => {
         set((state) => {
-          const b = state.bucketsByAccount[accountId]?.find((b) => b.id === bucketId);
+          const b = state.bucketsByAccount[accountId]?.find(
+            (b) => b.id === bucketId,
+          );
           if (b) Object.assign(b, updates, { updatedAt: nowISO() });
         });
       },
 
-      depositToBucket: ({ bucketId, accountId, userId, amount, cycleId, note }) => {
-        const bucket = get().bucketsByAccount[accountId]?.find((b) => b.id === bucketId);
+      depositToBucket: ({
+        bucketId,
+        accountId,
+        userId,
+        amount,
+        cycleId,
+        note,
+      }) => {
+        const bucket = get().bucketsByAccount[accountId]?.find(
+          (b) => b.id === bucketId,
+        );
         if (!bucket || amount <= 0) return false;
 
         set((state) => {
-          const b = state.bucketsByAccount[accountId]?.find((b) => b.id === bucketId);
-          if (b) { b.totalAccumulated += amount; b.updatedAt = nowISO(); }
+          const b = state.bucketsByAccount[accountId]?.find(
+            (b) => b.id === bucketId,
+          );
+          if (b) {
+            b.totalAccumulated += amount;
+            b.updatedAt = nowISO();
+          }
           state.bucketTransactions.push({
-            id: generateId(), bucketId, cycleId, userId,
-            amount, type: 'deposit', note,
-            date: nowISO(), createdAt: nowISO(),
+            id: generateId(),
+            bucketId,
+            cycleId,
+            userId,
+            amount,
+            type: "deposit",
+            note,
+            date: nowISO(),
+            createdAt: nowISO(),
           });
         });
         return true;
       },
 
       withdrawFromBucket: ({ bucketId, accountId, userId, amount, note }) => {
-        const bucket = get().bucketsByAccount[accountId]?.find((b) => b.id === bucketId);
+        const bucket = get().bucketsByAccount[accountId]?.find(
+          (b) => b.id === bucketId,
+        );
         if (!bucket || bucket.totalAccumulated < amount) return false;
 
         set((state) => {
-          const b = state.bucketsByAccount[accountId]?.find((b) => b.id === bucketId);
-          if (b) { b.totalAccumulated -= amount; b.updatedAt = nowISO(); }
+          const b = state.bucketsByAccount[accountId]?.find(
+            (b) => b.id === bucketId,
+          );
+          if (b) {
+            b.totalAccumulated -= amount;
+            b.updatedAt = nowISO();
+          }
           state.bucketTransactions.push({
-            id: generateId(), bucketId, userId,
-            amount: -amount, type: 'withdrawal', note,
-            date: nowISO(), createdAt: nowISO(),
+            id: generateId(),
+            bucketId,
+            userId,
+            amount: -amount,
+            type: "withdrawal",
+            note,
+            date: nowISO(),
+            createdAt: nowISO(),
           });
         });
         return true;
@@ -386,16 +486,27 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       resetBucket: (bucketId, accountId) => {
         set((state) => {
-          const b = state.bucketsByAccount[accountId]?.find((b) => b.id === bucketId);
-          if (b) { b.totalAccumulated = 0; b.updatedAt = nowISO(); }
+          const b = state.bucketsByAccount[accountId]?.find(
+            (b) => b.id === bucketId,
+          );
+          if (b) {
+            b.totalAccumulated = 0;
+            b.updatedAt = nowISO();
+          }
         });
       },
 
       // ── Fixed Transactions ─────────────────────────────────────────────────
 
       addFixedTransaction: (tx) => {
-        const newTx: FixedTransaction = { ...tx, id: generateId(), created_at: nowISO() };
-        set((state) => { state.fixedTransactions.push(newTx); });
+        const newTx: FixedTransaction = {
+          ...tx,
+          id: generateId(),
+          created_at: nowISO(),
+        };
+        set((state) => {
+          state.fixedTransactions.push(newTx);
+        });
         return newTx;
       },
 
@@ -406,40 +517,49 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         });
       },
 
+      getFixedTransactionById: (id) => {
+        return get().fixedTransactions.find((t) => t.id === id) || null;
+      },
+
       getFixedTransactionsByAccount: (accountId) => {
         const currentAccount = get().selectedCycleAccount;
         if (currentAccount !== accountId) return [];
-        return get().fixedTransactions.filter((t) => t.account_id === accountId);
+        return get().fixedTransactions.filter(
+          (t) => t.account_id === accountId,
+        );
       },
 
-      toggleFixedTransactionPaid: (id) => {
-        // 1. OBTENER LAS ACCIONES DEL OTRO STORE ANTES (Usando getState)
+      toggleFixedTransactionPaid: (id, toNotPaid = false) => {
         const { addTransactionStore, deleteTransaction } = useDataStore.getState();
+        let isNowPaid = false; 
 
-        // 2. ACTUALIZAR ESTE STORE (Puro, sin efectos secundarios)
+        // 1. Cambiamos el estado visual
         set((state) => {
           const tx = state.fixedTransactions.find((t) => t.id === id);
           if (tx) {
-            tx.isPaid = !tx.isPaid;
+            if (toNotPaid) {
+              tx.isPaid = false;
+            } else {
+              tx.isPaid = !tx.isPaid;
+            }
+            isNowPaid = tx.isPaid; 
           }
         });
 
-        // 3. LEER EL ESTADO ACTUALIZADO (Para no trabajar con el Proxy de Immer)
         const updatedTx = get().fixedTransactions.find((t) => t.id === id);
-        if (!updatedTx) return;
+        if (!updatedTx) return false;
 
-        // 4. EJECUTAR EL EFECTO SECUNDARIO EN EL OTRO STORE
-        if (updatedTx.isPaid) {
-          // Gestión de slugs para categorías
+        // 2. Aplicamos la lógica en el historial general
+        if (isNowPaid) {
+        // Si AHORA ESTÁ PAGADO -> Agregamos la transacción
           const defaultCategoriesSlug: string[] = [
             CategoryLabelSpanish[updatedTx.category_icon_name as keyof typeof CategoryLabelSpanish] || "",
             CategoryLabelPortuguese[updatedTx.category_icon_name as keyof typeof CategoryLabelPortuguese] || "",
           ];
-
           const isNewCategory = !defaultCategoriesSlug.includes(updatedTx.category_icon_name as string);
 
           addTransactionStore({
-            id: updatedTx.id,
+            id: updatedTx.id, // OJO: Usamos el mismo ID para poder borrarla después
             account_id: updatedTx.account_id,
             user_id: updatedTx.user_id,
             amount: updatedTx.amount,
@@ -457,9 +577,12 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
             updated_at: new Date().toISOString(),
           });
         } else {
-          // Si se desmarcó, la eliminamos de las transacciones globales
+          // Si SE DESMARCÓ -> La borramos de tu base de datos global
           deleteTransaction(updatedTx.id);
         }
+
+        // 3. Retornamos el estado final a tu componente
+        return isNowPaid;
       },
 
       toggleFixedTransactionActive: (id) => {
@@ -479,7 +602,9 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
             return;
           }
           // 3. Si no está pagada, procedemos a filtrarla (eliminarla)
-          state.fixedTransactions = state.fixedTransactions.filter((t) => t.id !== id);
+          state.fixedTransactions = state.fixedTransactions.filter(
+            (t) => t.id !== id,
+          );
         });
       },
       // ── Category Limits (NUEVO) ────────────────────────────────────────────
@@ -488,7 +613,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         set((state) => {
           // Buscamos si ya existe un límite para esa categoría en ese ciclo
           const existingLimit = state.categoryLimits.find(
-            (l) => l.cycleId === cycleId && l.categoryId === categoryId
+            (l) => l.cycleId === cycleId && l.categoryId === categoryId,
           );
 
           if (existingLimit) {
@@ -510,7 +635,9 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       deleteCategoryLimit: (limitId: string) => {
         set((state) => {
-          state.categoryLimits = state.categoryLimits.filter((l) => l.id !== limitId);
+          state.categoryLimits = state.categoryLimits.filter(
+            (l) => l.id !== limitId,
+          );
         });
       },
 
@@ -537,7 +664,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       },
     })),
     {
-      name: 'cycle-store-v5',
+      name: "cycle-store-v5",
       storage: createJSONStorage(() => mmkvStorage),
       partialize: (state) => ({
         cycles: state.cycles,
@@ -548,45 +675,62 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
         fixedTransactions: state.fixedTransactions,
         categoryLimits: state.categoryLimits,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ─── SELECTORS ───────────────────────────────────────────────────────────────
 
-export const selectActiveCycle = (accountId: string) => (state: CycleStoreState) => {
-  const activeId = state.activeCycles[accountId];
-  if (!activeId) return null;
-  return state.cycles.find((c) => c.id === activeId && c.accountId === accountId) ?? null;
-};
+export const selectActiveCycle =
+  (accountId: string) => (state: CycleStoreState) => {
+    const activeId = state.activeCycles[accountId];
+    if (!activeId) return null;
+    return (
+      state.cycles.find(
+        (c) => c.id === activeId && c.accountId === accountId,
+      ) ?? null
+    );
+  };
 
 export const selectBuckets = (accountId: string) => (state: CycleStoreState) =>
   state.bucketsByAccount[accountId] ?? [];
 
-export const selectBucketByType = (accountId: string, type: BucketType) => (state: CycleStoreState) =>
-  state.bucketsByAccount[accountId]?.find((b) => b.type === type) ?? null;
+export const selectBucketByType =
+  (accountId: string, type: BucketType) => (state: CycleStoreState) =>
+    state.bucketsByAccount[accountId]?.find((b) => b.type === type) ?? null;
 
-export const selectBucketTransactions = (bucketId: string) => (state: CycleStoreState) =>
-  state.bucketTransactions.filter((t) => t.bucketId === bucketId);
+export const selectBucketTransactions =
+  (bucketId: string) => (state: CycleStoreState) =>
+    state.bucketTransactions.filter((t) => t.bucketId === bucketId);
 
-export const selectCycleHistory = (accountId: string) => (state: CycleStoreState) =>
-  [...state.cycles]
-    .filter((c) => c.status === 'closed' && c.accountId === accountId)
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+export const selectCycleHistory =
+  (accountId: string) => (state: CycleStoreState) =>
+    [...state.cycles]
+      .filter((c) => c.status === "closed" && c.accountId === accountId)
+      .sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
+      );
 
-export const selectTotalSaved = (accountId: string) => (state: CycleStoreState) => {
-  const buckets = state.bucketsByAccount[accountId] ?? [];
-  return (['savings', 'emergency', 'investment'] as BucketType[])
-    .reduce((acc, type) => acc + (buckets.find((b) => b.type === type)?.totalAccumulated ?? 0), 0);
-};
+export const selectTotalSaved =
+  (accountId: string) => (state: CycleStoreState) => {
+    const buckets = state.bucketsByAccount[accountId] ?? [];
+    return (["savings", "emergency", "investment"] as BucketType[]).reduce(
+      (acc, type) =>
+        acc + (buckets.find((b) => b.type === type)?.totalAccumulated ?? 0),
+      0,
+    );
+  };
 
 export const selectActiveFixedTransactions = (state: CycleStoreState) =>
   state.fixedTransactions.filter((t) => t.isActive);
 
-export const selectPendingSurplus = (accountId: string) => (state: CycleStoreState) =>
-  state.cycles.find(
-    (c) => c.status === 'closed' &&
-      c.accountId === accountId &&
-      (c.surplusAmount ?? 0) > 0 &&
-      !state.surplusDestinations.some((d) => d.cycleId === c.id)
-  ) ?? null;
+export const selectPendingSurplus =
+  (accountId: string) => (state: CycleStoreState) =>
+    state.cycles.find(
+      (c) =>
+        c.status === "closed" &&
+        c.accountId === accountId &&
+        (c.surplusAmount ?? 0) > 0 &&
+        !state.surplusDestinations.some((d) => d.cycleId === c.id),
+    ) ?? null;

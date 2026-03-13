@@ -65,7 +65,6 @@ export const TransactionItemMobile = React.memo(({
             style={[styles.containerWrapper, rContainerStyle]}
             onLayout={handleLayout}
         >
-            {/* FONDO (Swipe Actions) */}
             {/* Swipe Delete  */}
             <SwipeDelete rBackgroundStyle={rBackgroundStyle} colors={colors} />
 

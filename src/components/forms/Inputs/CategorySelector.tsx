@@ -385,8 +385,9 @@ export default function CategorySelectorPopover({
       } else {
         handleSelectCategory(cat);
       }
+      handleClosePopover()
     },
-    [toolsOpen, handleSelectCategory]
+    [toolsOpen, handleSelectCategory, handleClosePopover]
   );
 
   const handleItemLongPress = useCallback(() => {
@@ -541,6 +542,7 @@ export default function CategorySelectorPopover({
               type={iconsKey}
               closeInput={handleToggleOptions}
               setSelectingMyCategories={setSelectingMyCategories}
+              handleSelectCategory={handleSelectCategory}
               categoryToEdit={categoryToEdit}
             />
           ) : (
