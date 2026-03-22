@@ -135,7 +135,7 @@ export const FixedTransactionItem = React.memo(({
             {/* ZONA DE EDICIÓN (Izquierda y Centro) */}
             <TouchableOpacity
               activeOpacity={0.88}
-              onPress={handleEditPress}
+                onPress={tx.isPaid ? undefined : handleEditPress}
               style={styles.touchableContent}
               accessibilityRole="button"
               accessibilityLabel={`Editar gasto ${tx.description}`}
@@ -181,7 +181,7 @@ export const FixedTransactionItem = React.memo(({
             {/* ZONA DE CHECK Y MONTO (Derecha) */}
             <View style={styles.rightActionContainer}>
               <Text style={[globalStyles.amountSm, { color: tx.isPaid ? colors.textSecondary : colors.text, marginBottom: 4 }]}>
-                {formattedAmount} {/* Ya viene formateado con el símbolo */}
+                  {formattedAmount}
               </Text>
               
               <TouchableOpacity

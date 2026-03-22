@@ -593,6 +593,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       },
 
       deleteFixedTransaction: (id) => {
+        const { deleteTransaction } = useDataStore.getState();
         set((state) => {
           // 1. Buscamos la transacción que el usuario quiere eliminar
           const txToDelete = state.fixedTransactions.find((t) => t.id === id);
@@ -606,6 +607,11 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
             (t) => t.id !== id,
           );
         });
+        // También eliminamos la transacción de la base de datos global si estaba pagada
+        const txToDelete = get().fixedTransactions.find((t) => t.id === id);
+        if (txToDelete && txToDelete.isPaid) {
+          deleteTransaction(txToDelete.id);
+        }
       },
       // ── Category Limits (NUEVO) ────────────────────────────────────────────
 

@@ -125,7 +125,6 @@ export const FixedTransactionForm = ({
     const isNewCategory = !defaultCategoriesSlug.includes(selectedCategory.name as string);
     const now = new Date().toISOString();
 
-    // ✨ NUEVO: Lógica condicional Editar vs Crear
     if (initialData) {
       updateFixedTransaction(initialData.id, {
         amount: Math.abs(parseFloat(amount)),

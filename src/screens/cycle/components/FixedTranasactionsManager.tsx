@@ -25,22 +25,11 @@ import { FixedTransaction } from '../../../interfaces/cycle.interface';
 import { TransactionType } from '../../../interfaces/data.interface';
 import { FixedTransactionForm } from './FixedTransactionForm';
 import FixedTransactionsList from './FixedTransactionsList';
-import { useTransactionsLogic } from '../../transactions/hooks/useTransactionsLogic';
 import useDataStore from '../../../stores/useDataStore';
 import { useCreditCycleScreen } from '../hooks/useCreditCycleScreen';
 import { useAuthStore } from '../../../stores/authStore';
+import { de } from 'react-native-paper-dates';
 
-
-
-const EMPTY_FORM: Omit<FixedTransaction, 'id' | 'isActive' | 'created_at' | 'updated_at' | 'isPaid' | 'date' | 'slug_category_name' > = {
-  description: '',
-  category_icon_name: 'home',
-  type: TransactionType.EXPENSE,
-  account_id: '',
-  user_id: '',
-  dayOfMonth: 1,
-  amount: 0,
-};
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 interface Props {
@@ -71,7 +60,7 @@ export function FixedTransactionsManager({ availableCycleDays }: Props) {
   const deleteFixedTx = useCycleStore((s) => s.deleteFixedTransaction);
   const updateAccountBalance = useDataStore((s) => s.updateAccountBalance);
 
-  const activeFixed = myFixed.filter((tx) => tx.isActive);
+  const activeFixed = useMemo(() => myFixed.filter((tx) => tx.isActive), [myFixed, deleteFixedTx,]);
   // ── Totales ──
   const totalFixed = useMemo(
     () => activeFixed.reduce((s, tx) => s + tx.amount, 0),
@@ -88,10 +77,6 @@ export function FixedTransactionsManager({ availableCycleDays }: Props) {
   const [formVisible, setFormVisible] = useState(false);
 
   const [showAllFixed, setShowAllFixed] = useState(false);
-
-  const openForm = () => {
-    setFormVisible(true);
-  };
 
   const handleTogglePaid = useCallback((id: string, accountId: string, amount: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -136,7 +121,6 @@ export function FixedTransactionsManager({ availableCycleDays }: Props) {
         {/* Botón Toggle (Ver todos / Ver menos) - Solo aparece si hay más de 3 */}
         {activeFixed.length > 3 && (
           <TouchableOpacity
-            // Alternamos el estado local en lugar de abrir el modal
             onPress={() => {
               Haptics.selectionAsync();
               setShowAllFixed(!showAllFixed);

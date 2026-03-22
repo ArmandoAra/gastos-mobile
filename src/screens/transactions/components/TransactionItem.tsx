@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     Text,
@@ -16,6 +16,9 @@ import { useSettingsStore } from '../../../stores/settingsStore';
 import { defaultCategoryNames } from '../../../constants/categories';
 import { globalStyles } from '../../../theme/global.styles';
 import { SwipeDelete } from '../../../components/buttons/SwipeDelete';
+import { useCreditCycleScreen } from '../../cycle/hooks/useCreditCycleScreen';
+import { FixedTransaction } from '../../../interfaces/cycle.interface';
+import { useAuthStore } from '../../../stores/authStore';
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -52,6 +55,9 @@ export const TransactionItemMobile = React.memo(({
         rBackgroundStyle,
         accessibilityActions
     } = useTransactionItemLogic({ transaction, onDelete, colors });
+    const currentUserId = useAuthStore((s) => s.user?.id || '');
+    const { getMyFixedTransactions } = useCreditCycleScreen();
+    const myFixed: FixedTransaction[] = getMyFixedTransactions({ userId: currentUserId });
 
     const { IconComponent, color, displayName } = categoryIconData;
 
@@ -59,6 +65,9 @@ export const TransactionItemMobile = React.memo(({
         prepareForEdit();
         onEditPress(transaction);
     };
+
+    const isFixed = useMemo(() => myFixed.some(tx => tx.description === transaction.description), [myFixed, transaction.description]);
+
 
     return (
         <Animated.View
@@ -79,7 +88,7 @@ export const TransactionItemMobile = React.memo(({
                 >
                     <TouchableOpacity
                         activeOpacity={0.88}
-                        onPress={handlePress}
+                        onPress={isFixed ? undefined : handlePress}
                         style={styles.touchableContent}
                         accessibilityRole="button"
                         accessibilityLabel={`${transaction.description}, ${formattedAmount}, ${transaction.category_icon_name}`}
@@ -154,8 +163,13 @@ export const TransactionItemMobile = React.memo(({
                                     {accountName}
                                 </Text>
                             </View>
+
                         </View>
+
                     </TouchableOpacity>
+                    <Text style={{ ...globalStyles.bodyTextSm, color: colors.error, position: 'absolute', top: 2, right: 15 }}>
+                        {isFixed ? t('transactions.fixed') : ''}
+                    </Text>
                 </Animated.View>
             </GestureDetector>
 
