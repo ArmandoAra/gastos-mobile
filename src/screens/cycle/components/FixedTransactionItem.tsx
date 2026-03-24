@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { t } from 'i18next';
@@ -11,7 +11,6 @@ import { ThemeColors } from '../../../types/navigation';
 import { TransactionType } from '../../../interfaces/data.interface';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { globalStyles } from '../../../theme/global.styles';
-import { useAuthStore } from '../../../stores/authStore';
 
 // Hooks y Componentes de tu sistema de Transacciones
 import { useTransactionItemLogic } from '../../transactions/hooks/useTransactionItemLogic';
@@ -41,7 +40,6 @@ export const FixedTransactionItem = React.memo(({
   delay = 0
 }: FixedTransactionItemProps) => {
 
-  const currencySymbol = useAuthStore((s) => s.currencySymbol);
   const iconsOptions = useSettingsStore(state => state.iconsOptions);
   const { getUserCategories } = useCategoriesStore();
 
@@ -111,18 +109,16 @@ export const FixedTransactionItem = React.memo(({
     <Animated.View
       entering={FadeInUp.delay(delay).springify().damping(60)}
       exiting={FadeOutUp.duration(150)}
-      layout={LinearTransition.springify().damping(18).stiffness(120)}
       style={[styles.containerWrapper, rContainerStyle]}
       onLayout={handleLayout}
     >
-      {/* Swipe Delete Fondo (Solo si no está pagado) */}
-      {!tx.isPaid && (
+
         <SwipeDelete rBackgroundStyle={rBackgroundStyle} colors={colors} />
-      )}
+
 
       {/* Tarjeta Principal Deslizable */}
       <GestureHandlerRootView>
-      <GestureDetector gesture={panGesture}>
+        <GestureDetector gesture={panGesture.enabled(!tx.isPaid)}>
         <Animated.View
           style={[
             styles.itemContainer,
@@ -133,8 +129,7 @@ export const FixedTransactionItem = React.memo(({
           <View style={styles.contentRow}>
             
             {/* ZONA DE EDICIÓN (Izquierda y Centro) */}
-            <TouchableOpacity
-              activeOpacity={0.88}
+              <Pressable
                 onPress={tx.isPaid ? undefined : handleEditPress}
               style={styles.touchableContent}
               accessibilityRole="button"
@@ -176,15 +171,14 @@ export const FixedTransactionItem = React.memo(({
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
+              </Pressable>
 
-            {/* ZONA DE CHECK Y MONTO (Derecha) */}
             <View style={styles.rightActionContainer}>
               <Text style={[globalStyles.amountSm, { color: tx.isPaid ? colors.textSecondary : colors.text, marginBottom: 4 }]}>
                   {formattedAmount}
               </Text>
               
-              <TouchableOpacity
+                <Pressable
                 onPress={handleCheckPress}
                 style={styles.checkButton}
                 hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
@@ -194,7 +188,7 @@ export const FixedTransactionItem = React.memo(({
                   size={26}
                   color={tx.isPaid ? colors.success : colors.border}
                 />
-              </TouchableOpacity>
+                </Pressable>
             </View>
 
           </View>

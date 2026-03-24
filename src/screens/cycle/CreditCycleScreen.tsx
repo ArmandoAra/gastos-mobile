@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -26,6 +26,7 @@ import { HeroCard } from './components/HeroCard';
 import { BucketCard } from './components/BucketCard';
 import { CollapsibleSection } from './components/CollapsibleSecction';
 import { CycleHistoryRow } from './components/CircleHistory';
+import * as Haptics from 'expo-haptics';
 
 // ─── ÚNICO PUNTO DE ENTRADA AL HOOK ──────────────────────────────────────────
 // useCreditCycleScreen se llama UNA SOLA VEZ aquí.
@@ -168,7 +169,7 @@ export default function CreditCycleScreen() {
                 <Text style={main.pendingEmoji}>🎉</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[globalStyles.bodyTextXl, { color: colors.text, fontWeight: 'bold' }]}>
-                    {t('cycle_screen.unallocated_surplus', { pendingSurplusCycle })}
+                    {`${t('cycle_screen.unallocated_surplus')} ${currencySymbol}${pendingSurplusCycle.surplusAmount ?? 0}`}
                   </Text>
                   <Text style={[globalStyles.bodyTextBase, { color: colors.text, fontWeight: '600' }]}>
                     {t('cycle_screen.touch_to_allocate')}
@@ -210,39 +211,29 @@ export default function CreditCycleScreen() {
             <View style={{ height: 16 }} />
 
             {/* COFRES */}
-            <CollapsibleSection
-              title="Cofres de ahorro"
-              initialExpanded={false}
-              customStyles={{ borderColor: colors.accent, backgroundColor: colors.surfaceSecondary }}
-            >
-              {buckets.map((bucket, index) => {
-                const thisBucketTxs = allBucketTransactions.filter(tx => tx.bucketId === bucket.id);
+            <CollapsibleSection title="Mis Cofres de Ahorro">
+              <View style={screen.gridContainer}>
 
-                return (
+                {/* Mapeas tus cofres existentes */}
+                {buckets.map((bucket, index) => (
                   <BucketCard
                     key={bucket.id}
                     bucket={bucket}
-                    transactions={thisBucketTxs} // Pasamos el array de transacciones
+                    transactions={allBucketTransactions.filter(tx => tx.bucketId === bucket.id)}
                     index={index}
+                    onPress={() => console.log('Abrir detalle del cofre')}
                   />
-                );
-              })}
+                ))}
+
+                {/* El botón de agregar siempre va al final */}
+                {/* <AddBucketButton
+                  index={buckets.length}
+                  onPress={() => console.log('Abrir modal de crear cofre')}
+                /> */}
+
+              </View>
             </CollapsibleSection>
 
-            {/* FLUJO ESPECIAL */}
-            <CollapsibleSection
-              title="Flujo especial"
-              initialExpanded={false}
-              customStyles={{ borderColor: colors.warning, backgroundColor: colors.surfaceSecondary }}
-            >
-              {buckets.map((bucket, i) => (
-                <BucketCard
-                  key={bucket.id}
-                  bucket={bucket}
-                  index={i + 3}
-                  transactions={allBucketTransactions} />
-              ))}
-            </CollapsibleSection>
 
             {/* HISTORIAL */}
             <CollapsibleSection
@@ -293,7 +284,52 @@ export default function CreditCycleScreen() {
   );
 }
 
+// ─── BOTÓN PARA AGREGAR NUEVO COFRE ──────────────────────────────────────────
+export function AddBucketButton({
+  onPress,
+  index
+}: {
+  onPress: () => void;
+  index: number
+}) {
+  const theme = useSettingsStore((s) => s.theme);
+  const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(index * 50).springify().damping(18)}
+      layout={LinearTransition.springify()}
+      style={screen.cardWrapper}
+    >
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }}
+        style={[
+          screen.card,
+          screen.addCard,
+          { borderColor: colors.border, backgroundColor: 'transparent' }
+        ]}
+      >
+        <View style={[screen.addIconBox, { backgroundColor: colors.surfaceSecondary }]}>
+          <Ionicons name="add" size={28} color={colors.textSecondary} />
+        </View>
+        <Text style={[globalStyles.bodyTextSm, { color: colors.textSecondary, marginTop: 12 }]}>
+          {t("cycle_screen.add_bucket", "Nuevo cofre")}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 const screen = StyleSheet.create({
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', // Esto empuja las tarjetas a los bordes y deja el gap al medio
+    width: '100%',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -402,6 +438,34 @@ const screen = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 99,
+  },
+  // Estilos específicos para el botón de agregar
+  addCard: {
+    borderStyle: 'dashed',
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  cardWrapper: {
+    width: '48%',
+    marginBottom: 12,
+  },
+  card: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+    minHeight: 130, // Asegura que todas las tarjetas tengan la misma altura base
+    justifyContent: 'center',
   },
 });
 

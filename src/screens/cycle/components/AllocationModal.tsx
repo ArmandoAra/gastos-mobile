@@ -1,16 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
-import {  View ,Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, Platform} from "react-native";
-import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
-import { BucketType, useCycleStore } from "../../../stores/useCycleStore";
+import {
+  View, Text, StyleSheet, TouchableOpacity, TextInput,
+  KeyboardAvoidingView, Modal, Platform
+} from "react-native";
+import Animated, { FadeInDown, FadeInUp, ZoomIn, FadeOutDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { t } from "i18next";
+import { useShallow } from 'zustand/react/shallow'; // <-- 1. IMPORTANTE IMPORTAR ESTO
+
+import { useCycleStore } from "../../../stores/useCycleStore";
 import { useAuthStore } from "../../../stores/authStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { darkTheme, lightTheme } from "../../../theme/colors";
 import { globalStyles } from "../../../theme/global.styles";
-import { useCreditCycleScreen } from "../hooks/useCreditCycleScreen";
+import { Bucket } from "../../../interfaces/cycle.interface"; 
 
 interface AllocationModalProps {
   cycleId: string;
@@ -22,48 +27,53 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
   const currencySymbol = useAuthStore((s) => s.currencySymbol);
   const theme = useSettingsStore((s) => s.theme);
   const colors = useMemo(() => theme === 'dark' ? darkTheme : lightTheme, [theme]);
-  const [selected, setSelected] = useState<BucketType | null>(null);
+
+  const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
   const [customAmount, setCustomAmount] = useState(String(available));
   const [step, setStep] = useState<'pick' | 'confirm' | 'done'>('pick');
   
-  const allocateSurplus = useCycleStore((s) => s.allocateSurplus);
-  const applyRollover = useCycleStore((s) => s.applyRolloverToNextCycle);
-  const buckets = useCreditCycleScreen().buckets;
+  // Acciones
+  const allocateToBucket = useCycleStore((s) => s.allocateToBucket);
+  const applyRollover = useCycleStore((s) => s.applyRolloverToNextCycle); 
+  const currentAccount = useCycleStore(s => s.selectedCycleAccount);
 
+  // 2. Usamos useShallow para evitar que el filter() del store cause re-renders fantasma
+  const buckets = useCycleStore(useShallow(s => s.getBucketsByAccount(currentAccount)));
+
+  const isRolloverSelected = selectedBucket?.id === 'rollover';
+
+  // 3. EL ARREGLO DEL BUCLE INFINITO
   useEffect(() => {
-    if (available <= 0) {
+    // Si available es 0, PERO no estamos en la pantalla de éxito ('done'), entonces cerramos
+    if (available <= 0 && step !== 'done') {
       onDone();
     }
+    // Ignoramos onDone en las dependencias intencionalmente
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [available]);
+  }, [available, step]); 
 
-  const bucketOrder: BucketType[] = ['rollover', 'savings', 'emergency', 'investment', 'buffer'];
-
-  function handleSelect(id: BucketType) {
+  function handleSelect(bucket: Bucket | { id: string, name: string, emoji: string, color: string }) {
     Haptics.selectionAsync();
-    setSelected(id);
-    setCustomAmount(String(available)); // Resetea el input al máximo al seleccionar
+    setSelectedBucket(bucket as Bucket);
+    setCustomAmount(String(available));
     setStep('confirm');
   }
 
   function handleConfirm() {
-    if (!selected) return;
-    
-    // SOLUCIÓN 2: Manejo más seguro del input numérico
+    if (!selectedBucket) return;
+
     const parsedAmount = parseFloat(customAmount);
-    // Si el texto no es un número válido (ej. vacío), usamos 0. Si no, tomamos el valor ingresado, limitado al disponible.
     const amountToAllocate = isNaN(parsedAmount) ? 0 : Math.max(0, Math.min(parsedAmount, available));
 
     if (amountToAllocate <= 0) {
-      // Si decide no asignar nada, simplemente cerramos
       onDone();
       return;
     }
 
-    if (selected === 'rollover') {
-      applyRollover(cycleId, amountToAllocate);
+    if (isRolloverSelected) {
+      applyRollover(cycleId, amountToAllocate); 
     } else {
-      allocateSurplus(cycleId, selected, amountToAllocate);
+      allocateToBucket(cycleId, selectedBucket.id, amountToAllocate);
     }
     
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -71,124 +81,164 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
     setTimeout(onDone, 1600);
   }
 
-  // SOLUCIÓN 1: Extrajimos las vistas para mayor claridad y estabilidad de las animaciones.
-  const renderDone = () => (
-    <Animated.View entering={ZoomIn.springify()} style={alloc.doneCard}>
-      <Text style={alloc.doneEmoji}>✅</Text>
-      <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>{t("cycle_screen.saved")}</Text>
-      <Text style={[globalStyles.bodyTextLg, { color: colors.text, textAlign: 'center' }]}>
-        {currencySymbol}{customAmount} {t("cycle_screen.allocated_to")} {buckets[selected!]?.emoji} {buckets[selected!]?.label}
-      </Text>
-    </Animated.View>
-  );
-
-  const renderConfirm = () => (
-    <Animated.View entering={FadeInUp.springify()} style={[alloc.card, { borderColor: buckets[selected!].color, backgroundColor: colors.surface }]}>
-      <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>{t("cycle_screen.confirm_allocation")}</Text>
-      <Text style={[globalStyles.bodyTextLg, { color: colors.text }]}>
-        {buckets[selected!]?.emoji} {buckets[selected!]?.label}
-      </Text>
-
-      <View style={alloc.inputRow}>
-        <Text style={[globalStyles.bodyTextLg, { color: colors.text }]}>{currencySymbol} </Text>
-        <TextInput
-          style={[globalStyles.amountInput, { color: colors.text, backgroundColor: colors.surfaceSecondary }]}
-          value={customAmount}
-          onChangeText={setCustomAmount}
-          keyboardType="numeric"
-          placeholder="0"
-          placeholderTextColor="rgba(255,255,255,0.3)"
-          selectionColor="#68D391"
-          autoFocus // Abre el teclado automáticamente
-        />
-      </View>
-      <Text style={alloc.maxHint}>{t("cycle_screen.max_available")}: {currencySymbol}{available}</Text>
-
-      <View style={alloc.btnRow}>
-        <TouchableOpacity style={[globalStyles.btnSecondary, { backgroundColor: colors.expense }]} onPress={() => setStep('pick')}>
-          <Text style={[globalStyles.bodyTextLg, { color: colors.text, fontWeight: 'bold' }]}>{t("common.back")}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[globalStyles.btnSecondary, { backgroundColor: colors.income }]} onPress={handleConfirm}>
-          <Text style={[globalStyles.bodyTextLg, { color: colors.text, fontWeight: 'bold' }]}>{t("common.confirm")}</Text>
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
-  );
-
-  const renderPick = () => (
-    <Animated.View entering={FadeInUp.springify()} style={[alloc.card, { backgroundColor: colors.surfaceSecondary }]}>
-      <TouchableOpacity style={[alloc.closeBtn, { backgroundColor: colors.text, }]} onPress={onDone}>
-        <Ionicons name="close" size={20} color={colors.surfaceSecondary} />
-      </TouchableOpacity>
-      {/* TODO: Poner un icono de fiesta */}
-      <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>🎉 ¡{t("cycle_screen.surplus")}: {currencySymbol}{available}!</Text>
-      <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>{t("cycle_screen.where_to_store")}</Text>
-      
-      {bucketOrder.map((id, i) => {
-        const b = buckets[id];
-        if (!b) return null; // Prevenir errores si el bucket no existe en el store inicial
-        
-        return (
-          <Animated.View key={id} entering={FadeInDown.delay(i * 60).springify()}>
-            <TouchableOpacity
-              style={[alloc.option, { borderColor: b.color, backgroundColor: b.color + '22' }]}
-              onPress={() => handleSelect(id)}
-              activeOpacity={0.8}
-            >
-              <View style={[alloc.optionIcon, { backgroundColor: b.color + '22' }]}>
-                <Text style={{ fontSize: 22 }}>{b.emoji}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>{b.label}</Text>
-                <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>
-                  {id === 'rollover'
-                    ? t("cycle_screen.rollover_description")
-                    : id === 'buffer'
-                      ? t("cycle_screen.buffer_description")
-                      : `${t("cycle_screen.accumulated")}: ${currencySymbol}${b.totalAccumulated.toLocaleString()}`}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.text} />
-            </TouchableOpacity>
-          </Animated.View>
-        );
-      })}
-    </Animated.View>
-  );
-
   return (
-    <Modal animationType="fade" statusBarTranslucent>
+    <Modal animationType="fade" statusBarTranslucent transparent>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={alloc.overlay}>
-          {step === 'done' && renderDone()}
-          {step === 'confirm' && renderConfirm()}
-          {step === 'pick' && renderPick()}
+          {/* Botón Cerrar (Global para el overlay) */}
+          {step === 'pick' && (
+            <TouchableOpacity
+              style={[alloc.closeBtn, { backgroundColor: colors.surface }]}
+              onPress={onDone}
+            >
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          )}
+
+          {/* PASO 1: SELECCIONAR */}
+          {step === 'pick' && (
+            <Animated.View
+              entering={FadeInDown.springify().damping(18)}
+              exiting={FadeOutDown.duration(200)}
+              style={[alloc.card, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
+            >
+              <Text style={[globalStyles.headerTitleXL, { color: colors.text, textAlign: 'center' }]}>
+                🎉 ¡{t("cycle_screen.surplus")}: {currencySymbol}{available}
+              </Text>
+              <Text style={[globalStyles.bodyTextSm, { color: colors.textSecondary, textAlign: 'center', marginBottom: 16 }]}>
+                {t("cycle_screen.where_to_store")}
+              </Text>
+
+              {/* Opción Especial: Rollover (Pasar al siguiente mes) */}
+              <TouchableOpacity
+                style={[alloc.option, { borderColor: colors.accent, backgroundColor: colors.accent + '15' }]}
+                onPress={() => handleSelect({ id: 'rollover', name: 'Siguiente Ciclo', emoji: '⏩', color: colors.accent })}
+                activeOpacity={0.8}
+              >
+                <View style={[alloc.optionIcon, { backgroundColor: colors.accent + '30' }]}>
+                  <Text style={{ fontSize: 22 }}>⏩</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>
+                    Usar el próximo ciclo
+                  </Text>
+                  <Text style={[globalStyles.bodyTextXs, { color: colors.textSecondary }]}>
+                    {t("cycle_screen.rollover_description")}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.text} />
+              </TouchableOpacity>
+
+              {/* Lista dinámica de cofres del usuario */}
+              {buckets.map((b, i) => (
+                <Animated.View key={b.id} entering={FadeInDown.delay((i + 1) * 60).springify()}>
+                  <TouchableOpacity
+                    style={[alloc.option, { borderColor: colors.primary, backgroundColor: (colors.primary) + '15' }]}
+                    onPress={() => handleSelect(b)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[alloc.optionIcon, { backgroundColor: (colors.primary) + '30' }]}>
+                      <Text style={{ fontSize: 22 }}>{b.iconName?.length <= 2 ? b.iconName : '💰'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>{b.name}</Text>
+                      <Text style={[globalStyles.bodyTextXs, { color: colors.textSecondary }]}>
+                        {t("cycle_screen.accumulated")}: {currencySymbol}{b.totalAccumulated.toLocaleString()}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.text} />
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}
+            </Animated.View>
+          )}
+
+          {/* PASO 2: CONFIRMAR MONTO */}
+          {step === 'confirm' && selectedBucket && (
+            <Animated.View
+              entering={FadeInUp.springify()}
+              style={[alloc.card, { borderColor: colors.primary, backgroundColor: colors.surface }]}
+            >
+              <Text style={[globalStyles.headerTitleXL, { color: colors.text, textAlign: 'center' }]}>
+                {t("cycle_screen.confirm_allocation")}
+              </Text>
+
+              <View style={{ alignItems: 'center', marginVertical: 12 }}>
+                <Text style={{ fontSize: 40, marginBottom: 8 }}>{selectedBucket.iconName?.length <= 2 ? selectedBucket.iconName : '💰'}</Text>
+                <Text style={[globalStyles.bodyTextLg, { color: colors.text }]}>{selectedBucket.name}</Text>
+              </View>
+
+              <View style={[alloc.inputRow, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[globalStyles.bodyTextLg, { color: colors.text }]}>{currencySymbol}</Text>
+                <TextInput
+                  style={[globalStyles.amountLg, { color: colors.text, flex: 1, paddingVertical: 12, paddingLeft: 8 }]}
+                  value={customAmount}
+                  onChangeText={setCustomAmount}
+                  keyboardType="decimal-pad"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textSecondary}
+                  selectionColor={colors.accent}
+                  autoFocus
+                />
+              </View>
+              <Text style={[alloc.maxHint, { color: colors.textSecondary }]}>{t("cycle_screen.max_available")}: {currencySymbol}{available}</Text>
+
+              <View style={alloc.btnRow}>
+                <TouchableOpacity style={[globalStyles.btnSecondary, { backgroundColor: colors.surfaceSecondary, flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 14 }]} onPress={() => setStep('pick')}>
+                  <Text style={[globalStyles.bodyTextLg, { color: colors.text, fontWeight: 'bold' }]}>{t("common.back")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[globalStyles.btnSecondary, { backgroundColor: colors.income, flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 14 }]} onPress={handleConfirm}>
+                  <Text style={[globalStyles.bodyTextLg, { color: colors.surface, fontWeight: 'bold' }]}>{t("common.confirm")}</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          )}
+
+          {/* PASO 3: DONE */}
+          {step === 'done' && selectedBucket && (
+            <Animated.View entering={ZoomIn.springify()} style={[alloc.doneCard, { backgroundColor: colors.surface, borderColor: colors.income }]}>
+              <Text style={alloc.doneEmoji}>✅</Text>
+              <Text style={[globalStyles.headerTitleXL, { color: colors.text }]}>{t("cycle_screen.saved")}</Text>
+              <Text style={[globalStyles.bodyTextLg, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
+                {currencySymbol}{customAmount} {t("cycle_screen.allocated_to")} {selectedBucket.name}
+              </Text>
+            </Animated.View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
+
 const alloc = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
   },
   card: {
     borderRadius: 28,
     padding: 24,
-    gap: 10,
-    borderWidth: 0.5,
+    borderWidth: 1,
   },
   closeBtn: {
-    borderRadius: 50,
-    alignSelf: 'flex-end',
-    padding: 4,
-    marginBottom: 4,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   option: {
     flexDirection: 'row',
@@ -197,7 +247,7 @@ const alloc = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    marginBottom: 8,
   },
   optionIcon: {
     width: 44,
@@ -206,29 +256,33 @@ const alloc = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Confirm step
-  bucketName: { color: '#fff', fontSize: 28, fontWeight: '800', textAlign: 'center', marginTop: 8 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 25,
+    borderRadius: 16,
     paddingHorizontal: 20,
-    marginTop: 12,
     borderWidth: 1,
+    marginBottom: 8,
   },
-  maxHint: { color: 'rgba(255,255,255,0.35)', fontSize: 12, textAlign: 'center' },
-  btnRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
-
-  // Done step
+  maxHint: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    gap: 12
+  },
   doneCard: {
     alignSelf: 'center',
-    backgroundColor: '#131320',
     borderRadius: 28,
     padding: 36,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(104,211,145,0.3)',
-    gap: 8,
+    width: '100%',
   },
-  doneEmoji: { fontSize: 56 },
+  doneEmoji: {
+    fontSize: 64,
+    marginBottom: 12
+  },
 });

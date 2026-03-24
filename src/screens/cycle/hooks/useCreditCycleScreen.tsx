@@ -11,7 +11,6 @@ import {
 } from '../selectors/cycleSelectors';
 import useDataStore from '../../../stores/useDataStore';
 import { getCycleDays } from '../../../utils/helpers';
-import { FixedTransaction } from '../../../interfaces/cycle.interface';
 
 export const useCreditCycleScreen = () => {
   const [todayString, setTodayString] = useState(new Date().toDateString());
@@ -44,12 +43,16 @@ export const useCreditCycleScreen = () => {
     return bufferBucket ? bufferBucket.totalAccumulated : 0;
   });
 
-  // FIX: El cofre ahora es un Array en el store, así que lo buscamos por su type
-  const rollover = useCycleStore((state) => {
+  // 1. Leemos lo que hay actualmente en el cofre
+  const rolloverBucketAmount = useCycleStore((state) => {
     const accountBuckets = state.bucketsByAccount[accountSelected] || [];
     const rolloverBucket = accountBuckets.find(b => b.type === 'rollover');
     return rolloverBucket ? rolloverBucket.totalAccumulated : 0;
   });
+
+  // 2. Si hay un ciclo activo, el rollover le pertenece a ese ciclo (rolloverBonus).
+  // Si no hay ciclo activo, mostramos lo que está guardado en el cofre esperando.
+  const rollover = activeCycle ? activeCycle.rolloverBonus : rolloverBucketAmount;
 
   const allBucketTransactions = useCycleStore(s => s.bucketTransactions);
   // FIX: Usamos el selector que creamos para que convierta el Array de cofres 

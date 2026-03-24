@@ -65,11 +65,9 @@ export function HeroCard() {
 
   const myFixed: FixedTransaction[] = getMyFixedTransactions({ userId: currentUserId });
   const activeFixed = myFixed.filter((tx) => tx.isActive);
+
   // ── Totales ──
-  const totalFixed = useMemo(
-    () => activeFixed.reduce((s, tx) => s + tx.amount, 0),
-    [activeFixed]
-  );
+  const totalFixed = activeFixed.reduce((s, tx) => s + tx.amount, 0)
 
 
   useEffect(() => {

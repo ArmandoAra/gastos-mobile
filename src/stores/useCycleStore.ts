@@ -18,8 +18,6 @@ import {
   CategoryLabelPortuguese,
   CategoryLabelSpanish,
 } from "../interfaces/categories.interface";
-import { useTransactionsLogic } from "../screens/transactions/hooks/useTransactionsLogic";
-import { is } from "date-fns/locale";
 
 // ─── MMKV ────────────────────────────────────────────────────────────────────
 export const cycleStorage = createMMKV({ id: "categories-storage" });
@@ -80,11 +78,13 @@ export interface CycleStoreActions {
   };
 
   // Surplus
+  allocateToBucket: (cycleId: string, bucketId: string, amount: number) => void;
   allocateSurplus: (cycleId: string, bucketId: string, amount?: number) => void;
   applyRolloverToNextCycle: (fromCycleId: string, amount: number) => void;
   absorbDeficitWithBuffer: (cycleId: string) => boolean;
 
   // Buckets
+  getBucketsByAccount: (accountId: string) => Bucket[];
   createBucket: (params: {
     userId: string;
     accountId: string;
@@ -129,9 +129,12 @@ export interface CycleStoreActions {
   toggleFixedTransactionActive: (id: string) => void;
   deleteFixedTransaction: (id: string) => void;
 
+  // Category Limits
   setCategoryLimit: (
     params: Omit<CategoryLimit, "id" | "createdAt" | "updatedAt">,
   ) => void;
+  deleteCategoryLimit: (limitId: string) => void;
+  getCategoryLimitsByCycle: (cycleId: string) => CategoryLimit[];
 
   // Dev
   clearAllCycleData: () => void;
@@ -156,7 +159,6 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       initAccountDataIfMissing: (accountId, userId) => {
         set((state) => {
           if (!state.bucketsByAccount[accountId]) {
-            // Deep copy de DEFAULT_BUCKETS adaptado a la nueva interfaz Bucket
             const defaults: Bucket[] = DEFAULT_BUCKETS.map((b: any) => ({
               id: generateId(),
               userId,
@@ -287,6 +289,56 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       // ── Surplus ────────────────────────────────────────────────────────────
 
+      allocateToBucket: (cycleId, bucketId, amount) => {
+        const cycle = get().cycles.find((c) => c.id === cycleId);
+        if (!cycle || cycle.status !== "closed") return;
+
+        const available = cycle.surplusAmount ?? 0;
+        if (amount <= 0 || amount > available) return;
+
+        const bucket = get().bucketsByAccount[cycle.accountId]?.find(
+          (b) => b.id === bucketId,
+        );
+        if (!bucket) return;
+
+        const txn: BucketTransaction = {
+          id: generateId(),
+          bucketId,
+          cycleId,
+          userId: cycle.userId,
+          amount,
+          type: "deposit",
+          note: `Sobrante ciclo ${cycle.name}`,
+          date: nowISO(),
+          createdAt: nowISO(),
+        };
+
+        const destination: SurplusDestination = {
+          id: generateId(),
+          cycleId,
+          bucketId,
+          amount,
+          createdAt: nowISO(),
+        };
+
+        set((state) => {
+          const c = state.cycles.find((c) => c.id === cycleId);
+          if (c) {
+            c.surplusAmount = (c.surplusAmount ?? 0) - amount;
+            c.updatedAt = nowISO();
+          }
+          const b = state.bucketsByAccount[cycle.accountId]?.find(
+            (b) => b.id === bucketId,
+          );
+          if (b) {
+            b.totalAccumulated += amount;
+            b.updatedAt = nowISO();
+          }
+          state.bucketTransactions.push(txn);
+          state.surplusDestinations.push(destination);
+        });
+      },
+
       allocateSurplus: (cycleId, bucketId, amount) => {
         const cycle = get().cycles.find((c) => c.id === cycleId);
         if (!cycle || cycle.status !== "closed") return;
@@ -391,6 +443,10 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
       },
 
       // ── Buckets ────────────────────────────────────────────────────────────
+      getBucketsByAccount: (accountId) => {
+        const buckets = get().bucketsByAccount[accountId] ?? [];
+        return buckets.filter((b) => b.type !== "rollover");
+      },
 
       createBucket: ({ userId, accountId, type, name, iconName }) => {
         const newBucket: Bucket = {
@@ -531,9 +587,8 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       toggleFixedTransactionPaid: (id, toNotPaid = false) => {
         const { addTransactionStore, deleteTransaction } = useDataStore.getState();
-        let isNowPaid = false; 
+        let isNowPaid = false;
 
-        // 1. Cambiamos el estado visual
         set((state) => {
           const tx = state.fixedTransactions.find((t) => t.id === id);
           if (tx) {
@@ -542,16 +597,14 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
             } else {
               tx.isPaid = !tx.isPaid;
             }
-            isNowPaid = tx.isPaid; 
+            isNowPaid = tx.isPaid;
           }
         });
 
         const updatedTx = get().fixedTransactions.find((t) => t.id === id);
         if (!updatedTx) return false;
 
-        // 2. Aplicamos la lógica en el historial general
         if (isNowPaid) {
-        // Si AHORA ESTÁ PAGADO -> Agregamos la transacción
           const defaultCategoriesSlug: string[] = [
             CategoryLabelSpanish[updatedTx.category_icon_name as keyof typeof CategoryLabelSpanish] || "",
             CategoryLabelPortuguese[updatedTx.category_icon_name as keyof typeof CategoryLabelPortuguese] || "",
@@ -559,7 +612,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           const isNewCategory = !defaultCategoriesSlug.includes(updatedTx.category_icon_name as string);
 
           addTransactionStore({
-            id: updatedTx.id, // OJO: Usamos el mismo ID para poder borrarla después
+            id: updatedTx.id,
             account_id: updatedTx.account_id,
             user_id: updatedTx.user_id,
             amount: updatedTx.amount,
@@ -577,11 +630,9 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
             updated_at: new Date().toISOString(),
           });
         } else {
-          // Si SE DESMARCÓ -> La borramos de tu base de datos global
           deleteTransaction(updatedTx.id);
         }
 
-        // 3. Retornamos el estado final a tu componente
         return isNowPaid;
       },
 
@@ -594,40 +645,45 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
 
       deleteFixedTransaction: (id) => {
         const { deleteTransaction } = useDataStore.getState();
-        set((state) => {
-          // 1. Buscamos la transacción que el usuario quiere eliminar
-          const txToDelete = state.fixedTransactions.find((t) => t.id === id);
 
-          // 2. Si la encontramos y YA ESTÁ PAGADA, bloqueamos la eliminación
-          if (txToDelete && txToDelete.isPaid) {
-            return;
-          }
-          // 3. Si no está pagada, procedemos a filtrarla (eliminarla)
+        // 1. Buscamos el estado actual (fuera del mutador para no tener conflictos lógicos)
+        const txToDelete = get().fixedTransactions.find((t) => t.id === id);
+
+        if (!txToDelete) return;
+
+        // 2. Si la transacción ya está pagada, bloqueamos su eliminación 
+        // (o podrías quitar este if si decides que SÍ se eliminen, pero tu código sugería bloquearlo)
+        if (txToDelete.isPaid) {
+          console.warn("No se puede eliminar una transacción fija que ya está pagada.");
+          return;
+        }
+
+        // 3. Procedemos a eliminarla de la lista del store local
+        set((state) => {
           state.fixedTransactions = state.fixedTransactions.filter(
             (t) => t.id !== id,
           );
         });
-        // También eliminamos la transacción de la base de datos global si estaba pagada
-        const txToDelete = get().fixedTransactions.find((t) => t.id === id);
-        if (txToDelete && txToDelete.isPaid) {
+
+        // 4. Si necesitáramos borrarla del global (aunque arriba bloqueamos si estaba pagada), 
+        // la llamada correcta sería esta:
+        if (txToDelete.isPaid) {
           deleteTransaction(txToDelete.id);
         }
       },
-      // ── Category Limits (NUEVO) ────────────────────────────────────────────
+
+      // ── Category Limits ────────────────────────────────────────────────────
 
       setCategoryLimit: ({ cycleId, categoryId, limitAmount }) => {
         set((state) => {
-          // Buscamos si ya existe un límite para esa categoría en ese ciclo
           const existingLimit = state.categoryLimits.find(
             (l) => l.cycleId === cycleId && l.categoryId === categoryId,
           );
 
           if (existingLimit) {
-            // Si existe, lo actualizamos
             existingLimit.limitAmount = limitAmount;
             existingLimit.updatedAt = nowISO();
           } else {
-            // Si no existe, creamos uno nuevo
             state.categoryLimits.push({
               id: generateId(),
               cycleId,
@@ -663,10 +719,6 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
           state.fixedTransactions = [];
           state.categoryLimits = [];
         });
-        const currentAccount = get().selectedCycleAccount;
-        if (currentAccount) {
-          // Re-init requiere userId — llamar desde el componente si es necesario
-        }
       },
     })),
     {

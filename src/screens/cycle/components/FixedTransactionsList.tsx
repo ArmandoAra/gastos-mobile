@@ -53,7 +53,6 @@ export default function FixedTransactionsList({
       {/* Progress bar */}
       {totalFixed > 0 && (
         <Animated.View
-          layout={LinearTransition.springify().damping(90).stiffness(120)}
           style={[styles.progressTrack, { backgroundColor: colors.border }]}
         >
           <View
@@ -70,15 +69,14 @@ export default function FixedTransactionsList({
 
       {/* Lista Animada */}
       <Animated.View
-        layout={LinearTransition.springify().delay(100).stiffness(120)}
         style={styles.listContainer}
       >
         {activeFixed.map((tx, i) => (
           <Animated.View
             key={tx.id}
-            entering={FadeInUp.delay(i * 40).springify()}
-            exiting={FadeOutUp.duration(50)}
-            layout={LinearTransition.springify()}
+            layout={LinearTransition.springify().delay(100).stiffness(120)}
+            entering={FadeInUp.delay(i * 40).springify().damping(60)}
+
           >
             <FixedTransactionItem
               tx={tx}
@@ -86,6 +84,7 @@ export default function FixedTransactionsList({
               onToggle={handleTogglePaid}
               onDelete={deleteFixedTx}
               onEdit={openFormEdit}
+              delay={i * 40} // El hijo se encargará de su FadeInUp
             />
           </Animated.View>
         ))}
