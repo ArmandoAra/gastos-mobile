@@ -536,7 +536,13 @@
     "under_budget": "¡Estás por debajo del presupuesto!",
     "over_budget": "¡Estás por encima del presupuesto!",
     "days_left": "días restantes",
-    "category_limit": "Límite de categoría"
+    "category_limit": "Límite de categoría",
+    "next_cycle": "Siguiente ciclo",
+    "current_cycle": "Ciclo actual",
+    "savings": "Ahorros",
+    "emergency": "Emergencias",
+    "investment": "Inversión",
+    "min_cycle_range": "Rango mínimo de 3 días "
     },
     "fixed_tx": {
         "paid": "Pagado",

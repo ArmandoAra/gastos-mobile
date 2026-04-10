@@ -66,11 +66,13 @@ export const useCreditCycleScreen = () => {
 
   const isActiveCycle = !!activeCycle;
 
-  // ── FIX: REEMPLAZO MASIVO A SNAKE_CASE EN EL CICLO ──
+
   const daysElapsed = useMemo(() => {
     if (!activeCycle) return 0;
-    return differenceInDays(new Date(activeCycle.endDate), new Date(activeCycle.startDate));
+    return differenceInDays(new Date(), new Date(activeCycle.startDate));
   }, [activeCycle?.startDate, activeCycle?.endDate]);
+
+
 
   const remainingDays = useMemo(() => {
     if (!activeCycle) return 0;

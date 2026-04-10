@@ -22,8 +22,8 @@ export function CloseCycleCard() {
   // Extraemos lo que necesitamos del hook principal
   const {
     activeCycle,
-    totalSpentInCycle, // ¡Esto es vital! Es el gasto real calculado de la base de datos
-    safeToSpendToday
+    totalSpentInCycle,
+    daysElapsed,
   } = useCreditCycleScreen();
 
   // Si no hay ciclo activo, este botón ni siquiera debería renderizarse
@@ -34,7 +34,7 @@ export function CloseCycleCard() {
   const currentSurplus = activeCycle.baseBudget - totalSpentInCycle;
 
   function closeCycleHandler() {
-    if (!activeCycle) return;
+    if (!activeCycle || daysElapsed <= 2) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 

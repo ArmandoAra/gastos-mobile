@@ -33,12 +33,9 @@ import * as Haptics from 'expo-haptics';
 // Los datos se pasan hacia abajo como props a HeroCard y PacingBar.
 // Así todos los componentes ven exactamente el mismo estado en el mismo render.
 import { useCreditCycleScreen } from './hooks/useCreditCycleScreen';
-import { FixedTransactionsManager } from './components/FixedTranasactionsManager';
 import { useAuthStore } from '../../stores/authStore';
 import { useDailyExpenseLogic } from '../../hooks/useDailyExpenseLogic';
-import { isSmallScreen } from '../analytics/components/styles';
 import { DetailsModal } from '../../components/charts/DetailsModal';
-import { CategoryTransactionRow } from './components/CategoryTransactionRow';
 import { CategoryCycleExpensesView } from './components/CategoryCycleExpensesView';
 import { FixedExpensesCycleView } from './components/FixedExpensesCycleView';
 
@@ -93,10 +90,10 @@ export default function CreditCycleScreen() {
     setIsAccountSelectorOpen,
     setAccountSelected,
     setShowRollover,
+    remainingDays
   } = useCreditCycleScreen();
   const { setCurrentPeriod, transactionsCycleData, statsByCycle, selectedCategory, handleCategorySelectByCycle, modalData, handleCloseModal } = useDailyExpenseLogic();
   const { currencySymbol } = useAuthStore();
-
 
 
   useEffect(() => {
@@ -256,7 +253,8 @@ export default function CreditCycleScreen() {
 
             {showRollover && <RolloverModal onDismiss={() => setShowRollover(false)} />}
 
-            {!pendingSurplusCycle && !showAlloc && <CloseCycleCard />}
+            {/* daysElapsed > 2 */}
+            {!pendingSurplusCycle && !showAlloc && daysElapsed > 2 && <CloseCycleCard />}
 
             {showAlloc && pendingSurplusCycle && (
               <AllocationModal

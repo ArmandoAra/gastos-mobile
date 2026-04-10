@@ -11,7 +11,7 @@ import { selectActiveCycle } from '../selectors/cycleSelectors';
 import { t } from 'i18next';
 import { useAuthStore } from '../../../stores/authStore';
 
-const MIN_CYCLE_DAYS = 7;
+const MIN_CYCLE_DAYS = 3;
 
 export function CycleDatePicker() {
   const paperTheme = useTheme();
@@ -33,12 +33,9 @@ export function CycleDatePicker() {
   const currentStartDate = activeCycle?.startDate ? new Date(activeCycle.startDate) : undefined;
   const currentEndDate = activeCycle?.endDate ? new Date(activeCycle.endDate) : undefined;
 
+
   const today = startOfDay(new Date());
 
-  // ── FECHAS BLOQUEADAS ────────────────────────────────────────────────────
-  // disabledDates forma parte de validRange en react-native-paper-dates.
-  // Los días de ciclos cerrados se pasan como disabledDates dentro de validRange
-  // y el calendario los pinta automáticamente como no seleccionables.
   const disabledDates = useMemo(() => {
     const closedCycles = allCycles.filter(
       (c) => c.accountId === selectedCycleAccount && c.status === 'closed'
@@ -63,6 +60,7 @@ export function CycleDatePicker() {
     startDate: today,
     disabledDates,
   }), [today.toDateString(), disabledDates]);
+
 
   // ── CONFIRMACIÓN ─────────────────────────────────────────────────────────
   const onConfirmRange = useCallback(

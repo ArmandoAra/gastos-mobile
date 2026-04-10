@@ -73,7 +73,6 @@ export default function AnalyticsScreen() {
         {/* 2. Heatmap */}
         <ExpenseHeatmap />
 
-        {/* Espacio para que el contenido no quede tapado por la barra de navegación */}
         <View style={{ height: insets.bottom + 80 }} />
 
       </Animated.ScrollView>
@@ -82,7 +81,6 @@ export default function AnalyticsScreen() {
 }
 
 const styles = StyleSheet.create({
-  // ... resto de tus estilos (se mantienen igual)
   periodSelectorWrapper: {
     paddingHorizontal: 12,
     paddingBottom: 8,

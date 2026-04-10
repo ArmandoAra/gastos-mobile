@@ -277,6 +277,7 @@ export const useCycleStore = create<CycleStoreState & CycleStoreActions>()(
             c.totalSpent = spent;
             c.surplusAmount = surplus > 0 ? surplus : 0;
             c.updatedAt = nowISO();
+            c.endDate = nowISO(); //Por si el ciclo se cierra antes de la fecha programada, se actualiza la fecha de fin al momento del cierre para cálculos posteriores.
             state.activeCycles[c.accountId] = null;
           }
         });

@@ -50,6 +50,7 @@ export interface Bucket {
   totalAccumulated: number;  // Saldo actual del cofre
   createdAt: string;
   updatedAt: string;
+  color?: string;           // Para personalizar el color del cofre en la UI
 }
 
 export interface BucketTransaction {

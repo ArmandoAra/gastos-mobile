@@ -37,14 +37,12 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
   const applyRollover = useCycleStore((s) => s.applyRolloverToNextCycle); 
   const currentAccount = useCycleStore(s => s.selectedCycleAccount);
 
-  // 2. Usamos useShallow para evitar que el filter() del store cause re-renders fantasma
   const buckets = useCycleStore(useShallow(s => s.getBucketsByAccount(currentAccount)));
 
   const isRolloverSelected = selectedBucket?.id === 'rollover';
 
   // 3. EL ARREGLO DEL BUCLE INFINITO
   useEffect(() => {
-    // Si available es 0, PERO no estamos en la pantalla de éxito ('done'), entonces cerramos
     if (available <= 0 && step !== 'done') {
       onDone();
     }
@@ -88,7 +86,6 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={alloc.overlay}>
-          {/* Botón Cerrar (Global para el overlay) */}
           {step === 'pick' && (
             <TouchableOpacity
               style={[alloc.closeBtn, { backgroundColor: colors.surface }]}

@@ -68,7 +68,7 @@ export function BucketCard({
           style={[globalStyles.bodyTextSm, { color: colors.textSecondary, marginTop: 8 }]}
           numberOfLines={1}
         >
-          {bucket.name}
+          {t(`cycle_screen.${bucket.name}`, bucket.name)}
         </Text>
 
         {/* Monto Acumulado */}

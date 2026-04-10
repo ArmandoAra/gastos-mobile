@@ -111,11 +111,11 @@ export function HeroCard() {
                 style={[globalStyles.headerTitleSm, { color: colors.text }]}
                 accessibilityRole="header"
               >
-                {t('cycle_screen.active_cycle')} 
+                {t('cycle_screen.active_cycle')}
               </Text>
               <Text style={[globalStyles.bodyTextSm, { color: colors.textSecondary }]} accessibilityLabel={activeCycle ? `${remainingDays} ${t('cycle_screen.days_left')}` : t('cycle_screen.no_active_cycle')}
               >
-                {activeCycle ? `(${remainingDays} ${t('cycle_screen.days_left')})` : ''}
+                {activeCycle ? `(${remainingDays} ${t('cycle_screen.days_left')})` : t('cycle_screen.min_cycle_range')}
               </Text>
               {activeCycle ? (
                 <Text

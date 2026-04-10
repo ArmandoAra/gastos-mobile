@@ -1,6 +1,6 @@
 
 import { DEFAULT_BUCKETS } from "../../../constants/cycle";
-import { BucketType, CycleStoreState } from "../../../stores/useCycleStore";
+import { CycleStoreState } from "../../../stores/useCycleStore";
 
 export const selectActiveCycle = (accountId: string) => (state: CycleStoreState) => {
   const activeId = state.activeCycles[accountId];
@@ -38,7 +38,7 @@ export const selectTotalSaved = (accountId: string) => (state: CycleStoreState):
 
   // 2. Sumamos el acumulado de todos los cofres (excepto el rollover, si quieres)
   return bucketsArray.reduce((sum, bucket) => {
-    // Normalmente el rollover (sobrante para el mes siguiente) no se cuenta como "ahorro" neto.
+    // Normalmente el rollover (sobrante para el ciclo siguiente) no se cuenta como "ahorro" neto.
     // Si tú sí quieres contarlo, simplemente quita este 'if'
     if (bucket.type === 'rollover') return sum;
 
