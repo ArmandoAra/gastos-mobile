@@ -119,7 +119,7 @@ export const CategoryCycleExpensesView = ({ data, statsByCycle, handleCategorySe
             >
               <MaterialCommunityIcons name="tune-variant" size={14} color={colors.surface} />
               <Text style={[styles.btnText, { color: colors.surface }]}>
-                {t('cycle_screen.set_limit', 'Límite')}
+                {t('cycle_screen.limit', 'Límite')}
               </Text>
             </TouchableOpacity>
 

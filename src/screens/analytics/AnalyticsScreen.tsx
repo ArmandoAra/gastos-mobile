@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
   },
   periodText: {
     fontFamily: 'FiraSans-Bold',

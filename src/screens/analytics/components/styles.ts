@@ -119,7 +119,7 @@ export const styles = StyleSheet.create({
         flex: 1,
         padding: isSmallScreen ? 12 : 16,
         borderRadius: 16,
-        borderWidth: 1,
+        borderWidth: 0.3,
         marginHorizontal: isSmallScreen ? 4 : 6,
         minWidth: isSmallScreen ? 100 : 120,
     },
@@ -159,7 +159,7 @@ export const styles = StyleSheet.create({
     tooltip: {
         padding: 8,
         borderRadius: 8,
-        borderWidth: 1,
+        borderWidth: 0.3,
         minWidth: 80,
         alignItems: 'center',
         marginBottom: 4
@@ -183,7 +183,7 @@ export const styles = StyleSheet.create({
         flexDirection: 'row', 
         borderRadius: 24, 
         padding: 2, 
-        borderWidth: 1 
+        borderWidth: 0.3, 
     },
     toggleBtn: { 
         paddingHorizontal: 12, 
@@ -371,7 +371,7 @@ export const styles = StyleSheet.create({
         flex: 1,
         padding: isSmallScreen ? 12 : 16,
         borderRadius: 16,
-        borderWidth: 1,
+        borderWidth: 0.5,
         marginHorizontal: isSmallScreen ? 4 : 6,
         minWidth: isSmallScreen ? 120 : 150,
     },
@@ -455,7 +455,7 @@ export const styles = StyleSheet.create({
         maxWidth: 300, 
         borderRadius: 20, 
         padding: 20, 
-        borderWidth: 1 
+        borderWidth: 0.5,
     },
     modalHeader: { 
         flexDirection: 'row', 

@@ -98,12 +98,12 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
           {/* PASO 1: SELECCIONAR */}
           {step === 'pick' && (
             <Animated.View
-              entering={FadeInDown.springify().damping(18)}
+              entering={FadeInDown.springify().damping(80)}
               exiting={FadeOutDown.duration(200)}
               style={[alloc.card, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
             >
               <Text style={[globalStyles.headerTitleXL, { color: colors.text, textAlign: 'center' }]}>
-                🎉 ¡{t("cycle_screen.surplus")}: {currencySymbol}{available}
+                ¡{t("cycle_screen.surplus")}: {currencySymbol}{available}
               </Text>
               <Text style={[globalStyles.bodyTextSm, { color: colors.textSecondary, textAlign: 'center', marginBottom: 16 }]}>
                 {t("cycle_screen.where_to_store")}
@@ -112,7 +112,7 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
               {/* Opción Especial: Rollover (Pasar al siguiente mes) */}
               <TouchableOpacity
                 style={[alloc.option, { borderColor: colors.accent, backgroundColor: colors.accent + '15' }]}
-                onPress={() => handleSelect({ id: 'rollover', name: 'Siguiente Ciclo', emoji: '⏩', color: colors.accent })}
+                onPress={() => handleSelect({ id: 'rollover', name: t("cycle_screen.rollover"), emoji: '⏩', color: colors.accent })}
                 activeOpacity={0.8}
               >
                 <View style={[alloc.optionIcon, { backgroundColor: colors.accent + '30' }]}>
@@ -120,7 +120,7 @@ export function AllocationModal({ cycleId, available, onDone }: AllocationModalP
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[globalStyles.bodyTextSm, { color: colors.text, fontWeight: 'bold' }]}>
-                    Usar el próximo ciclo
+                    {t("cycle_screen.rollover")}
                   </Text>
                   <Text style={[globalStyles.bodyTextXs, { color: colors.textSecondary }]}>
                     {t("cycle_screen.rollover_description")}
@@ -221,7 +221,7 @@ const alloc = StyleSheet.create({
   card: {
     borderRadius: 28,
     padding: 24,
-    borderWidth: 1,
+    borderWidth: 0.3,
   },
   closeBtn: {
     width: 44,
@@ -243,7 +243,7 @@ const alloc = StyleSheet.create({
     gap: 14,
     padding: 14,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 0.3,
     marginBottom: 8,
   },
   optionIcon: {
@@ -258,7 +258,7 @@ const alloc = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 0.3,
     marginBottom: 8,
   },
   maxHint: {

@@ -45,12 +45,6 @@ export const cycleStart = subDays(today, 10);
 export const cycleEnd = addDays(today, 20);
 export const cycleDays = differenceInDays(cycleEnd, cycleStart);
 
-
-export const gastosFijos = [
-  { icon: 'phone', label: 'Internet', spent: 120, color: '#FF6B6B', paid: true },
-  { icon: 'home', label: 'Hogar', spent: 180, color: '#4ECDC4', paid: false },
-];
-
 // ─── SCREEN ───────────────────────────────────────────────────────────────────
 export default function CreditCycleScreen() {
   const theme = useSettingsStore((s) => s.theme);
@@ -90,7 +84,6 @@ export default function CreditCycleScreen() {
     setIsAccountSelectorOpen,
     setAccountSelected,
     setShowRollover,
-    remainingDays
   } = useCreditCycleScreen();
   const { setCurrentPeriod, transactionsCycleData, statsByCycle, selectedCategory, handleCategorySelectByCycle, modalData, handleCloseModal } = useDailyExpenseLogic();
   const { currencySymbol } = useAuthStore();
@@ -128,10 +121,7 @@ export default function CreditCycleScreen() {
               <Text style={[globalStyles.bodyTextXs, { color: colors.textSecondary }]}>
                 {!isActiveCycle
                   ? t('cycle_screen.no_active_cycle')
-                  : `${t('cycle_screen.active_cycle')} ${daysElapsed} ${daysElapsed === 1
-                    ? t('cycle_screen.days_singular')
-                    : t('cycle_screen.days')
-                  }`}
+                  : ` ${daysElapsed} ${t('cycle_screen.days_elapsed')} `}
               </Text>
             </View>
 
@@ -208,7 +198,7 @@ export default function CreditCycleScreen() {
             <View style={{ height: 16 }} />
 
             {/* COFRES */}
-            <CollapsibleSection title="Mis Cofres de Ahorro">
+            <CollapsibleSection title={t('cycle_screen.buckets', 'Cofres')} initialExpanded={true} customStyles={{ borderColor: colors.text, backgroundColor: colors.surfaceSecondary }}>
               <View style={screen.gridContainer}>
 
                 {/* Mapeas tus cofres existentes */}
@@ -234,7 +224,7 @@ export default function CreditCycleScreen() {
 
             {/* HISTORIAL */}
             <CollapsibleSection
-              title="Historial de ciclos"
+              title={t('cycle_screen.cycle_history', 'Historial de ciclos')}
               initialExpanded={false}
               customStyles={{ borderColor: colors.text, backgroundColor: colors.surfaceSecondary }}
             >
@@ -259,6 +249,7 @@ export default function CreditCycleScreen() {
             {showAlloc && pendingSurplusCycle && (
               <AllocationModal
                 cycleId={pendingSurplusCycle.id}
+
                 available={pendingSurplusCycle.surplusAmount ?? 0}
                 onDone={() => setShowAlloc(false)}
               />
@@ -459,7 +450,7 @@ const screen = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 0.5,
     overflow: 'hidden',
     position: 'relative',
     minHeight: 130, // Asegura que todas las tarjetas tengan la misma altura base
@@ -475,15 +466,16 @@ export const main = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 0.5,
   },
   pendingEmoji: { fontSize: 28 },
   historySection: { gap: 8 },
   historyCard: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.07)',
   },
 });

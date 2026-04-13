@@ -153,7 +153,7 @@ export function FixedTransactionsManager({ availableCycleDays }: Props) {
         >
           <MaterialCommunityIcons name="plus" size={18} color={colors.surface} />
           <Text style={[globalStyles.bodyTextBase, { color: colors.surface }]}>
-            {t('fixed_tx.add', 'Agregar')}
+            {t('common.add', 'Agregar')}
           </Text>
         </TouchableOpacity>
       </View>

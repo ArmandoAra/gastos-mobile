@@ -46,7 +46,7 @@ export interface Category {
     icon: CategoryLabel;
     color: typeof COLOR_PICKER_PALETTE[number];
     type: TransactionType;
-    isActive: boolean;
+    isActive?: boolean;
     userId: string;
 }
 

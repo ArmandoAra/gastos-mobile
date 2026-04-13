@@ -19,7 +19,9 @@ export function CycleHistoryRow({ cycle, index }: { cycle: ReturnType<ReturnType
   const hasSurplus = surplus > 0;
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={[hist_s.row, { backgroundColor: colors.surfaceSecondary }]}>
+    <Animated.View entering={FadeInDown.delay(index * 50).springify()}
+      style={[hist_s.row,
+      { backgroundColor: colors.surfaceSecondary, borderRadius: 25 }]}>
       <View style={[hist_s.indicator, { backgroundColor: hasSurplus ? colors.success : colors.error }]} />
       <View style={{ flex: 1 }}>
         <Text style={[globalStyles.bodyTextSm, { color: colors.text }]}>
@@ -43,7 +45,7 @@ const hist_s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },

@@ -76,7 +76,7 @@ export function DayAndDescriptionInput({
               ]}
               numberOfLines={1}
             >
-              {t('fixed_tx.day_label', 'Dia')}
+              {t('cycle_screen.days_singular', 'Dia')}
             </Text>
           </Animated.View>
         )}
@@ -111,7 +111,7 @@ export function DayAndDescriptionInput({
               ]}
               numberOfLines={1}
             >
-              {t('fixed_tx.description_label', 'Descripcion')}
+              {t('transactions.description', 'Descripcion')}
             </Text>
           </Animated.View>
         )}
@@ -123,7 +123,7 @@ export function DayAndDescriptionInput({
           >
             <TextInput
               style={[styles.input, { color: colors.text }]}
-              placeholder={t('fixed_tx.description_placeholder', 'Netflix, Gimnasio...')}
+              placeholder={t('transactions.descriptionPlaceholder', 'Enter a description...')}
               placeholderTextColor={colors.textSecondary}
               value={description}
               onChangeText={onDescriptionChange}

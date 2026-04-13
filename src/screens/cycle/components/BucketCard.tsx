@@ -37,7 +37,7 @@ export function BucketCard({
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(index * 50).springify().damping(18)}
+      entering={FadeInDown.delay(index * 50).springify().damping(70)}
       layout={LinearTransition.springify()}
       style={bucket_s.cardWrapper}
     >
@@ -56,7 +56,7 @@ export function BucketCard({
 
         {/* Header de la tarjeta */}
         <View style={bucket_s.topRow}>
-          <View style={[bucket_s.emojiBox, { backgroundColor: (bucket.color || colors.primary) + '20' }]}>
+          <View style={[bucket_s.emojiBox,]}>
             <Text style={bucket_s.emoji}>
               {bucket.iconName?.length <= 2 ? bucket.iconName : '💰'}
             </Text>
@@ -107,7 +107,7 @@ const bucket_s = StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 0.3,
     overflow: 'hidden',
     position: 'relative',
     minHeight: 130, // Asegura que todas las tarjetas tengan la misma altura base
@@ -122,6 +122,9 @@ const bucket_s = StyleSheet.create({
     borderRadius: 40,
   },
   topRow: {
+    position: 'absolute',
+    top: 6,
+    right: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',

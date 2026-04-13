@@ -197,7 +197,7 @@ export const FixedTransactionForm = ({
             <View style={formStyles.sheetHeader}>
               <Text style={[globalStyles.headerTitleSm, { color: colors.text }]}>
                 {/* ✨ NUEVO: Título dinámico según el modo */}
-                {initialData ? t("fixed_tx.edit", "Editar gasto fijo") : t("fixed_tx.new", "Nuevo gasto fijo")}
+                {initialData ? t("fixed_tx.edit_fixed_tx", "Editar transacción fija") : t("fixed_tx.new_fixed_tx", "Nueva transacción fija")}
               </Text>
               <TouchableOpacity
                 onPress={handleClose}

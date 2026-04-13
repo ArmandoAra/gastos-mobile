@@ -58,7 +58,7 @@ export const BudgetFormSection = ({
                     borderColor: (isOverBudget ? colors.expense : colors.income) + '35',
                 }]}>
                     <Text style={[formStyles.label, { color: colors.textSecondary }]}>
-                        {t('budget_form.fields.current_total_label')}
+                {t('budget_form.fields.current_total_label')}
                     </Text>
                     <Text style={[formStyles.displayTotal, { color: isOverBudget ? colors.expense : colors.income }]}>
                         {currencySymbol}{formatCurrency(totalSpent)}

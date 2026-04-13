@@ -58,8 +58,6 @@ export const BudgetFormModal = ({
 
     const [menuVisible, setMenuVisible] = useState(false);
     const [delettingBudget, setDelettingBudget] = useState(false);
-    const [stickyVisible, setStickyVisible] = useState(false);
-    const formHeightRef = useRef(0);
 
     const {
         name, setName,
@@ -231,7 +229,7 @@ export const BudgetFormModal = ({
                         />
 
                         {/* 3. CONTENEDOR DE LA LISTA Y EL STICKY */}
-                        <View style={[headerStyles.sectionBox, { backgroundColor: colors.surface }]}>
+                        <View style={[headerStyles.sectionBox]}>
                             <CategoryAndName
                                 colors={colors}
                                 name={name}
@@ -242,6 +240,7 @@ export const BudgetFormModal = ({
                                 t={t}
                             />
                         </View>
+
                         <View style={{ flex: 1, position: 'relative' }}>
                             {/* CLAVE DEL FIX: Aparece sin animación y usa position absolute para no mover la FlatList */}
 
@@ -295,7 +294,7 @@ const styles = StyleSheet.create({
 });
 
 const headerStyles = StyleSheet.create({
-    sectionBox: { borderRadius: 18, paddingHorizontal: 20, paddingVertical: 16, marginBottom: 4, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2, gap: 14 },
+    sectionBox: { borderRadius: 18, paddingHorizontal: 20, paddingVertical: 2, marginBottom: 4, gap: 14 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, zIndex: 10, minHeight: 64, gap: 10 },
     headerTitle: { fontSize: 16, fontFamily: 'FiraSans-Bold', flex: 1, textAlign: 'center' },
     headerIconBtn: { width: 40, height: 40, borderRadius: 50, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },

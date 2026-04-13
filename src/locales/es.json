@@ -31,6 +31,7 @@
         "yes": "Sí",
         "no": "No",
         "of": "de",
+        "add": "Agregar",
         "save": "Guardar",
         "saving": "Guardando...",
         "create": "Crear",
@@ -479,9 +480,10 @@
 },
 "cycle_screen": {
     "active_cycle": "Ciclo activo",
+    "buckets": "Cofres",
     "select_account": "Seleccionar cuenta",
-    "days": "días",
-    "days_singular": "día",
+    "days": "Días",
+    "days_singular": "Día",
     "no_selected_account": "Ninguna cuenta seleccionada",
     "today_available": "Disponible para gastar hoy",
     "time": "Tiempo",
@@ -542,11 +544,20 @@
     "savings": "Ahorros",
     "emergency": "Emergencias",
     "investment": "Inversión",
-    "min_cycle_range": "Rango mínimo de 3 días "
+    "min_cycle_range": "Rango mínimo de 3 días ",
+    "days_elapsed": "días transcurridos",
+    "daily_avg": "Prom. diario",
+    "this_day": "Este día",
+    "limit": "Llímite",
+    "cycle_history": "Historial de ciclos",
+    "tap_bar_hint": "Toca la barra para ver detalles de gastos por categoría"
     },
     "fixed_tx": {
+        "new_fixed_tx": "Nueva transacción fija",
+        "edit_fixed_tx": "Editar transacción fija",
         "paid": "Pagado",
         "unpaid": "Pendiente",
-        "day_of_month": "Día del mes"
+        "day_of_month": "Día del mes",
+        "select_day": "Seleccionar día del ciclo"
     }
 }

@@ -44,7 +44,18 @@ export const CategoryAndName = ({
                     />
                 </View>
 
-                <View style={{ flex: 1 }}>
+              <View style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 5,
+                  flex: 1,
+                  backgroundColor: colors.surfaceSecondary,
+                  borderColor: colors.border,
+                  borderWidth: 0.3,
+                  borderRadius: 12,
+                  marginLeft: 15
+
+              }}>
                     <View style={formStyles.inputHeader}>
                         <Text style={[formStyles.label, { color: colors.textSecondary }]}>
                             {t('budget_form.fields.name_label')}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useCallback } from 'react';
-import { useSharedValue, withTiming, SharedValue, useDerivedValue } from 'react-native-reanimated';
+import { useSharedValue, withTiming, SharedValue } from 'react-native-reanimated';
 
 interface TabBarVisibilityContextType {
   translateY: SharedValue<number>;

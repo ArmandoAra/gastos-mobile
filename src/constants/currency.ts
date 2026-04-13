@@ -1,10 +1,3 @@
-
-interface CurrencyOption {
-    code: string;
-    symbol: string;
-    name: string;
-}
-
 export const currencyOptions = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
     { code: 'EUR', symbol: '€', name: 'Euro' },

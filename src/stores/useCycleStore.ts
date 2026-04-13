@@ -19,6 +19,10 @@ import {
   CategoryLabelSpanish,
 } from "../interfaces/categories.interface";
 
+// TODO: Cuando el ciclo se cierra, los gastos fijos se mantienen , pero necesito cambiar su id para que no sean los mismos
+//que se crean al marcar como pagados en el cyclo siguiente.
+//Definir el paso a paso y ver cual es la opcion optima.
+
 // ─── MMKV ────────────────────────────────────────────────────────────────────
 export const cycleStorage = createMMKV({ id: "categories-storage" });
 

@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 30,
     alignItems: 'center',
   },
   closeText: { fontSize: 16, fontFamily: 'FiraSans-Bold', lineHeight: 20 }

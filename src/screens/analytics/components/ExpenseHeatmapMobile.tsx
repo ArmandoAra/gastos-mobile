@@ -219,7 +219,7 @@ export default function ExpenseHeatmap() {
                             height: CELL_SIZE,
                             backgroundColor: getHeatColor(cell.amount),
                             borderColor: colors.border,
-                            borderWidth: cell.amount === 0 ? 1 : 0
+                            borderWidth: cell.amount === 0 ? 0.5 : 0
                           }
                         ]}
                         accessibilityRole="button"
@@ -265,7 +265,7 @@ export default function ExpenseHeatmap() {
                     {
                       backgroundColor: getHeatColor(cell.amount),
                       borderColor: colors.border,
-                      borderWidth: cell.amount === 0 ? 1 : 0
+                      borderWidth: cell.amount === 0 ? 0.5 : 0
                     }
                   ]}
                   accessibilityRole="button"
@@ -342,7 +342,7 @@ export default function ExpenseHeatmap() {
                         {
                           backgroundColor: getHeatColor(cell.amount),
                           borderColor: colors.border,
-                          borderWidth: cell.amount === 0 ? 0.5 : 0
+                          borderWidth: cell.amount === 0 ? 0.3 : 0
                         }
                       ]}
                       accessibilityRole="button"
@@ -411,6 +411,7 @@ export default function ExpenseHeatmap() {
                   </Text>
               )}
             </ScrollView>
+            <View style={{ height: 12 }} />
             
             <CloseModalButton handleCloseModal={handleCloseModal} colors={colors} t={t} />
           </Animated.View>
@@ -449,15 +450,15 @@ const localStyles = StyleSheet.create({
   },
   toggleContainer: {
     flexDirection: 'row',
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 50,
+    borderWidth: 0.3,
     overflow: 'hidden',
-    padding: 3,
+
   },
   toggleBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 38,
     minWidth: 70,
     alignItems: 'center',
     minHeight: 44,
@@ -495,7 +496,7 @@ const localStyles = StyleSheet.create({
     gap: 8,
   },
   cell: {
-    borderRadius: 8,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 44,
@@ -508,7 +509,7 @@ const localStyles = StyleSheet.create({
   yearCell: {
     width: '30%',
     height: 70,
-    borderRadius: 12,
+    borderRadius: 38,
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 70,
@@ -530,7 +531,7 @@ const localStyles = StyleSheet.create({
   catHeaderCell: { width: MINI_CELL_SIZE, height: 40, justifyContent: 'center', alignItems: 'center' },
   catColHeader: { fontSize: 10, fontFamily: 'FiraSans-Regular', lineHeight: 14 },
   catDataRow: { flexDirection: 'row', gap: GAP_SIZE, marginBottom: GAP_SIZE },
-  miniCell: { width: MINI_CELL_SIZE, height: MINI_CELL_SIZE, borderRadius: 4, minHeight: 24, minWidth: 24 },
+  miniCell: { width: MINI_CELL_SIZE, height: MINI_CELL_SIZE, borderRadius: 24, minHeight: 24, minWidth: 24 },
 
   // LEGEND
   legend: {
@@ -543,7 +544,7 @@ const localStyles = StyleSheet.create({
   },
   legendLabel: { fontSize: 12, fontFamily: 'FiraSans-Regular', lineHeight: 16 },
   scaleBar: { flexDirection: 'row', gap: 6 },
-  scaleDot: { width: 20, height: 20, borderRadius: 4 },
+  scaleDot: { width: 20, height: 20, borderRadius: 24 },
 
   // MODAL
   modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 20 },
@@ -551,7 +552,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     maxHeight: '80%',
-    borderWidth: 1,
+    borderWidth: 0.5,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
